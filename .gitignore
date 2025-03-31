@@ -1,0 +1,6 @@
+rsconnect/
+Project.Rproj
+.Rproj.user/
+.RData
+data/cleaned/*.rds
+.Rhistory
