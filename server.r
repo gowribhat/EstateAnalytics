@@ -1,5 +1,10 @@
 server <- function(input, output, session) {
-  # Load data based on user selection
+  # ============================
+  # DATA LOADING & PREPARATION
+  # ============================
+  # TODO: Ensure datasets are properly loaded before use
+  #       - Load data from `data/cleaned/`
+  #       - Check for missing values and handle them appropriately
   dataset <- reactive({
     if (input$dataset == "Schools") {
       return(schools_data)
@@ -24,4 +29,19 @@ server <- function(input, output, session) {
       addTiles() %>%
       setView(lng = 103.8198, lat = 1.3521, zoom = 12)  # Singapore center
   })
+  
+  # ============================
+  # FUTURE ADDITIONS
+  # ============================
+  # TODO: Property Price Analysis
+  #       - Choropleth maps for median prices
+  #       - Time series trends visualization
+  #
+  # TODO: Lifestyle Match Scoring
+  #       - Customizable scoring system based on user preferences
+  #       - Radar/spider charts for comparing neighborhoods
+  #
+  # TODO: Transport & Accessibility Features
+  #       - Walking distance calculations to nearby MRT/bus stops
+  #       - Score-based system to rank areas by convenience
 }
