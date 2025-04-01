@@ -23,11 +23,28 @@ server <- function(input, output, session) {
     summary(dataset())
   })
   
-  # Render map (Placeholder)
+  # Render map with dynamic markers
   output$map <- renderLeaflet({
-    leaflet() %>%
+    data <- dataset()  # Get selected dataset
+    
+    # Assign correct columns for name and postal code
+    if (input$dataset == "Schools") {
+      name_col <- "school_name"
+      color <- "blue"  # Color for schools
+    } else {
+      name_col <- "centre_name"
+      color <- "red"   # Color for childcare centers
+    }
+    
+    leaflet(data) %>%
       addTiles() %>%
-      setView(lng = 103.8198, lat = 1.3521, zoom = 12)  # Singapore center
+      setView(lng = 103.8198, lat = 1.3521, zoom = 12) %>%  # Center map on Singapore
+      addCircleMarkers(
+        lng = ~longitude, lat = ~latitude, 
+        popup = ~paste0("<b>Name:</b> ", get(name_col), 
+                        "<br><b>Postal Code:</b> ", postal_code),
+        radius = 5, color = color, fillOpacity = 0.5
+      )
   })
   
   # ============================

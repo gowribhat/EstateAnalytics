@@ -1,6 +1,7 @@
 library(dplyr)
 library(stringr)
 library(lubridate)
+library(ggmap)
 
 if (!dir.exists("./data/cleaned")) {
   dir.create("./data/cleaned", recursive = TRUE, showWarnings = FALSE)
@@ -8,6 +9,29 @@ if (!dir.exists("./data/cleaned")) {
 }
 
 ##### Helper Functions
+
+get_lat_long <- function(postal_code) {
+  if (is.na(postal_code) | postal_code == "") {
+    return(c(NA, NA))
+  }
+  
+  result <- tryCatch(
+    geocode(paste(postal_code, "Singapore"), source = "google"),
+    error = function(e) return(data.frame(lon = NA, lat = NA))
+  )
+  
+  return(c(result$lon, result$lat))
+}
+
+clean_postal_codes <- function(df, column) {
+  df %>%
+    mutate(!!column := case_when(
+      str_detect(!!sym(column), "^[0-9]+$") & nchar(!!sym(column)) < 6 ~ str_pad(!!sym(column), 6, pad = "0"),
+      nchar(!!sym(column)) == 6 & str_detect(!!sym(column), "^[0-9]+$") ~ !!sym(column),
+      TRUE ~ NA_character_
+    ))
+}
+
 clean_character_cols <- function(df) {
   df %>%
     mutate(across(where(is.character), ~ str_trim(.))) %>%
@@ -38,7 +62,8 @@ clean_schools <- function() {
   schools_data <- schools_data %>%
     clean_character_cols() %>%
     clean_phone_numbers(c("telephone_no", "telephone_no_2")) %>%
-    mutate(postal_code = as.character(postal_code))
+    mutate(postal_code = as.character(postal_code)) %>%
+    clean_postal_codes("postal_code")
   
   # Convert relevant columns to factors and logical
   factor_columns <- c("dgp_code", "zone_code", "type_code", "nature_code", "session_code", "mainlevel_code")
@@ -47,6 +72,11 @@ clean_schools <- function() {
     rename(mt_chinese = mothertongue1_code, mt_malay = mothertongue2_code, mt_tamil = mothertongue3_code) %>%
     mutate(across(c("mt_chinese", "mt_malay", "mt_tamil"), ~ . %in% c("Chinese", "Malay", "Tamil"))) %>%
     convert_to_logical(c("sap_ind", "autonomous_ind", "gifted_ind", "ip_ind"))
+  
+  # Get Latitude & Longitude
+  coords <- t(sapply(schools_data$postal_code, get_lat_long))
+  schools_data$longitude <- coords[, 1]
+  schools_data$latitude <- coords[, 2]
   
   saveRDS(schools_data, "./data/cleaned/cleaned_schools.RDS")
   
@@ -64,6 +94,7 @@ clean_childcares <- function() {
   childcares_data <- childcares_data %>%
     clean_character_cols() %>%
     mutate(postal_code = as.character(postal_code)) %>%
+    clean_postal_codes("postal_code") %>%
     clean_phone_numbers("centre_contact_no") %>%
     mutate(centre_contact_no = if_else(centre_contact_no == "0", "Unknown", centre_contact_no)) %>%
     mutate(centre_email_address = if_else(
@@ -104,6 +135,11 @@ clean_childcares <- function() {
     rename(gst_registration = gst_regisration) %>%
     convert_to_logical(c("spark_certified", "provision_of_transport", "gst_registration")) %>%
     mutate(last_updated = dmy(last_updated))
+  
+  # Get Latitude & Longitude
+  coords <- t(sapply(childcares_data$postal_code, get_lat_long))
+  childcares_data$longitude <- coords[, 1]
+  childcares_data$latitude <- coords[, 2]
   
   saveRDS(childcares_data, "./data/cleaned/cleaned_childcares.RDS")
   
