@@ -12,7 +12,7 @@ This project aims to develop a data analytics platform that revolutionizes how p
 - **ggplot2** – Data visualization
 - **leaflet** – Interactive maps
 - **dplyr & stringr** – Data cleaning & transformation
-- **httr** – API connections hi Noel
+- **httr** – API connections
 
 ## Project Structure
 
