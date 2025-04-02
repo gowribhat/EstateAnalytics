@@ -45,6 +45,14 @@ Project/
 
 ## Getting Started
 
+1.  **Set environment variable**
+
+    Create a file name `.env` in the project root with the following variable and set your private keys.
+
+    ```bash
+    GOOGLE_API_KEY="add_your_key"
+    ```
+
 1.  **Install dependencies**
 
     Run script to install any missing packages for local developement.

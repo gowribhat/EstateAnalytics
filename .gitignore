@@ -4,3 +4,4 @@ Project.Rproj
 .RData
 data/cleaned/*.rds
 .Rhistory
+.env

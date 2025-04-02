@@ -1,7 +1,11 @@
+library(dotenv)
 library(dplyr)
 library(stringr)
 library(lubridate)
 library(ggmap)
+
+dotenv::load_dot_env()
+ggmap::register_google(key = Sys.getenv("GOOGLE_API_KEY"))
 
 if (!dir.exists("./data/cleaned")) {
   dir.create("./data/cleaned", recursive = TRUE, showWarnings = FALSE)
