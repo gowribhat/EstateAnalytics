@@ -82,7 +82,7 @@ clean_schools <- function() {
   schools_data$longitude <- coords[, 1]
   schools_data$latitude <- coords[, 2]
   
-  saveRDS(schools_data, "./data/cleaned/cleaned_schools.RDS")
+  saveRDS(schools_data, "./data/schools.RDS")
   
   return(schools_data)
 }
@@ -145,7 +145,7 @@ clean_childcares <- function() {
   childcares_data$longitude <- coords[, 1]
   childcares_data$latitude <- coords[, 2]
   
-  saveRDS(childcares_data, "./data/cleaned/cleaned_childcares.RDS")
+  saveRDS(childcares_data, "./data/childcares.RDS")
   
   return(childcares_data)
 }
