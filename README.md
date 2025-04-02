@@ -12,7 +12,6 @@ This project aims to develop a data analytics platform that revolutionizes how p
 - **ggplot2** – Data visualization
 - **leaflet** – Interactive maps
 - **dplyr & stringr** – Data cleaning & transformation
-- **httr** – API connections
 
 ## Project Structure
 
@@ -28,19 +27,16 @@ Project/
 |
 ├── server/
 │   └── server.R                              # Server-side logic
+│   ├── modules/                              # Modular server components
+│   │   ├── map_module.R                      # Server logic for interactive map
+│   │   └── ...
 |
 ├── www/
 │   └── styles.css                            # CSS styling file
 │
-├── data/
-│   ├── raw/                                  # Raw datasets
-│   │   ├── Generalinformationofschools.csv
-│   │   ├── ListingofCentres.csv
-│   │   └── ...
-│   │
-│   └── cleaned/                              # Cleaned datasets (R Data Serialization files)
-│       ├── cleaned_schools.RDS
-│       └── cleaned_childcares.RDS
+├── data/                                     # Cleaned RDS Datasets
+│   ├── schools.RDS
+│   └── childcares.RDS
 │
 ├── scripts/
 │   └── clean_data.R                          # Raw data cleaning functions
