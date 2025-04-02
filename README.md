@@ -19,8 +19,16 @@ This project aims to develop a data analytics platform that revolutionizes how p
 ```
 Project/
 ├── global.R                                  # Shared libraries & configurations
-├── server.R                                  # Server-side logic
-├── ui.R                                      # UI layout
+|
+├── ui/
+│   ├── components/                           # UI components for reuse
+│   │   ├── navbar.R
+|   |   └── ...
+|   └── ui.R                                  # Main UI script
+|
+├── server/
+│   └── server.R                              # Server-side logic
+|
 ├── www/
 │   └── styles.css                            # CSS styling file
 │
