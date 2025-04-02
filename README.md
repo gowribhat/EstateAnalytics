@@ -1,4 +1,4 @@
-# PropExplorer
+# HomeExplorer
 
 > A Comprehensive Property Search & Analysis Platform
 
@@ -18,11 +18,11 @@ This project aims to develop a data analytics platform that revolutionizes how p
 
 ```
 Project/
-├── app.R                                     # Main Shiny app entry point
 ├── global.R                                  # Shared libraries & configurations
 ├── server.R                                  # Server-side logic
 ├── ui.R                                      # UI layout
-├── Project.Rproj                             # RStudio project file
+├── www/
+│   └── styles.css                            # CSS styling file
 │
 ├── data/
 │   ├── raw/                                  # Raw datasets
@@ -36,6 +36,10 @@ Project/
 │
 ├── scripts/
 │   └── clean_data.R                          # Raw data cleaning functions
+│   └── install_packages.R                    # Script for local developement to install packages
+│   └── packages.R                            # List of packages needed
+│
+├── .env                                      # Secrets (e.g. Google API Key)
 │
 └── rsconnect/                                # Shinyapps.io deployment configs
     └── shinyapps.io/
@@ -71,15 +75,13 @@ Project/
 
 1.  **Run the Shiny app**
 
-    Open the `app.R` file in RStudio and click on the “Run App” button to start the Shiny app.
+    Click on the “Run App” button in Rstudio to start the Shiny app.
 
 1.  **Deploy the app**
 
     To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
 
-    _Files to deploy are the `app.R`, `global.R`, `server.R`, `ui.R` and cleaned datasets in the `data/cleaned` directory._
-
-    **Note:** If datasets are updated, re-run `source("scripts/clean_data.R")` to update the cleaned datasets.
+    **Note:** If datasets are updated or `clean_data.R` is changed, re-run `source("scripts/clean_data.R")` to update the cleaned datasets.
 
 ## Deployment Files
 
@@ -89,5 +91,5 @@ Ensure that the following files are included when deploying the app:
 - `global.R` – Shared libraries and configurations
 - `server.R` – Server-side logic
 - `ui.R` – UI layout file
-- `load_packages.R` and `packages.R` #TODO need to fix
+- CSS styling file in the `www/` directory
 - Cleaned datasets located in the `data/cleaned` directory
