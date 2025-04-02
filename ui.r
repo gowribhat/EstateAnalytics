@@ -1,34 +1,26 @@
 ui <- fluidPage(
-  titlePanel("Find Your New Home - Data Explorer"),
+  tags$head(includeCSS("www/styles.css")),
   
-  sidebarLayout(
-    sidebarPanel(
-      selectInput("dataset", "Choose Dataset:", 
-                  choices = c("Schools", "Childcare"), 
-                  selected = "Schools"),
-      actionButton("refresh", "Refresh Data")
-    ),
-    
-    mainPanel(
-      tabsetPanel(
-        # Data Table Tab - Displays the selected dataset
-        # TODO: Add filtering/search functionality for users to refine search results
-        # TODO: Allow exporting data to CSV for analysis
-        tabPanel("Table View", 
-                 DTOutput("data_table")),  
-        
-        # Summary Tab - Displays statistical summary of the dataset
-        # TODO: Implement visual analytics (e.g., bar charts, histograms, box plots)
-        # TODO: Provide insights into trends (e.g., top schools, price distribution)
-        tabPanel("Summary", 
-                 verbatimTextOutput("summary")),  
-        
-        # Map Visualization Tab - Displays locations of schools/childcare centers
-        # TODO: Expand to include property price heatmaps, MRT connectivity, and amenities
-        # TODO: Enable user-defined filters (e.g., show properties within 1km of MRT)
-        tabPanel("Map View", 
-                 leafletOutput("map"))  
-      )
-    )
+  # Top navigation bar for map type selection
+  div(id = "top-bar",
+      selectInput("dataset", "Choose Data:", choices = c("Schools", "Childcare"), selected = "Schools"),
+      actionButton("heatmap", "Heatmap", class = "map-type-btn"),
+      actionButton("pointmap", "Point Map", class = "map-type-btn"),
+      actionButton("clustered", "Cluster Map", class = "map-type-btn")
+  ),
+  
+  # Sidebar card for user preferences
+  div(id = "sidebar-card",
+      h4("User Preferences"),
+      numericInput("budget", "Budget (SGD)", value = 800000, min = 200000, step = 50000),
+      selectInput("house_type", "Type of House", choices = c("HDB", "Condo", "Landed")),
+      sliderInput("distance_school", "Max Distance to School (km)", min = 0, max = 5, value = 2),
+      sliderInput("distance_childcare", "Max Distance to Childcare (km)", min = 0, max = 5, value = 2),
+      actionButton("apply_filters", "Apply Filters", class = "btn-primary")
+  ),
+  
+  # Map container
+  div(id = "map-container",
+      leafletOutput("map", width = "100%", height = "100%")
   )
 )

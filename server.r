@@ -2,9 +2,6 @@ server <- function(input, output, session) {
   # ============================
   # DATA LOADING & PREPARATION
   # ============================
-  # TODO: Ensure datasets are properly loaded before use
-  #       - Load data from `data/cleaned/`
-  #       - Check for missing values and handle them appropriately
   dataset <- reactive({
     if (input$dataset == "Schools") {
       return(schools_data)
@@ -13,38 +10,74 @@ server <- function(input, output, session) {
     }
   })
   
-  # Render table for selected dataset
-  output$data_table <- renderDT({
-    datatable(dataset(), options = list(pageLength = 10))
+  # Track the selected map type
+  selected_map_type <- reactiveVal("pointmap")
+
+  observeEvent(input$heatmap, {
+    selected_map_type("heatmap")
+  })
+
+  observeEvent(input$pointmap, {
+    selected_map_type("pointmap")
   })
   
-  # Render summary of selected dataset
-  output$summary <- renderPrint({
-    summary(dataset())
-  })
-  
-  # Render map with dynamic markers
+  # ============================
+  # INITIAL MAP RENDERING
+  # ============================
   output$map <- renderLeaflet({
-    data <- dataset()  # Get selected dataset
+    leaflet() %>%
+      addTiles() %>%
+      setView(lng = 103.8198, lat = 1.3521, zoom = 12)  # Default center (Singapore)
+  })
+  
+  # ============================
+  # MAP TYPE SWITCHING
+  # ============================
+  
+  output$map <- renderLeaflet({
+    data <- dataset()
     
-    # Assign correct columns for name and postal code
     if (input$dataset == "Schools") {
       name_col <- "school_name"
-      color <- "blue"  # Color for schools
+      color <- "blue"
     } else {
       name_col <- "centre_name"
-      color <- "red"   # Color for childcare centers
+      color <- "red"
     }
     
-    leaflet(data) %>%
+    # Base leaflet map
+    map <- leaflet(data) %>%
       addTiles() %>%
-      setView(lng = 103.8198, lat = 1.3521, zoom = 12) %>%  # Center map on Singapore
-      addCircleMarkers(
-        lng = ~longitude, lat = ~latitude, 
-        popup = ~paste0("<b>Name:</b> ", get(name_col), 
-                        "<br><b>Postal Code:</b> ", postal_code),
-        radius = 5, color = color, fillOpacity = 0.5
-      )
+      setView(lng = 103.8198, lat = 1.3521, zoom = 12)  # Center map on Singapore
+    
+    # Render selected map type
+    if (selected_map_type() == "heatmap") {
+      map <- map %>%
+        addHeatmap(
+          lng = ~longitude, lat = ~latitude,
+          blur = 20, max = 0.05, radius = 15
+        )
+    } else if (selected_map_type() == "pointmap") {
+      map <- map %>%
+        addCircleMarkers(
+          lng = ~longitude, lat = ~latitude, 
+          popup = ~paste0("<b>Name:</b> ", get(name_col), 
+                          "<br><b>Postal Code:</b> ", postal_code),
+          radius = 5, color = color, fillOpacity = 0.5
+        )
+    }
+    
+    return(map)
+  })
+  
+  # Placeholder for Cluster Map (Coming Soon)
+  observeEvent(input$clustered, {
+    showNotification("Clustered Map feature is coming soon!", type = "message")
+  })
+  
+  # Placeholder for Filtering
+  observeEvent(input$apply_filters, {
+    showNotification("Filtering feature is coming soon!", type = "message")
   })
   
   # ============================
