@@ -7,3 +7,4 @@ data/cleaned/*.rds
 .env
 .vscode/
 .DS_Store
+.github
