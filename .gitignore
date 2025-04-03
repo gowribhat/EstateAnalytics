@@ -6,3 +6,4 @@ data/cleaned/*.rds
 .Rhistory
 .env
 .vscode/
+.DS_Store
