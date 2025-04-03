@@ -98,7 +98,10 @@ ui <- fluidPage(
       style = "height: calc(100% - 80px); display: flex; flex-direction: column;",
       h4("Area Summary"),
       h5(textOutput("current_region_name", inline = TRUE)),
-      plotOutput("summary_plot", height = "150px")
+      plotOutput("summary_plot", height = "150px"),
+      
+      # Add household income statistics
+      htmlOutput("income_stats")
     ),
     # Price legend at the absolute bottom
     div(

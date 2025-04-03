@@ -29,7 +29,7 @@ addPropertyMarkers <- function(map_proxy, data, color_palette) {
       radius = 5,
       color = ~color_palette(resale_price),
       stroke = FALSE, 
-      fillOpacity = 0.7,
+      fillOpacity = 0.8,
       popup = ~paste(
         "<b>Address:</b>", address, "<br>",
         "<b>Price:</b> $", format(resale_price, big.mark = ","), "<br>",

@@ -85,7 +85,7 @@ sg_lng <- 103.8198
 sg_zoom <- 11
 
 # Define property types
-property_types <- c("HDB", "Condominium", "Landed", "All")
+property_types <- c("HDB", "Condominium")
 
 # Source all module files
 module_files <- list.files("R/modules", full.names = TRUE, pattern = "*.R")
