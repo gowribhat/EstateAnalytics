@@ -1,1 +1,22 @@
-required_packages <- c("shiny", "dplyr", "ggplot2", "leaflet", "leaflet.extras", "httr", "stringr", "lubridate", "DT", "jsonlite", "dotenv", "shinyWidgets")
+required_packages <- c(
+  "shiny", 
+  "leaflet", 
+  "dplyr", 
+  "ggplot2", 
+  "DT", 
+  "plotly", 
+  "shinythemes", 
+  "shinyjs", 
+  "shinyWidgets", 
+  "sf", 
+  "viridis", 
+  "htmltools", 
+  "RColorBrewer", 
+  "scales",
+  "leaflet.extras", 
+  "httr", 
+  "stringr", 
+  "lubridate", 
+  "jsonlite", 
+  "dotenv"
+)

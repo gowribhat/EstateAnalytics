@@ -12,32 +12,26 @@ dashboardModuleUI <- function(id) {
                tabPanel("Price Analysis",
                         fluidRow(
                           column(6,
-                                 box(
-                                   title = "Median Prices by Area", 
-                                   status = "primary", 
-                                   solidHeader = TRUE,
-                                   width = NULL,
-                                   plotlyOutput(ns("median_price_plot"), height = "300px")
+                                 createAnalysisBox(
+                                   "Median Prices by Area", 
+                                   ns("median_price_plot"), 
+                                   status = "primary"
                                  )
                           ),
                           column(6,
-                                 box(
-                                   title = "Price Trends Over Time", 
-                                   status = "primary", 
-                                   solidHeader = TRUE,
-                                   width = NULL,
-                                   plotlyOutput(ns("price_trends_plot"), height = "300px")
+                                 createAnalysisBox(
+                                   "Price Trends Over Time", 
+                                   ns("price_trends_plot"), 
+                                   status = "primary"
                                  )
                           )
                         ),
                         fluidRow(
                           column(12,
-                                 box(
-                                   title = "Price Distribution by Property Type", 
-                                   status = "info", 
-                                   solidHeader = TRUE,
-                                   width = NULL,
-                                   plotlyOutput(ns("price_distribution_plot"), height = "300px")
+                                 createAnalysisBox(
+                                   "Price Distribution by Property Type", 
+                                   ns("price_distribution_plot"), 
+                                   status = "info"
                                  )
                           )
                         )
@@ -45,32 +39,26 @@ dashboardModuleUI <- function(id) {
                tabPanel("Neighborhood Explorer",
                         fluidRow(
                           column(6,
-                                 box(
-                                   title = "Amenities Proximity Analysis", 
-                                   status = "success", 
-                                   solidHeader = TRUE,
-                                   width = NULL,
-                                   plotlyOutput(ns("amenities_plot"), height = "300px")
+                                 createAnalysisBox(
+                                   "Amenities Proximity Analysis", 
+                                   ns("amenities_plot"), 
+                                   status = "success"
                                  )
                           ),
                           column(6,
-                                 box(
-                                   title = "Transportation Accessibility", 
-                                   status = "success", 
-                                   solidHeader = TRUE,
-                                   width = NULL,
-                                   plotlyOutput(ns("transportation_plot"), height = "300px")
+                                 createAnalysisBox(
+                                   "Transportation Accessibility", 
+                                   ns("transportation_plot"), 
+                                   status = "success"
                                  )
                           )
                         ),
                         fluidRow(
                           column(12,
-                                 box(
-                                   title = "Area Comparison", 
-                                   status = "warning", 
-                                   solidHeader = TRUE,
-                                   width = NULL,
-                                   plotlyOutput(ns("area_comparison_plot"), height = "300px")
+                                 createAnalysisBox(
+                                   "Area Comparison", 
+                                   ns("area_comparison_plot"), 
+                                   status = "warning"
                                  )
                           )
                         )
@@ -110,14 +98,13 @@ dashboardModule <- function(input, output, session, map_data) {
       arrange(desc(median_price))
     
     p <- ggplot(price_by_area, aes(x = reorder(town, median_price), y = median_price/1000)) +
-      geom_bar(stat = "identity", fill = "#2196F3") +
-      theme_minimal() +
+      geom_bar(stat = "identity", fill = price_colors(1)) +
+      theme_property_app() +
       coord_flip() +
       labs(x = "", y = "Median Price (SGD Thousands)", 
-           title = "Median Property Prices by Area") +
-      theme(axis.text.y = element_text(size = 8))
+           title = "Median Property Prices by Area")
     
-    ggplotly(p) %>% config(displayModeBar = FALSE)
+    configure_plotly(ggplotly(p))
   })
   
   # Price trends plot
@@ -130,14 +117,14 @@ dashboardModule <- function(input, output, session, map_data) {
       summarise(median_price = median(resale_price, na.rm = TRUE))
     
     p <- ggplot(data, aes(x = month, y = median_price/1000)) +
-      geom_line(color = "#4CAF50", size = 1) +
-      geom_point(color = "#4CAF50", size = 2) +
-      theme_minimal() +
+      geom_line(color = area_colors(1), size = 1) +
+      geom_point(color = area_colors(1), size = 2) +
+      theme_property_app() +
       labs(x = "Month", y = "Median Price (SGD Thousands)", 
            title = "Price Trends Over Time") +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggplotly(p) %>% config(displayModeBar = FALSE)
+    configure_plotly(ggplotly(p))
   })
   
   # Price distribution by property type plot
@@ -146,13 +133,13 @@ dashboardModule <- function(input, output, session, map_data) {
     
     p <- ggplot(map_data$filtered_data, aes(x = flat_type, y = resale_price/1000, fill = flat_type)) +
       geom_boxplot() +
-      theme_minimal() +
+      theme_property_app() +
       scale_fill_viridis_d() +
       labs(x = "Property Type", y = "Price (SGD Thousands)", 
            title = "Price Distribution by Property Type") +
       theme(legend.position = "none")
     
-    ggplotly(p) %>% config(displayModeBar = FALSE)
+    configure_plotly(ggplotly(p))
   })
   
   # Placeholder plots for neighborhood explorer (to be replaced with actual data)
@@ -160,20 +147,22 @@ dashboardModule <- function(input, output, session, map_data) {
     plot_ly(type = "bar") %>%
       add_trace(x = c("Supermarket", "Parks", "Restaurants", "Schools"), 
                 y = c(3, 5, 8, 2),
-                marker = list(color = "#8BC34A")) %>%
+                marker = list(color = area_colors(1))) %>%
       layout(title = "Number of Amenities Within 1km",
              xaxis = list(title = ""),
-             yaxis = list(title = "Count"))
+             yaxis = list(title = "Count")) %>%
+      configure_plotly()
   })
   
   output$transportation_plot <- renderPlotly({
     plot_ly(type = "bar") %>%
       add_trace(x = c("MRT Station", "Bus Stop", "Highway Access"), 
                 y = c(0.8, 0.3, 1.5),
-                marker = list(color = "#FF9800")) %>%
+                marker = list(color = comparison_colors(1))) %>%
       layout(title = "Distance to Transportation (km)",
              xaxis = list(title = ""),
-             yaxis = list(title = "Distance (km)"))
+             yaxis = list(title = "Distance (km)")) %>%
+      configure_plotly()
   })
   
   output$area_comparison_plot <- renderPlotly({
@@ -200,7 +189,8 @@ dashboardModule <- function(input, output, session, map_data) {
       ),
       title = "Area Feature Comparison",
       showlegend = TRUE
-    )
+    ) %>%
+    configure_plotly()
   })
   
   # Property table output

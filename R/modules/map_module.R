@@ -81,17 +81,7 @@ mapModule <- function(input, output, session) {
   
   # Initialize the map
   output$property_map <- renderLeaflet({
-    leaflet() %>%
-      addTiles() %>%
-      addProviderTiles(providers$CartoDB.Positron, group = "CartoDB") %>%
-      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
-      setView(lng = sg_lng, lat = sg_lat, zoom = sg_zoom) %>%
-      addLayersControl(
-        baseGroups = c("CartoDB", "Satellite"),
-        position = "bottomright",
-        options = layersControlOptions(collapsed = TRUE)
-      ) %>%
-      addScaleBar(position = "bottomleft")
+    initializeLeafletMap()
   })
   
   # Update the map based on user inputs
@@ -108,74 +98,22 @@ mapModule <- function(input, output, session) {
     
     # Add property markers if selected
     if ("markers" %in% input$map_overlays) {
-      # Limit the number of markers for performance
-      markers_data <- head(map_data$filtered_data, 500)
-      
-      map_proxy %>%
-        addCircleMarkers(
-          data = markers_data,
-          lng = ~longitude, 
-          lat = ~latitude,
-          radius = 5,
-          color = ~property_price_palette(resale_price),
-          stroke = FALSE, 
-          fillOpacity = 0.7,
-          popup = ~paste(
-            "<b>Address:</b>", address, "<br>",
-            "<b>Price:</b> $", format(resale_price, big.mark = ","), "<br>",
-            "<b>Type:</b>", flat_type, "<br>",
-            "<b>Floor Area:</b>", floor_area_sqm, "sqm<br>",
-            "<b>Date:</b>", month
-          )
-        )
+      map_proxy <- addPropertyMarkers(map_proxy, map_data$filtered_data, property_price_palette)
     }
     
     # Add property heatmap if selected
     if ("heatmap" %in% input$map_overlays) {
-      map_proxy %>%
-        addHeatmap(
-          data = map_data$filtered_data,
-          lng = ~longitude, 
-          lat = ~latitude,
-          intensity = ~resale_price,
-          blur = 20, 
-          max = 0.05,
-          radius = 15
-        )
+      map_proxy <- addPropertyHeatmap(map_proxy, map_data$filtered_data)
     }
     
     # Add MRT stations if selected
     if ("mrt" %in% input$map_overlays && !is.null(map_data$mrt_data)) {
-      map_proxy %>%
-        addCircleMarkers(
-          data = map_data$mrt_data,
-          stroke = FALSE,
-          radius = 5,
-          color = "#1976D2",
-          fillOpacity = 0.8,
-          popup = ~paste0("<b>Station:</b> ", name)
-        )
+      map_proxy <- addMrtStations(map_proxy, map_data$mrt_data)
     }
     
     # Add planning areas if selected
     if ("planning" %in% input$map_overlays && !is.null(map_data$planning_areas)) {
-      map_proxy %>%
-        addPolygons(
-          data = map_data$planning_areas,
-          fillColor = "#8BC34A",
-          weight = 1,
-          opacity = 1,
-          color = "white",
-          dashArray = "3",
-          fillOpacity = 0.2,
-          highlight = highlightOptions(
-            weight = 2,
-            color = "#666",
-            dashArray = "",
-            fillOpacity = 0.3,
-            bringToFront = TRUE),
-          popup = ~paste0("<b>Area:</b> ", PLN_AREA_N)
-        )
+      map_proxy <- addPlanningAreas(map_proxy, map_data$planning_areas)
     }
   })
   
@@ -184,4 +122,7 @@ mapModule <- function(input, output, session) {
     leafletProxy("property_map") %>%
       setView(lng = sg_lng, lat = sg_lat, zoom = sg_zoom)
   })
+  
+  # Return reactive values for other modules to use
+  return(map_data)
 }

@@ -2,61 +2,76 @@
 # Find Your New Home: Data-Driven Property Search Platform
 # DBA3702 Team 3
 
-# Ensure all required libraries are loaded
-library(shiny)
-library(leaflet)
-library(dplyr)
-library(DT)
-library(ggplot2)
-library(plotly)
-library(shinythemes)
-library(shinyjs)
-library(shinyWidgets)
-library(sf)
-library(viridis)
-library(htmltools)
-library(RColorBrewer)
-library(scales)
+# Load packages from centralized package management
+source("scripts/load_packages.R")
 
 # Define paths
 resources_path <- "data/"
 
-# Load data function - will only load data when needed to optimize performance
-loadData <- function(dataname) {
-  switch(dataname,
-         "hdb_resale" = {
-           if (!exists("hdb_resale_data")) {
-             hdb_data <- read.csv(paste0(resources_path, "HDB_Resale_Coordinates_region.csv"), 
-                                  stringsAsFactors = FALSE)
-             return(hdb_data)
-           }
-         },
-         "ura_private" = {
-           if (!exists("ura_data")) {
-             ura_data <- read.csv(paste0(resources_path, "URA_PrivateTransactions2025-04-02_region.csv"), 
-                                  stringsAsFactors = FALSE)
-             return(ura_data)
-           }
-         },
-         "mrt_stations" = {
-           if (!exists("mrt_stations_data")) {
-             mrt_data <- st_read(paste0(resources_path, "LTAMRTStationExitGEOJSON.geojson"))
-             return(mrt_data)
-           }
-         },
-         "planning_areas" = {
-           if (!exists("planning_areas_data")) {
-             planning_areas <- st_read(paste0(resources_path, "district_and_planning_area.geojson"))
-             return(planning_areas)
-           }
-         },
-         "streets" = {
-           if (!exists("streets_data")) {
-             streets <- st_read(paste0(resources_path, "StreetandPlaces.geojson"))
-             return(streets)
-           }
-         }
+# Create a data registry to centralize all data specifications
+data_registry <- list(
+  # Geospatial files
+  planning_areas = list(
+    var_name = "planning_areas_data",
+    file_path = "district_and_planning_area.geojson",
+    read_func = "st_read"
+  ),
+  
+  # RDS files
+  hdb_resale = list(
+    var_name = "hdb_resale_data",
+    file_path = "hdb.rds",
+    read_func = "readRDS"
+  ),
+  ura_private = list(
+    var_name = "ura_private_data", 
+    file_path = "ura_private.rds",
+    read_func = "readRDS"
+  ),
+  childcares = list(
+    var_name = "childcares_data",
+    file_path = "childcares.RDS",
+    read_func = "readRDS"
+  ),
+  schools = list(
+    var_name = "schools_data",
+    file_path = "schools.RDS",
+    read_func = "readRDS"
+  ),
+  household_income = list(
+    var_name = "household_income_data",
+    file_path = "household_income_data.rds",
+    read_func = "readRDS"
   )
+)
+
+# Streamlined data loading function
+loadData <- function(dataname) {
+  if (!dataname %in% names(data_registry)) {
+    stop(paste("Unknown dataset:", dataname))
+  }
+  
+  data_spec <- data_registry[[dataname]]
+  var_name <- data_spec$var_name
+  
+  # Check if data already exists in the global environment
+  if (!exists(var_name, envir = .GlobalEnv)) {
+    file_path <- paste0(resources_path, data_spec$file_path)
+    
+    # Use the appropriate function to read the data
+    if (data_spec$read_func == "st_read") {
+      data <- sf::st_read(file_path, quiet = TRUE)
+    } else if (data_spec$read_func == "readRDS") {
+      data <- readRDS(file_path)
+    }
+    
+    # Assign to global environment for caching
+    assign(var_name, data, envir = .GlobalEnv)
+    return(data)
+  } else {
+    # Return existing data
+    return(get(var_name, envir = .GlobalEnv))
+  }
 }
 
 # Define color palettes for the app
