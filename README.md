@@ -12,7 +12,6 @@ This project aims to develop a data analytics platform that revolutionizes how p
 - **ggplot2** – Data visualization
 - **leaflet** – Interactive maps
 - **dplyr & stringr** – Data cleaning & transformation
-- **httr** – API connections
 
 ## Project Structure
 
@@ -28,19 +27,16 @@ Project/
 |
 ├── server/
 │   └── server.R                              # Server-side logic
+│   ├── modules/                              # Modular server components
+│   │   ├── map_module.R                      # Server logic for interactive map
+│   │   └── ...
 |
 ├── www/
 │   └── styles.css                            # CSS styling file
 │
-├── data/
-│   ├── raw/                                  # Raw datasets
-│   │   ├── Generalinformationofschools.csv
-│   │   ├── ListingofCentres.csv
-│   │   └── ...
-│   │
-│   └── cleaned/                              # Cleaned datasets (R Data Serialization files)
-│       ├── cleaned_schools.RDS
-│       └── cleaned_childcares.RDS
+├── data/                                     # Cleaned RDS Datasets
+│   ├── schools.RDS
+│   └── childcares.RDS
 │
 ├── scripts/
 │   └── clean_data.R                          # Raw data cleaning functions
@@ -73,14 +69,6 @@ Project/
     source("scripts/install_packages.R")
     ```
 
-1.  **Clean raw datasets**
-
-    If the datasets have not been cleaned yet, run the following line to clean the raw datasets. It will generate cleaned RDS files in the `data/cleaned` directory.
-
-    ```r
-    source("scripts/clean_data.R")
-    ```
-
 1.  **Run the Shiny app**
 
     Click on the “Run App” button in Rstudio to start the Shiny app.
@@ -88,8 +76,6 @@ Project/
 1.  **Deploy the app**
 
     To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
-
-    **Note:** If datasets are updated or `clean_data.R` is changed, re-run `source("scripts/clean_data.R")` to update the cleaned datasets.
 
 ## Deployment Files
 
@@ -101,3 +87,50 @@ Ensure that the following files are included when deploying the app:
 - `ui.R` – UI layout file
 - CSS styling file in the `www/` directory
 - Cleaned datasets located in the `data/cleaned` directory
+
+## 🚀 GitHub Workflow Guide
+
+### 1️⃣ Making Changes & Committing
+
+1. Open your editor (**RStudio/VSCode**) and make changes.
+2. **Save your changes locally.**
+3. Open **GitHub Desktop**, and you will see the files you modified.
+4. Write a **short commit message** describing your changes (e.g., `"Added interactive map"`).
+5. Click **"Commit to `<your-branch>`"** to save your work.
+
+### 2️⃣ Pushing Your Changes to GitHub
+
+1. Click **"Push origin"** in GitHub Desktop.
+2. Your changes are now uploaded to GitHub! 🎉
+
+### 3️⃣ Keeping Your Branch Updated with Master
+
+It's important to always keep your branch **in sync** with `master`:
+
+1. In **GitHub Desktop**, switch to **`master`**:
+   - Click **"Current Branch"** → Select **`master`**.
+   - Click **"Fetch Origin"** and then **"Pull"** to get the latest updates.
+2. Switch back to **your branch**.
+3. Click **"Branch" > "Merge into current branch"**.
+4. Select **`master`** and click **"Merge"**.
+5. Now, your branch is **up to date with master** ✅.
+
+### 4️⃣ Finishing Your Feature & Merging into Master (Pull Request)
+
+Once your feature is **complete and tested**:
+
+1. **Push all your changes** (Step 2 above).
+2. **Go to GitHub.com** and open our project.
+3. Click **"Pull Requests" > "New Pull Request"**.
+4. Select:
+   - **Base branch** → `master`
+   - **Compare branch** → `<your-feature-branch>`
+5. Add a **short description** and click **"Create Pull Request"**.
+6. Wait for approval, then **merge it! 🎉**
+
+### 🎯 Summary of Workflow
+
+- **Edit code**, **commit often**, and **push your changes**.
+- **Keep your branch updated with master** to avoid conflicts.
+- **Create a Pull Request (PR) when your feature is ready**.
+- **Merge into master** once approved.
