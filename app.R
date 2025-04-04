@@ -1,5 +1,5 @@
 source("global.R")
 source("ui.R")
-source("server.R")
+source("server/server.R")
 
 shinyApp(ui, server)
