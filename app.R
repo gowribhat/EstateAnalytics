@@ -11,7 +11,7 @@ server <- function(input,output){
   
   output$plotMap <- renderLeaflet(
     {
-      leaflet() %>% setView(lng = 103.9355, lat = 1.359087,
+      leaflet() %>% setView(lng = mean(HDB$longitude), lat = mean(HDB$latitude),
                             zoom = input$zoomlevel) %>% 
         addTiles() %>% 
         addMarkers(lat = HDB$latitude[1], lng = HDB$longitude[1],
@@ -23,7 +23,7 @@ server <- function(input,output){
 ui <- fluidPage(
   sliderInput(inputId = "zoomlevel",
               label = "Map Zooming Level",
-              value = 11,
+              value = 14,
               min = 1,
               max = 20),
   leafletOutput(outputId = "plotMap")
