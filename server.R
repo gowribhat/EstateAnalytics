@@ -1219,43 +1219,4 @@ server <- function(input, output, session) {
       print("Planning areas data loaded successfully.")
     }
   })
-
-  # Debugging: Check if map is rendering
-  observe({
-    if (is.null(input$property_map_center)) {
-      print("Map center input is not available.")
-    } else {
-      print(paste("Map center coordinates:", input$property_map_center$lng, input$property_map_center$lat))
-    }
-  })
-
-  # Debugging: Print column names of planning areas data
-  observe({
-    pa_sf <- planning_areas_data()
-    if (!is.null(pa_sf)) {
-      print("Column names in planning areas data:")
-      print(names(pa_sf))
-    }
-  })
-
-  # --- Debugging: Print spatial intersection result ---
-  observe({
-    center <- map_center_debounced()
-    pa_sf <- planning_areas_data()
-
-    if (!is.null(center) && !is.null(pa_sf)) {
-      center_point <- st_sfc(st_point(c(center$lng, center$lat)), crs = 4326)
-      pa_crs <- st_crs(pa_sf)
-      if (st_crs(center_point) != pa_crs) {
-        center_point <- st_transform(center_point, crs = pa_crs)
-      }
-
-      sf_use_s2(FALSE)
-      intersection <- st_intersects(center_point, pa_sf, sparse = FALSE)
-      sf_use_s2(TRUE)
-
-      print("Spatial intersection result:")
-      print(intersection)
-    }
-  })
 }
