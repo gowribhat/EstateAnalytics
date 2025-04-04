@@ -2,11 +2,18 @@ source("global.R")
 source("ui.R")
 source("server/server.R")
 
-<<<<<<< Updated upstream
+ui <- fluidPage()
 shinyApp(ui, server)
-=======
+server <- function(input,output){
+}
+
+ui <- fluidPage(
+  sliderInput(inputId = "zoomlevel",
+              label = "Map Zooming Level",
+              value = 11,
+              min = 1,
+              max = 20),
+  leafletOutput(outputId = "plotMap")
+)
 shinyApp(ui = ui, server = server)
 
-HDB <- readRDS("hdb.rds")
-priv <- readRDS("ura_private.rds")
->>>>>>> Stashed changes
