@@ -1,4 +1,10 @@
 # Building Details Logic (Right Overlay)
+# This script manages the logic for displaying building-specific details and visualizations in the right overlay.
+# It includes reactive datasets, UI rendering, and visualizations for selected buildings.
+# Key components:
+# - Building transactions: Retrieves transaction data for the selected building.
+# - Property details: Displays detailed information about the selected building.
+# - Visualizations: Generates plots and tables for building-specific data.
 
 # Right overlay: Building-specific data and visualization
 # Get transactions for specific building when selected

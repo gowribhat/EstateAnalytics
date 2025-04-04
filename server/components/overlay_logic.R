@@ -1,4 +1,10 @@
 # Overlay Handling Logic
+# This script manages the visibility and interactions of overlays in the application.
+# It includes logic for toggling overlays, handling user interactions, and refreshing data tables.
+# Key components:
+# - Transactions overlay: Displays detailed transaction data for selected properties.
+# - Overlay visibility: Tracks and updates the visibility state of overlays.
+# - JavaScript integration: Sends custom messages to the frontend for overlay actions.
 
 # --- Overlay Visibility Handling ---
 # This observes the input value set by our JavaScript to track overlay visibility

@@ -1,4 +1,11 @@
 # Map Rendering and Interaction Logic
+# This script handles the rendering and interaction logic for the map component.
+# It includes base map rendering, reverse geocoding, marker display, and spatial filtering.
+# Key components:
+# - Base map rendering: Initializes the map with default settings and tiles.
+# - Reverse geocoding: Determines the current planning area based on the map center.
+# - Marker display: Dynamically updates markers based on zoom level and filters.
+# - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({

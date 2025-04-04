@@ -1,4 +1,10 @@
 # Modal Dialog Logic
+# This script defines the logic for modal dialogs used in the application.
+# It includes modals for filtering data by property type, budget, area, floor height, and facilities.
+# Key components:
+# - Modal dialogs: Provides user-friendly interfaces for selecting filters.
+# - Reactive updates: Updates reactive values based on user inputs in modals.
+# - Button label updates: Dynamically updates button labels to reflect selected filter values.
 
 # --- Modal Dialog Logic ---
 

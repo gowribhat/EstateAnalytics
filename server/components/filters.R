@@ -1,4 +1,9 @@
 # Data Filtering Logic
+# This script defines the logic for filtering data based on user-selected criteria.
+# It includes reactive values for filters and functions to filter HDB and private property data.
+# Key components:
+# - Reactive filters: Tracks user-selected values for property type, budget, area, and floor height.
+# - Filtered datasets: Applies filters to HDB and private property datasets to generate subsets for visualization and analysis.
 
 # Property type selection (HDB or Private)
 observeEvent(input$ok_house_type, {

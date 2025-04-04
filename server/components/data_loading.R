@@ -1,4 +1,9 @@
 # Data Loading Logic
+# This script handles the loading of data required for the application.
+# It includes logic for loading planning areas, HDB resale data, household income data, and private property transactions.
+# Key components:
+# - Reactive data loading: Loads data reactively to ensure it is available when needed.
+# - Error handling: Provides fallback mechanisms and error logging for data loading issues.
 
 # --- Load Data ---
 # Load planning areas data reactively or on startup

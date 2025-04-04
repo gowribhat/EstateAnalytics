@@ -1,4 +1,10 @@
 # UI Update Logic (Left Overlay)
+# This script handles the logic for updating UI elements dynamically based on user interactions and data changes.
+# It includes rendering income statistics, price density plots, and other visualizations for the left overlay.
+# Key components:
+# - Income statistics: Displays household income distribution for the selected planning area.
+# - Price density plot: Visualizes the price distribution of visible transactions on the map.
+# - Reactive datasets: Filters and processes data for visualizations based on user inputs and map interactions.
 
 # --- Update UI Elements ---
 # Update the region name text
