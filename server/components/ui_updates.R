@@ -36,64 +36,14 @@ output$income_stats <- renderUI({
   # Calculate income metrics
   total_households <- region_data$Total
 
-  # Calculate households in different income brackets
-  no_income <- region_data$NoEmployedPerson
-  no_income_percent <- round(no_income / total_households * 100, 1)
-
-  low_income <- sum(region_data$Below_1_000, region_data$X1_000_1_999, region_data$X2_000_2_999)
-  low_income_percent <- round(low_income / total_households * 100, 1)
-
-  mid_income <- sum(region_data$X3_000_3_999, region_data$X4_000_4_999, region_data$X5_000_5_999,
-                   region_data$X6_000_6_999, region_data$X7_000_7_999, region_data$X8_000_8_999)
-  mid_income_percent <- round(mid_income / total_households * 100, 1)
-
-  high_income <- sum(region_data$X9_000_9_999, region_data$X10_000_10_999, region_data$X11_000_11_999,
-                    region_data$X12_000_12_999, region_data$X13_000_13_999, region_data$X14_000_14_999,
-                    region_data$X15_000_17_499, region_data$X17_500_19_999)
-  high_income_percent <- round(high_income / total_households * 100, 1)
-
-  affluent <- region_data$X20_000andOver
-  affluent_percent <- round(affluent / total_households * 100, 1)
-
-  # Create data for plotly donut chart
-  labels <- c("No Income", "Low Income (<$3K)", "Mid Income ($3-9K)",
-             "High Income ($9-20K)", "Affluent (>$20K)")
-  values <- c(no_income_percent, low_income_percent, mid_income_percent,
-             high_income_percent, affluent_percent)
-  colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00")
-
-  # Create donut chart using plotly
-  donut_chart <- plot_ly(
-    labels = labels,
-    values = values,
-    type = 'pie',
-    hole = 0.6,
-    marker = list(colors = colors),
-    textinfo = 'label+percent',
-    hoverinfo = 'label+value+percent',
-    textposition = 'outside',
-    insidetextorientation = 'radial'
-  ) %>%
-  layout(
-    title = list(
-      text = paste0('<b>Household Income Profile</b><br>',
-                   '<span style="font-size: 12px;">Total Households: ',
-                   format(total_households, big.mark=","), '</span>'),
-      font = list(size = 14)
-    ),
-    showlegend = TRUE,
-    legend = list(orientation = "h", y = -0.2),
-    margin = list(t = 80, b = 10, l = 10, r = 10)
-  )
-
-  # Return a div containing the plotly chart with appropriate sizing
+  # Return a div containing the plotly chart with appropriate sizing - reduced height for compression
   div(
-    style = "height:300px; background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;",
+    style = "height:220px; background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;",
     plotlyOutput(session$ns("income_donut"), height = "100%")
   )
 })
 
-# Render the plotly donut chart
+# Render the plotly income visualization - changed from donut chart to horizontal stacked bar
 output$income_donut <- renderPlotly({
   # Get the current planning area
   area_name <- current_planning_area()
@@ -132,7 +82,7 @@ output$income_donut <- renderPlotly({
   affluent <- region_data$X20_000andOver
   affluent_percent <- round(affluent / total_households * 100, 1)
 
-  # Create data for plotly donut chart with simplified labels for the legend
+  # Create data for plotly horizontal stacked bar chart
   legend_labels <- c("No Income", "<$3K", "$3-9K", "$9-20K", ">$20K")
   # Keep full labels for hover text
   hover_labels <- c("No Income", "Low Income (<$3K)", "Mid Income ($3-9K)",
@@ -141,45 +91,54 @@ output$income_donut <- renderPlotly({
              high_income_percent, affluent_percent)
   colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00")
 
-  # Create a data frame for plot_ly
+  # Create a data frame for plot_ly with a single row
   plot_data <- data.frame(
-    legend_label = legend_labels,
-    value = values,
+    y = "Income Distribution",
+    x = values,
+    income_type = legend_labels,
     hover_label = hover_labels,
     stringsAsFactors = FALSE
   )
 
-  # Create donut chart using plotly
-  plot_ly(
-    data = plot_data, # Pass the data frame
-    labels = ~legend_label, # Use simplified labels for the legend from the data frame
-    values = ~value,        # Use values from the data frame
-    customdata = ~hover_label, # Store full labels for hover from the data frame
-    type = 'pie',
-    hole = 0.6,
-    marker = list(colors = colors),
-    textinfo = 'none', # Remove labels from slices
-    hoverinfo = 'text', # Use custom hover text
-    text = ~paste(hover_label, paste0(value, "%")), # Format hover text using columns
-    insidetextorientation = 'radial'
-  ) %>%
-  layout(
-    title = list(
-      text = paste0('<b>Household Income Profile</b><br>',
-                   '<span style="font-size: 12px;">Total Households: ',
-                   format(total_households, big.mark=","), '</span>'),
-      font = list(size = 14)
-    ),
-    showlegend = TRUE,
-    legend = list(
-      orientation = "h", # Horizontal legend
-      y = -0.1,          # Position below the chart
-      x = 0.5,           # Center the legend horizontally
-      xanchor = 'center',
-      yanchor = 'top'
-    ),
-    margin = list(t = 80, b = 40, l = 10, r = 10) # Adjust bottom margin for legend
-  )
+  # Create horizontal stacked bar chart using plotly
+  plot_ly() %>%
+    add_bars(
+      data = plot_data,
+      x = ~x,
+      y = ~y,
+      color = ~income_type,
+      colors = colors,
+      hoverinfo = "text",
+      hovertext = ~paste0(hover_label, ": ", x, "%"),
+      orientation = 'h',
+      text = ~paste0(x, "%"),
+      textposition = 'inside',
+      insidetextanchor = 'middle'
+    ) %>%
+    layout(
+      title = list(
+        text = paste0('<b>Household Income</b><br>',
+                     '<span style="font-size: 11px;">Total: ',
+                     format(total_households, big.mark=","), ' households</span>'),
+        font = list(size = 13)
+      ),
+      barmode = 'stack',
+      showlegend = TRUE,
+      legend = list(
+        orientation = "h", 
+        y = -0.1,           # Moved closer to the bar
+        x = 0.5,
+        xanchor = 'center',
+        yanchor = 'top',
+        font = list(size = 9),  # Smaller font for legend
+        itemsizing = 'constant', # Makes legend items consistent size
+        itemwidth = 30,         # Narrower legend items
+        traceorder = "normal"
+      ),
+      yaxis = list(showticklabels = FALSE, title = "", showgrid = FALSE),
+      xaxis = list(showticklabels = FALSE, title = "", showgrid = FALSE, range = c(0, 100)),
+      margin = list(t = 50, b = 30, l = 10, r = 10) # Reduced margins
+    )
 })
 
 # Reactive dataset for the area summary plot

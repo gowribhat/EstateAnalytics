@@ -18,19 +18,20 @@ server <- function(input, output, session) {
   marker_cache <- reactiveVal(NULL)
   
   # --- Source Component Logic ---
-  # Dynamically source all R scripts in the components folder
-  component_files <- list.files("server/components", pattern = "\\.R$", full.names = TRUE)
-  lapply(component_files, function(file) source(file, local = TRUE))
-
-  # --- Debugging ---
-  # Keep essential debugging observers if needed
-  observe({
-    if (is.null(planning_areas_data())) {
-      print("Planning areas data is not loaded.")
-    } else {
-      print("Planning areas data loaded successfully.")
-    }
-  })
+  # Source components in a specific order to ensure dependencies are properly loaded
+  # First load map logic
+  source("server/components/map_logic.R", local = TRUE)
+  
+  # Then load data
+  source("server/components/data_loading.R", local = TRUE)
+  
+  # Then load filters which depend on the data
+  source("server/components/filters.R", local = TRUE)
+  
+  # Then load the remaining components in alphabetical order
+  remaining_components <- list.files("server/components", pattern = "\\.R$", full.names = TRUE)
+  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R)$", remaining_components)]
+  lapply(remaining_components, function(file) source(file, local = TRUE))
   
   # Make sure the overlay is not shown at startup
   transactions_overlay_visible(FALSE)

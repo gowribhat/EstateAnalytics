@@ -5,6 +5,9 @@
 # Load packages from centralized package management
 source("scripts/load_packages.R")
 
+# Explicitly load DT for DataTable functionality
+library(DT)
+
 # Define paths
 resources_path <- "data/"
 
@@ -19,7 +22,7 @@ data_registry <- list(
   
   # RDS files
   hdb_resale = list(
-    var_name = "hdb_resale_data",
+    var_name = "hdb_data",
     file_path = "hdb.rds",
     read_func = "readRDS"
   ),

@@ -50,7 +50,8 @@ addPropertyHeatmap <- function(map_proxy, data) {
       intensity = ~resale_price,
       blur = 20, 
       max = 0.05,
-      radius = 15
+      radius = 15,
+      opacity = 0.8  # Increasing opacity from default (0.6) to reduce transparency
     )
 }
 

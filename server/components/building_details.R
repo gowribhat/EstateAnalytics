@@ -207,84 +207,27 @@ output$building_plot <- renderPlot({
 })
 
 # Building-specific transaction list for right overlay (transactions overlay)
-output$building_transactions <- renderDT({
+output$building_transactions <- renderUI({
   # Add tryCatch to gracefully handle errors
   tryCatch({
+    # Explicitly require selected_building() *inside* the tryCatch
+    req(selected_building())
+    
     # Get building-specific transactions
     building_data <- building_transactions()
-
-    # Check if we have data to display
-    if(is.null(building_data) || nrow(building_data) == 0) {
-      # Return empty data frame with appropriate columns
-      property_type <- selected_property_type()
-      if(property_type == "HDB") {
-        return(data.frame(
-          Date = character(),
-          Price = character(),
-          Type = character(),
-          Floor = character(),
-          Area = character(),
-          stringsAsFactors = FALSE
-        ))
-      } else {
-        return(data.frame(
-          Date = character(),
-          Price = character(),
-          Type = character(),
-          Floor = character(),
-          Area = character(),
-          Tenure = character(),
-          stringsAsFactors = FALSE
-        ))
-      }
-    }
-
-    property_type <- selected_property_type()
-
-    if (property_type == "HDB") {
-      # Format the data for the table
-      result <- building_data %>%
-        select(month, resale_price, flat_type, storey_range, floor_area_sqm) %>%
-        rename(
-          Date = month,
-          Price = resale_price,
-          Type = flat_type,
-          Floor = storey_range,
-          Area = floor_area_sqm
-        )
-
-      # Format price with commas
-      result$Price <- paste0("$", format(result$Price, big.mark = ","))
-      # Add "sqm" to area column
-      result$Area <- paste(result$Area, "sqm")
-
-    } else {
-      # Format the data for the table for URA
-      result <- building_data %>%
-        select(contractDate, price, propertyType, floorRange, area, tenure) %>%
-        rename(
-          Date = contractDate,
-          Price = price,
-          Type = propertyType,
-          Floor = floorRange,
-          Area = area,
-          Tenure = tenure
-        )
-
-      # Format price with commas
-      result$Price <- paste0("$", format(result$Price, big.mark = ","))
-      # Add "sqm" to area column
-      result$Area <- paste(result$Area, "sqm")
-    }
-
-    return(result)
+    
+    # Simple success message
+    div(
+      class = "alert alert-info",
+      style = "text-align: center; padding: 20px;",
+      h4("Building Data Found", style = "margin-top: 0"),
+      p(paste("Found", nrow(building_data), "transactions for this building"))
+    )
   }, error = function(e) {
-    # On error, return an empty data frame with appropriate message
-    return(data.frame(
-      Message = "Click on a property marker to view transaction history",
-      stringsAsFactors = FALSE
-    ))
+    # On error, return an error message
+    div(
+      class = "alert alert-danger",
+      "Error loading transaction history. Please check logs."
+    )
   })
-}, options = list(pageLength = 10, searching = TRUE, lengthChange = TRUE, scrollY = "calc(100% - 100px)", language = list(
-  emptyTable = "No transaction history available for this property"
-)))
+})

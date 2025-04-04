@@ -8,3 +8,4 @@ data/cleaned/*.rds
 .vscode/
 .DS_Store
 .github
+temp.R

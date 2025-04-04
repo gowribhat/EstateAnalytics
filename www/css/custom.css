@@ -77,6 +77,24 @@ body {
   background-color: #f1f9fe;
 }
 
+/* Transaction overlay table styling */
+#transactions_table {
+  width: 100% !important;
+}
+
+.transactions-overlay .dataTables_wrapper {
+  padding: 0;
+  height: 100%;
+}
+
+.transactions-overlay .dataTables_scroll {
+  height: calc(100% - 80px);
+}
+
+.transactions-overlay .dataTables_scrollBody {
+  height: 100% !important;
+}
+
 /* Action buttons */
 .btn-primary {
   background-color: #2196F3;

@@ -86,8 +86,20 @@ observeEvent(input$property_map_zoom, {
 # Determine if zoom is sufficient for showing individual property markers
 should_show_markers <- reactive({
   zoom <- current_zoom()
-  # Progressive loading strategy based on zoom level
-  return(zoom >= 12)
+  # More restrictive - only show individual markers at higher zoom levels
+  return(zoom >= 13) # Increased from 12 to 13
+})
+
+# Function to determine visualization mode based on zoom level
+map_visualization_mode <- reactive({
+  zoom <- current_zoom()
+  if(zoom >= 13) {
+    return("markers") # Show individual markers when zoomed in
+  } else if(zoom >= 10) {
+    return("heatmap") # Show heatmap when at medium zoom
+  } else {
+    return("none")    # Show nothing when fully zoomed out
+  }
 })
 
 # Function to determine how many markers to show based on zoom level
@@ -122,16 +134,29 @@ visible_filtered_data <- reactive({
 
   # Get current map bounds if available for spatial filtering
   bounds <- input$property_map_bounds
-
-  # Only apply spatial filtering if bounds are available
+  
+  # Efficient spatial filtering - apply bounds filter first for better performance
   if (!is.null(bounds)) {
+    # Expand bounds slightly to prevent edge artifacts
+    bounds_expanded <- list(
+      west = bounds$west - 0.005,
+      east = bounds$east + 0.005, 
+      south = bounds$south - 0.005,
+      north = bounds$north + 0.005
+    )
+    
     data <- data %>%
       filter(
-        longitude >= bounds$west,
-        longitude <= bounds$east,
-        latitude >= bounds$south,
-        latitude <= bounds$north
+        longitude >= bounds_expanded$west,
+        longitude <= bounds_expanded$east,
+        latitude >= bounds_expanded$south,
+        latitude <= bounds_expanded$north
       )
+  }
+
+  # Optional early exit if no data in view
+  if (nrow(data) == 0) {
+    return(NULL)
   }
 
   # Filter for recent transactions (within 5 years from current date)
@@ -149,9 +174,29 @@ visible_filtered_data <- reactive({
       arrange(desc(contractDate))
   }
 
-  # Limit markers based on zoom level for performance
+  # Implement spatial pre-clustering to reduce markers
+  zoom <- current_zoom()
+  grid_size <- if(zoom >= 16) 0.0005 else if(zoom >= 14) 0.001 else if(zoom >= 13) 0.002 else 0.004
+  
+  # Group nearby points using grid-based clustering
+  data <- data %>%
+    mutate(
+      grid_lon = floor(longitude / grid_size) * grid_size,
+      grid_lat = floor(latitude / grid_size) * grid_size
+    )
+  
+  # If there are too many points, use representative points from each grid cell
+  if (nrow(data) > markers_to_show()) {
+    # For each grid cell, keep the most recent transaction
+    data <- data %>%
+      group_by(grid_lon, grid_lat) %>%
+      slice_head(n = 1) %>%
+      ungroup()
+  }
+  
+  # Still limit total markers for extremely dense areas
   limit <- markers_to_show()
-  if(nrow(data) > limit) {
+  if (nrow(data) > limit) {
     data <- head(data, limit)
   }
 
@@ -160,19 +205,55 @@ visible_filtered_data <- reactive({
 
 # Update markers based on filters and zoom level
 observe({
-  # Get filtered data based on current view
-  data <- visible_filtered_data()
+  # Get data based on current view and determine visualization mode
   property_type <- selected_property_type()
-
+  vis_mode <- map_visualization_mode()
+  
   # Clear any existing markers and legends
-  leafletProxy("property_map") %>%
+  map_proxy <- leafletProxy("property_map") %>%
     clearMarkers() %>%
     clearMarkerClusters() %>%
+    clearHeatmap() %>%
     clearControls() # Clear all legends and other controls
-
-  # Exit early if no data to show
+    
+  # Exit early if we should show nothing (very zoomed out)
+  if (vis_mode == "none") {
+    output$price_legend <- renderUI({ NULL })
+    return()
+  }
+  
+  # Get appropriate data based on visualization mode
+  if (vis_mode == "markers") {
+    # Use the filtered and pre-clustered data for markers
+    data <- visible_filtered_data()
+  } else if (vis_mode == "heatmap") {
+    # For heatmap, we can use more data points since they're aggregated
+    data <- if(property_type == "HDB") {
+      filtered_hdb_data()
+    } else {
+      filtered_ura_data()
+    }
+    
+    # Apply basic spatial filtering for the heatmap
+    bounds <- input$property_map_bounds
+    if (!is.null(bounds) && !is.null(data) && nrow(data) > 0) {
+      data <- data %>%
+        filter(
+          longitude >= bounds$west,
+          longitude <= bounds$east,
+          latitude >= bounds$south,
+          latitude <= bounds$north
+        )
+      
+      # Random sampling for very large datasets to improve performance
+      if (nrow(data) > 5000) {
+        data <- data[sample(nrow(data), 5000), ]
+      }
+    }
+  }
+  
+  # Exit if no data to show
   if (is.null(data) || nrow(data) == 0) {
-    # Clear the legend explicitly if no data
     output$price_legend <- renderUI({ NULL })
     return()
   }
@@ -193,61 +274,82 @@ observe({
     )
     price_col <- data$price
   }
-
-  # Update map with markers or clusters
-  map_proxy <- leafletProxy("property_map")
-
-  # Create popup content and building IDs based on property type
-  if(property_type == "HDB") {
-    popup_content <- paste0(
-      "<strong>", data$block, " ", data$street_name, "</strong><br>",
-      "Price: $", format(data$resale_price, big.mark = ","), "<br>",
-      "Date: ", data$month, "<br>",
-      "Floor: ", data$storey_range, "<br>",
-      "Flat Type: ", data$flat_type, "<br>",
-      "Area: ", data$floor_area_sqm, " sqm<br>",
-      "Built: ", data$lease_commence_date
+  
+  # Apply the appropriate visualization based on mode
+  if (vis_mode == "heatmap") {
+    # Add heatmap layer
+    intensity_col <- if(property_type == "HDB") data$resale_price else data$price
+    
+    map_proxy %>% addHeatmap(
+      data = data,
+      lng = ~longitude,
+      lat = ~latitude,
+      intensity = intensity_col,
+      blur = 20,
+      max = 1,
+      radius = 15
     )
-
-    # Add unique building identifiers for click events - keep consistent format
-    data$building_id <- paste(data$block, data$street_name)
-  } else {
-    popup_content <- paste0(
-      "<strong>", data$project, " - ", data$street, "</strong><br>",
-      "Price: $", format(data$price, big.mark = ","), "<br>",
-      "Date: ", data$contractDate, "<br>",
-      "Floor: ", data$floorRange, "<br>",
-      "Type: ", data$propertyType, "<br>",
-      "Area: ", data$area, " sqm<br>",
-      "Tenure: ", data$tenure
-    )
-
-    # Important: Use consistent format for building_id with a hyphen and space
-    # This must exactly match what we parse in the click handler
-    data$building_id <- paste0(data$project, " - ", data$street)
+  } else if (vis_mode == "markers") {
+    # Create popup content and building IDs based on property type
+    if(property_type == "HDB") {
+      popup_content <- paste0(
+        "<strong>", data$block, " ", data$street_name, "</strong><br>",
+        "Price: $", format(data$resale_price, big.mark = ","), "<br>",
+        "Date: ", data$month
+      )
+      data$building_id <- paste(data$block, data$street_name)
+    } else {
+      popup_content <- paste0(
+        "<strong>", data$project, " - ", data$street, "</strong><br>",
+        "Price: $", format(data$price, big.mark = ","), "<br>",
+        "Date: ", data$contractDate
+      )
+      data$building_id <- paste0(data$project, " - ", data$street)
+    }
+    
+    # Use a different marker rendering approach based on the number of points
+    if(nrow(data) > 500) {
+      # For large datasets, use more aggressive clustering and simpler markers
+      map_proxy %>% addCircleMarkers(
+        data = data,
+        lng = ~longitude,
+        lat = ~latitude,
+        radius = 3,
+        stroke = FALSE,
+        fillOpacity = 0.6,
+        fillColor = ~price_palette(price_col),
+        layerId = ~building_id, # Keep layerId for click events
+        # Skip popup content for large datasets - will show on click instead
+        clusterOptions = markerClusterOptions(
+          spiderfyOnMaxZoom = FALSE,
+          zoomToBoundsOnClick = TRUE,
+          maxClusterRadius = 80,
+          disableClusteringAtZoom = 16
+        )
+      )
+    } else {
+      # For smaller datasets, use normal markers with popups
+      map_proxy %>% addCircleMarkers(
+        data = data,
+        lng = ~longitude,
+        lat = ~latitude,
+        radius = 4,
+        stroke = FALSE,
+        fillOpacity = 0.7,
+        fillColor = ~price_palette(price_col),
+        popup = popup_content,
+        layerId = ~building_id,
+        clusterOptions = markerClusterOptions(
+          spiderfyOnMaxZoom = TRUE,
+          zoomToBoundsOnClick = TRUE,
+          maxClusterRadius = 50,
+          disableClusteringAtZoom = 15
+        )
+      )
+    }
   }
 
-  # Create marker click event JavaScript
-  # This will store marker info in a Shiny input value
-  map_proxy %>% addCircleMarkers(
-    data = data,
-    lng = ~longitude,
-    lat = ~latitude,
-    radius = 4,
-    stroke = FALSE,
-    fillOpacity = 0.7,
-    fillColor = ~price_palette(price_col),
-    popup = popup_content,
-    layerId = ~building_id,
-    clusterOptions = markerClusterOptions(
-      spiderfyOnMaxZoom = TRUE,
-      zoomToBoundsOnClick = TRUE,
-      maxClusterRadius = 50,
-      disableClusteringAtZoom = 15
-    )
-  )
-
-  # We'll create a legend in the left overlay instead of on the map
+  # Show price legend for any visualization type
   if(nrow(data) > 0) {
     output$price_legend <- renderUI({
       min_price <- if(property_type == "HDB") min(data$resale_price) else min(data$price)
@@ -271,19 +373,14 @@ observe({
       )
     })
   } else {
-      # Clear the legend if no data
-      output$price_legend <- renderUI({ NULL })
+    # Clear the legend if no data
+    output$price_legend <- renderUI({ NULL })
   }
 })
 
 # Marker click observer to update the selected building
 observeEvent(input$property_map_marker_click, {
   click <- input$property_map_marker_click
-
-  # Debug: Print the clicked ID to console
-  if (!is.null(click) && !is.null(click$id)) {
-    print(paste("Marker clicked with ID:", click$id))
-  }
 
   # Reset selection when no click or no id
   if (is.null(click) || is.null(click$id)) {
@@ -304,7 +401,6 @@ observeEvent(input$property_map_marker_click, {
   if(property_type == "HDB") {
     # For HDB, the ID is in format "block street_name"
     clicked_id <- click$id
-    print(paste("Looking for HDB with ID:", clicked_id))
 
     # First try exact match on the full ID
     matches <- data %>%
@@ -318,9 +414,6 @@ observeEvent(input$property_map_marker_click, {
         block <- parts[1]
         street_name <- paste(parts[-1], collapse = " ")
 
-        # Debug: Print the extracted block and street
-        print(paste("Looking for HDB block:", block, "on street:", street_name))
-
         # Find the first matching transaction
         matches <- data %>%
           filter(
@@ -333,10 +426,7 @@ observeEvent(input$property_map_marker_click, {
 
     if(nrow(matches) > 0) {
       selected_building(matches)
-      print(paste("Selected HDB building:", matches$block, matches$street_name))
     } else {
-      print("No matching HDB building found in filtered data")
-
       # Last resort - try to match by coordinates
       if(!is.null(click$lat) && !is.null(click$lng)) {
         # Find the closest point in the data
@@ -347,14 +437,12 @@ observeEvent(input$property_map_marker_click, {
 
         if(nrow(closest_match) > 0) {
           selected_building(closest_match)
-          print(paste("Selected closest HDB by coordinates:", closest_match$block, closest_match$street_name))
         }
       }
     }
   } else {
     # For private properties, the ID is more complex
     clicked_id <- click$id
-    print(paste("Looking for private property with ID:", clicked_id))
 
     # Try direct match on project and street first
     matches <- NULL
@@ -364,8 +452,6 @@ observeEvent(input$property_map_marker_click, {
     if(length(parts) >= 2) {
       project_name <- parts[1]
       street_name <- parts[2]
-
-      print(paste("Extracted project:", project_name, "and street:", street_name))
 
       # Try to find by exact project and street match
       matches <- data %>%
@@ -398,9 +484,20 @@ observeEvent(input$property_map_marker_click, {
 
     if(!is.null(matches) && nrow(matches) > 0) {
       selected_building(matches)
-      print(paste("Selected private property:", matches$project, "-", matches$street))
-    } else {
-      print("No matching private property found in filtered data")
     }
+  }
+})
+
+# Update the visualization mode text based on current view mode
+output$visualization_mode_text <- renderText({
+  mode <- map_visualization_mode()
+  zoom <- current_zoom()
+  
+  if(mode == "markers") {
+    paste("Viewing Property Markers (Zoom:", zoom, ")")
+  } else if(mode == "heatmap") {
+    paste("Price Heatmap View (Zoom:", zoom, ") - Zoom in for markers")
+  } else {
+    paste("Overview Mode (Zoom:", zoom, ") - Zoom in to see properties")
   }
 })
