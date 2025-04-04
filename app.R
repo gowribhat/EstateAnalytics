@@ -7,11 +7,11 @@ shinyApp(ui, server)
 server <- function(input,output){
   output$plotMap <- renderLeaflet(
     {
-      leaflet() %>% setView(lng = 103.835381, lat = 1.239660,
+      leaflet() %>% setView(lng = 103.9355, lat = 1.359087,
                             zoom = input$zoomlevel) %>% 
         addTiles() %>% 
-        addMarkers(lat = 1.239660, lng = 103.835381,
-                   popup = "Sentosa Cove")
+        addMarkers(lat = 1.359087, lng = 103.9355,
+                   popup = "My Old Home")
     }
   )
 }
