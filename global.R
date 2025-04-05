@@ -90,6 +90,5 @@ sg_zoom <- 11
 # Define property types
 property_types <- c("HDB", "Condominium")
 
-# Source all module files
-module_files <- list.files("R/modules", full.names = TRUE, pattern = "*.R")
-sapply(module_files, source)
+# Source useful helper functions - we'll create this new utility file
+source("server/components/utils.R")

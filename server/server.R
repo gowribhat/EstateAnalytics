@@ -18,8 +18,10 @@ server <- function(input, output, session) {
   marker_cache <- reactiveVal(NULL)
   
   # --- Source Component Logic ---
-  # Source components in a specific order to ensure dependencies are properly loaded
-  # First load map logic
+  # Make sure utils is loaded first
+  source("server/components/utils.R", local = TRUE)
+  
+  # Then load map logic
   source("server/components/map_logic.R", local = TRUE)
   
   # Then load data
@@ -30,7 +32,7 @@ server <- function(input, output, session) {
   
   # Then load the remaining components in alphabetical order
   remaining_components <- list.files("server/components", pattern = "\\.R$", full.names = TRUE)
-  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R)$", remaining_components)]
+  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R|utils\\.R)$", remaining_components)]
   lapply(remaining_components, function(file) source(file, local = TRUE))
   
   # Make sure the overlay is not shown at startup
