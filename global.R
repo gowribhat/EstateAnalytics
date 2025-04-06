@@ -5,6 +5,9 @@
 # Load packages from centralized package management
 source("scripts/load_packages.R")
 
+# Explicitly load DT for DataTable functionality
+library(DT)
+
 # Define paths
 resources_path <- "data/"
 
@@ -19,7 +22,7 @@ data_registry <- list(
   
   # RDS files
   hdb_resale = list(
-    var_name = "hdb_resale_data",
+    var_name = "hdb_data",
     file_path = "hdb.rds",
     read_func = "readRDS"
   ),
@@ -85,8 +88,7 @@ sg_lng <- 103.8198
 sg_zoom <- 11
 
 # Define property types
-property_types <- c("HDB", "Condominium", "Landed", "All")
+property_types <- c("HDB", "Condominium")
 
-# Source all module files
-module_files <- list.files("R/modules", full.names = TRUE, pattern = "*.R")
-sapply(module_files, source)
+# Source useful helper functions - we'll create this new utility file
+source("server/components/utils.R")

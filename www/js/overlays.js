@@ -2,153 +2,73 @@
 // JavaScript functions for handling overlay visibility
 
 $(document).ready(function() {
-  // Helper function to safely refresh DataTables
-  function refreshDataTable(tableId) {
-    var table = $('#' + tableId);
-    if (table.length > 0 && $.fn.DataTable.isDataTable('#' + tableId)) {
-      table.DataTable().columns.adjust().draw(false);
-      return true;
-    }
-    return false;
-  }
-
   // Handler for showing the transactions overlay
   Shiny.addCustomMessageHandler('showTransactionsOverlay', function(message) {
-    console.log("Showing transactions overlay");
+    console.log("JS: Showing transactions overlay");
+    var overlay = $('#transactions_overlay');
     
-    // Get left and right overlay widths
-    var leftOverlayWidth = $('.left-overlay').outerWidth() + 20;
-    var rightOverlayWidth = $('.right-overlay').outerWidth() + 20;
+    // Make the overlay visible
+    overlay.css('display', 'flex');
     
-    // Calculate available width for the middle overlay
-    var windowWidth = $(window).width();
-    var availableWidth = windowWidth - leftOverlayWidth - rightOverlayWidth;
-    
-    // Set the width and position
-    $('#transactions_overlay').css({
-      'width': availableWidth + 'px',
-      'left': leftOverlayWidth + 'px',
-      'right': rightOverlayWidth + 'px',
-      'transform': 'none' // Remove centering transform
-    });
-    
-    // Show the overlay first
-    $('#transactions_overlay').css('display', 'block');
-    
-    // Force DataTable redraw with multiple attempts
-    function attemptTableAdjust(attempt) {
-      console.log("Adjusting table, attempt: " + attempt);
-      
-      // Try to find the DataTable and adjust it
-      if ($.fn.DataTable.isDataTable('#building_transactions')) {
-        $('#building_transactions').DataTable().columns.adjust().draw(false);
-        console.log("DataTable adjusted successfully");
-      } else {
-        console.log("DataTable not initialized yet");
-        
-        // Check if the table element exists
-        if ($('#building_transactions').length > 0) {
-          console.log("Table element exists, trying to trigger Shiny");
-          
-          // If we can find the table element but DataTable isn't initialized,
-          // try to trigger a Shiny update
-          Shiny.setInputValue('force_dt_refresh', new Date().getTime());
-        }
-        
-        // Retry a few times with increasing delays
-        if (attempt < 5) {
-          setTimeout(function() {
-            attemptTableAdjust(attempt + 1);
-          }, attempt * 100); // Increasing delay
-        }
-      }
-    }
-    
-    // Start table adjustment attempts immediately and after a small delay
-    attemptTableAdjust(1);
-    
-    // Additional attempt with more delay to ensure it catches late initialization
+    // Add a small delay before triggering resize to help DataTable initialize properly
     setTimeout(function() {
-      attemptTableAdjust(1);
-    }, 300);
+      $(window).trigger('resize');
+      
+      // If DataTable exists, adjust columns
+      if ($.fn.DataTable.isDataTable('#transactions_table')) {
+        $('#transactions_table').DataTable().columns.adjust().draw();
+      }
+    }, 100);
     
-    // Update hidden input to track overlay state
+    // Update hidden input to track general overlay state
     Shiny.setInputValue('overlays_visible', true);
   });
-  
+
   // Handler for hiding the transactions overlay
   Shiny.addCustomMessageHandler('hideTransactionsOverlay', function(message) {
-    console.log("Hiding transactions overlay");
-    
-    // Hide the overlay - simple display none
-    $('#transactions_overlay').css('display', 'none');
-    
-    // Reset the styling when hiding
-    $('#transactions_overlay').css({
-      'width': '', 
-      'left': '50%',
-      'transform': 'translateX(-50%)'
-    });
-    
+    console.log("JS: Hiding transactions overlay");
+    var overlay = $('#transactions_overlay');
+
+    // Set display to none to hide
+    overlay.css('display', 'none');
+
     // Update hidden input to track overlay state
-    if (!$('.overlay.visible').length) {
+    if ($('.left-overlay:visible, .right-overlay:visible, #transactions_overlay:visible').length === 0) {
       Shiny.setInputValue('overlays_visible', false);
-    }
-  });
-  
-  // Handler to refresh a specific DataTable
-  Shiny.addCustomMessageHandler('refreshDataTable', function(message) {
-    var tableId = message.tableId;
-    console.log("Refreshing DataTable: " + tableId);
-    
-    if ($.fn.DataTable.isDataTable('#' + tableId)) {
-      $('#' + tableId).DataTable().columns.adjust().draw(false);
-      console.log("DataTable refreshed successfully");
     } else {
-      console.log("Cannot refresh DataTable - not initialized");
+      Shiny.setInputValue('overlays_visible', true);
     }
   });
 
   // Close overlay when clicking the X button
   $(document).on('click', '.close-overlay', function() {
-    console.log("Close button clicked");
+    console.log("JS: Close button clicked");
     var overlay = $(this).closest('.transactions-overlay');
-    
-    // Hide the overlay
+
+    // Set display to none to hide
     overlay.css('display', 'none');
-    
-    // Reset the styling
-    overlay.css({
-      'width': '',
-      'left': '50%',
-      'transform': 'translateX(-50%)'
-    });
-    
-    // Update hidden input to track overlay state
-    if (!$('.overlay.visible, .transactions-overlay:visible').length) {
+
+    // Trigger the Shiny input associated with the close button if it exists
+    var closeButtonId = $(this).attr('id');
+    if (closeButtonId) {
+       Shiny.setInputValue(closeButtonId, Date.now(), {priority: 'event'}); // Trigger the R observer
+    }
+
+    // Update general overlay visibility state
+    if ($('.left-overlay:visible, .right-overlay:visible, #transactions_overlay:visible').length === 0) {
       Shiny.setInputValue('overlays_visible', false);
+    } else {
+      Shiny.setInputValue('overlays_visible', true);
     }
   });
   
-  // Adjust overlay positions when window is resized
+  // Add window resize handler for DataTable adjustments
   $(window).resize(function() {
-    // Only adjust if the transactions overlay is visible
-    if ($('#transactions_overlay').is(':visible')) {
-      var leftOverlayWidth = $('.left-overlay').outerWidth() + 20;
-      var rightOverlayWidth = $('.right-overlay').outerWidth() + 20;
-      var windowWidth = $(window).width();
-      var availableWidth = windowWidth - leftOverlayWidth - rightOverlayWidth;
-      
-      $('#transactions_overlay').css({
-        'width': availableWidth + 'px',
-        'left': leftOverlayWidth + 'px',
-        'right': rightOverlayWidth + 'px',
-        'transform': 'none'
-      });
-      
-      // Refresh any DataTable when resizing
-      if ($.fn.DataTable.isDataTable('#building_transactions')) {
-        $('#building_transactions').DataTable().columns.adjust().draw(false);
+    // Check if transaction overlay is visible
+    if ($('#transactions_overlay').css('display') === 'flex') {
+      // If DataTable exists, adjust columns after resize
+      if ($.fn.DataTable.isDataTable('#transactions_table')) {
+        $('#transactions_table').DataTable().columns.adjust();
       }
     }
   });

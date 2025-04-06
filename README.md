@@ -90,47 +90,58 @@ Ensure that the following files are included when deploying the app:
 
 ## 🚀 GitHub Workflow Guide
 
-### 1️⃣ Making Changes & Committing
+### 🔁 BEFORE You Start Working
 
-1. Open your editor (**RStudio/VSCode**) and make changes.
-2. **Save your changes locally.**
-3. Open **GitHub Desktop**, and you will see the files you modified.
-4. Write a **short commit message** describing your changes (e.g., `"Added interactive map"`).
-5. Click **"Commit to `<your-branch>`"** to save your work.
+Always make sure your branch is up-to-date before making changes.
 
-### 2️⃣ Pushing Your Changes to GitHub
+1. Open **GitHub Desktop**.
+2. Switch to `master`:
+   - Click **"Current Branch"** → select `master`.
+   - Click **"Fetch Origin"** and **"Pull"** to get the latest version.
+3. Switch to **your feature branch** (or create one if new).
+4. Click **"Branch > Merge into current branch"**.
+5. Select `master` and click **"Merge"**.
 
-1. Click **"Push origin"** in GitHub Desktop.
-2. Your changes are now uploaded to GitHub! 🎉
+   ✅ Your feature branch is now updated with the latest `master`.
 
-### 3️⃣ Keeping Your Branch Updated with Master
+### 🛠️ While Working on Your Feature
 
-It's important to always keep your branch **in sync** with `master`:
+1. Open your editor (**RStudio** or **VSCode**).
+2. Make your changes locally.
+3. **Commit frequently**:
+   - Save your changes.
+   - Go to **GitHub Desktop**.
+   - Write a **short commit message** describing what you have done in this commit (e.g., `"Added proximity filter for schools"`).
+   - Click **"Commit to `<your-branch>`"**.
+4. Push your work:
+   - Click **"Push origin"** to upload your branch changes to GitHub.
 
-1. In **GitHub Desktop**, switch to **`master`**:
-   - Click **"Current Branch"** → Select **`master`**.
-   - Click **"Fetch Origin"** and then **"Pull"** to get the latest updates.
-2. Switch back to **your branch**.
-3. Click **"Branch" > "Merge into current branch"**.
-4. Select **`master`** and click **"Merge"**.
-5. Now, your branch is **up to date with master** ✅.
+> 💡 Tip: Small, regular commits make it easier to review and fix issues.
 
-### 4️⃣ Finishing Your Feature & Merging into Master (Pull Request)
+### ✅ When You Finish a Feature
 
-Once your feature is **complete and tested**:
-
-1. **Push all your changes** (Step 2 above).
-2. **Go to GitHub.com** and open our project.
-3. Click **"Pull Requests" > "New Pull Request"**.
-4. Select:
+1. Push all your latest changes (see step above).
+2. Go to [GitHub.com](https://github.com) and open the project.
+3. Click on **"Pull Requests" > "New Pull Request"**.
+4. Set:
    - **Base branch** → `master`
-   - **Compare branch** → `<your-feature-branch>`
-5. Add a **short description** and click **"Create Pull Request"**.
-6. Wait for approval, then **merge it! 🎉**
+   - **Compare branch** → your feature branch
+5. Add a short summary and **click "Create Pull Request"**.
+6. Tag a teammate for review (or ping on group chat).
+7. Once approved, click **"Merge"** to merge your work into `master`.
 
-### 🎯 Summary of Workflow
+### 🔁 After Merging or When Others Merge to Master
 
-- **Edit code**, **commit often**, and **push your changes**.
-- **Keep your branch updated with master** to avoid conflicts.
-- **Create a Pull Request (PR) when your feature is ready**.
-- **Merge into master** once approved.
+To stay up-to-date:
+
+1. Pull the latest `master` (see "Before You Start Working" section).
+2. Merge it into your own branch if you're still working on other features.
+
+### 🔑 Summary: What Everyone Should Always Do
+
+- **Start your day by updating `master` and your branch**
+- **Work on your own branch**
+- **Commit frequently and push your changes**
+- **Open a PR when your feature is ready**
+- **Merge your PR only after review**
+- **Update your local project regularly**
