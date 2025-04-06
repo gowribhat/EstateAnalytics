@@ -314,9 +314,9 @@ observe({
         data = data,
         lng = ~longitude,
         lat = ~latitude,
-        radius = 3,
+        radius = 7,
         stroke = FALSE,
-        fillOpacity = 0.6,
+        fillOpacity = 0.8,
         fillColor = ~price_palette(price_col),
         layerId = ~building_id, # Keep layerId for click events
         # Skip popup content for large datasets - will show on click instead
@@ -333,7 +333,7 @@ observe({
         data = data,
         lng = ~longitude,
         lat = ~latitude,
-        radius = 4,
+        radius = 5,
         stroke = FALSE,
         fillOpacity = 0.7,
         fillColor = ~price_palette(price_col),
