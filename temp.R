@@ -2,6 +2,7 @@
 # Server File
 # DBA3702 Team 3
 
+
 server <- function(input, output, session) {
 
   # --- Overlay Visibility Handling ---
@@ -93,7 +94,19 @@ server <- function(input, output, session) {
       ura_data(data)
     })
   })
-  
+  # Load Childcare data
+  childcare_data <- reactiveVal(NULL)
+  observe({
+    # Load RDS file for better performance
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "childcare.rds"))
+      ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("ura_private")
+      ura_data(data)
+    })
+  })
   # Property type selection (HDB or Private)
   selected_property_type <- reactiveVal("HDB")
   
