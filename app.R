@@ -10,7 +10,7 @@ HDB <- readRDS("C:/Users/User/R-4.4.3/Project/data/hdb.rds")
 ui <- fluidPage(
   sliderInput(inputId = "zoomlevel",
               label = "Map Zooming Level",
-              value = 12,
+              value = 11,
               min = 1,
               max = 20),
   leafletOutput(outputId = "plotMap")
@@ -41,6 +41,7 @@ server <- function(input, output) {
     
     # Create the leaflet map
     leaflet(data = st_as_sf(HDB_merged_data)) %>%
+      setView(lng=103.8, lat=1.35, zoom=input$zoomlevel) %>%
       addTiles() %>%
       addPolygons(
         weight = 2,
@@ -48,7 +49,7 @@ server <- function(input, output) {
         smoothFactor = 0.1,
         fillOpacity = 0.8,
         color = ~pal(price),
-        popup = ~planning_area
+        popup = ~paste0(planning_area, ": $", comma(round(price,-3)))
       )
   })
 }
