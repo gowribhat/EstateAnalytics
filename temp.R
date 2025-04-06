@@ -119,14 +119,7 @@ server <- function(input, output, session) {
       })
     })
   })
-  facilities <- reactive({
-    bind_rows(
-      lapply(facility_types, function(type) {
-        facility_data[[type]]() %>%
-          mutate(type = tools::toTitleCase(type))
-      }) %>% compact()  # remove NULLs if some haven't loaded
-    )
-  })
+  
   # Property type selection (HDB or Private)
   selected_property_type <- reactiveVal("HDB")
   
