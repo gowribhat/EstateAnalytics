@@ -145,8 +145,59 @@ server <- function(input, output, session) {
     }, error = function(e) {
       # Fallback to CSV if RDS not available
       data <- loadData("gyms_data")
->>>>>>> Stashed changes
+      gym_data(data)
+    })
+  })
+  # Load LRT/MRT data
+  mrt_data <- reactiveVal(NULL)
+  observe({
+    # Load RDS file for better performance
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "LRT_MRT.rds"))
       ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("LRT_MRT")
+      mrt_data(data)
+    })
+  })
+  # Load parks data
+  park_data <- reactiveVal(NULL)
+  observe({
+    # Load RDS file for better performance
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "parks_data.rds"))
+      ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("parks_data")
+      park_data(data)
+    })
+  })
+  # Load schools data
+  school_data <- reactiveVal(NULL)
+  observe({
+    # Load RDS file for better performance
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "schools_data.rds"))
+      ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("schools_data")
+      school_data(data)
+    })
+  })
+  # Load supermarket data
+  mart_data <- reactiveVal(NULL)
+  observe({
+    # Load RDS file for better performance
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "Supermarkets.rds"))
+      ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("Supermarkets")
+      mart_data(data)
     })
   })
   # Property type selection (HDB or Private)
