@@ -2,10 +2,6 @@
 # Server File
 # DBA3702 Team 3
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 server <- function(input, output, session) {
 
   # --- Overlay Visibility Handling ---
