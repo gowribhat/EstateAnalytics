@@ -1,10 +1,23 @@
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+setwd("C:/Users/User/R-4.4.3/Project")
 source("global.R")
 source("ui.R")
 source("server/server.R")
+source("scripts/install_packages.R")
+source("scripts/load_packages.R")
+source("scripts/packages.R")
+
+library(raster)
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(leaflet)
+library(leaflet.extras)
 
 # Loading data
-area <- st_read("C:/Users/User/R-4.4.3/Project/data/district_and_planning_area.geojson")
-HDB <- readRDS("C:/Users/User/R-4.4.3/Project/data/hdb.rds")
+area <- st_read("data/district_and_planning_area.geojson")
+HDB <- readRDS("data/hdb.rds")
 
 # UI definition
 ui <- fluidPage(
