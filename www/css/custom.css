@@ -1,0 +1,141 @@
+/* Find Your New Home: Data-Driven Property Search Platform
+   Custom CSS file
+   DBA3702 Team 3
+*/
+
+/* General styling */
+body {
+  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Navbar styling */
+.navbar {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border: none;
+}
+
+.navbar-default .navbar-brand {
+  font-weight: 700;
+  color: #2196F3;
+}
+
+/* Dashboard elements */
+.dashboard-title {
+  margin-bottom: 20px;
+  color: #2196F3;
+  font-weight: 300;
+}
+
+.box {
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.box-header {
+  border-radius: 5px 5px 0 0;
+}
+
+/* Map elements */
+#map-controls {
+  transition: all 0.3s ease;
+}
+
+#map-controls:hover {
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 5px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+}
+
+.leaflet-popup-content {
+  margin: 12px 15px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Property listings */
+.dataTables_wrapper {
+  padding: 15px 0;
+}
+
+.dataTable {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.dataTable thead th {
+  background-color: #f9f9f9;
+  border-bottom: 2px solid #ddd;
+}
+
+.dataTable tbody tr:hover {
+  background-color: #f1f9fe;
+}
+
+/* Transaction overlay table styling */
+#transactions_table {
+  width: 100% !important;
+}
+
+.transactions-overlay .dataTables_wrapper {
+  padding: 0;
+  height: 100%;
+}
+
+.transactions-overlay .dataTables_scroll {
+  height: calc(100% - 80px);
+}
+
+.transactions-overlay .dataTables_scrollBody {
+  height: 100% !important;
+}
+
+/* Action buttons */
+.btn-primary {
+  background-color: #2196F3;
+  border-color: #1976D2;
+}
+
+.btn-primary:hover {
+  background-color: #1976D2;
+  border-color: #1565C0;
+}
+
+.action-button {
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+/* About page */
+.about-section {
+  background-color: white;
+  padding: 30px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+/* Search filters */
+.well {
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #map-controls {
+    width: 80%;
+    right: 10%;
+    left: 10%;
+  }
+}
