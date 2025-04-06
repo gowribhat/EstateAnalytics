@@ -1,97 +1,40 @@
+# Main Server File
+
 server <- function(input, output, session) {
-  # ============================
-  # DATA LOADING & PREPARATION
-  # ============================
-  dataset <- reactive({
-    if (input$dataset == "Schools") {
-      return(schools_data)
-    } else {
-      return(childcares_data)
-    }
-  })
-  
-  # Track the selected map type
-  selected_map_type <- reactiveVal("pointmap")
 
-  observeEvent(input$heatmap, {
-    selected_map_type("heatmap")
-  })
-
-  observeEvent(input$pointmap, {
-    selected_map_type("pointmap")
-  })
+  # --- Reactive Values ---
+  # Central place for reactive values needed across components
+  selected_building <- reactiveVal(NULL)
+  transactions_overlay_visible <- reactiveVal(FALSE)
+  planning_areas_data <- reactiveVal(NULL)
+  hdb_data <- reactiveVal(NULL)
+  household_income_data <- reactiveVal(NULL)
+  ura_data <- reactiveVal(NULL)
+  selected_property_type <- reactiveVal("HDB")
+  budget_range <- reactiveVal(c(100000, 10000000))
+  floor_range <- reactiveVal(c(1, 50))
+  area_range <- reactiveVal(c(0, 1000))
+  current_zoom <- reactiveVal(sg_zoom) # Default zoom from global.R
+  marker_cache <- reactiveVal(NULL)
   
-  # ============================
-  # INITIAL MAP RENDERING
-  # ============================
-  output$map <- renderLeaflet({
-    leaflet() %>%
-      addTiles() %>%
-      setView(lng = 103.8198, lat = 1.3521, zoom = 12)  # Default center (Singapore)
-  })
+  # --- Source Component Logic ---
+  # Make sure utils is loaded first
+  source("server/components/utils.R", local = TRUE)
   
-  # ============================
-  # MAP TYPE SWITCHING
-  # ============================
+  # Then load map logic
+  source("server/components/map_logic.R", local = TRUE)
   
-  output$map <- renderLeaflet({
-    data <- dataset()
-    
-    if (input$dataset == "Schools") {
-      name_col <- "school_name"
-      color <- "blue"
-    } else {
-      name_col <- "centre_name"
-      color <- "red"
-    }
-    
-    # Base leaflet map
-    map <- leaflet(data) %>%
-      addTiles() %>%
-      setView(lng = 103.8198, lat = 1.3521, zoom = 12)  # Center map on Singapore
-    
-    # Render selected map type
-    if (selected_map_type() == "heatmap") {
-      map <- map %>%
-        addHeatmap(
-          lng = ~longitude, lat = ~latitude,
-          blur = 20, max = 0.05, radius = 15
-        )
-    } else if (selected_map_type() == "pointmap") {
-      map <- map %>%
-        addCircleMarkers(
-          lng = ~longitude, lat = ~latitude, 
-          popup = ~paste0("<b>Name:</b> ", get(name_col), 
-                          "<br><b>Postal Code:</b> ", postal_code),
-          radius = 5, color = color, fillOpacity = 0.5
-        )
-    }
-    
-    return(map)
-  })
+  # Then load data
+  source("server/components/data_loading.R", local = TRUE)
   
-  # Placeholder for Cluster Map (Coming Soon)
-  observeEvent(input$clustered, {
-    showNotification("Clustered Map feature is coming soon!", type = "message")
-  })
+  # Then load filters which depend on the data
+  source("server/components/filters.R", local = TRUE)
   
-  # Placeholder for Filtering
-  observeEvent(input$apply_filters, {
-    showNotification("Filtering feature is coming soon!", type = "message")
-  })
+  # Then load the remaining components in alphabetical order
+  remaining_components <- list.files("server/components", pattern = "\\.R$", full.names = TRUE)
+  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R|utils\\.R)$", remaining_components)]
+  lapply(remaining_components, function(file) source(file, local = TRUE))
   
-  # ============================
-  # FUTURE ADDITIONS
-  # ============================
-  # TODO: Property Price Analysis
-  #       - Choropleth maps for median prices
-  #       - Time series trends visualization
-  #
-  # TODO: Lifestyle Match Scoring
-  #       - Customizable scoring system based on user preferences
-  #       - Radar/spider charts for comparing neighborhoods
-  #
-  # TODO: Transport & Accessibility Features
-  #       - Walking distance calculations to nearby MRT/bus stops
-  #       - Score-based system to rank areas by convenience
+  # Make sure the overlay is not shown at startup
+  transactions_overlay_visible(FALSE)
 }

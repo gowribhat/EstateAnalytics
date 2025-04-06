@@ -1,0 +1,146 @@
+# Find Your New Home: Data-Driven Property Search Platform
+# UI File
+# DBA3702 Team 3
+
+# Load packages - will be handled by global.R but added here for clarity
+# library(shiny)
+# library(shinydashboard)
+# library(shinythemes)
+# library(leaflet)
+library(shinyjs) # Add this line
+
+ui <- fluidPage(
+  useShinyjs(), # Add this line to enable shinyjs functions
+  # Custom CSS for modern design
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "css/custom.css"),
+    # Explicitly load DT dependencies
+    tags$script(src = "shared/datatables/js/jquery.dataTables.min.js"),
+    tags$script(src = "shared/datatables/js/dataTables.bootstrap.min.js"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "shared/datatables/css/dataTables.bootstrap.css"),
+    # Load our custom overlays.js file
+    tags$script(src = "js/overlays.js"),
+    tags$style(HTML("\n      body, html {\n        height: 100%;\n        margin: 0;\n        overflow: hidden;\n        font-family: 'Roboto', sans-serif;\n      }\n      .map-container {\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 1;\n      }\n      .top-filters {\n        position: absolute;\n        top: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        z-index: 1000;\n        display: flex;\n        gap: 10px;\n      }\n      .top-filters .btn {\n        border-radius: 20px;\n        transition: all 0.3s ease;\n      }\n      .top-filters .btn:hover {\n        background-color: #007bff;\n        color: white;\n        transform: scale(1.1);\n      }\n      .left-overlay, .right-overlay {\n        position: absolute;\n        top: 50px;\n        bottom: 10px;\n        width: 300px;\n        background: rgba(255, 255, 255, 0.9);\n        border-radius: 15px;\n        padding: 15px;\n        overflow-y: auto;\n        z-index: 1000;\n        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);\n        transition: all 0.3s ease;\n      }\n      .left-overlay:hover, .right-overlay:hover {\n        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);\n      }\n      .left-overlay {\n        left: 10px;\n      }\n      .right-overlay {\n        right: 10px;\n      }\n      /* Transactions overlay styling */\n      .transactions-overlay {\n        position: absolute;\n        bottom: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        width: calc(100% - 640px); /* Adjusted width */\n        max-width: 900px;\n        height: 50%; /* Restore fixed height */\n        background: rgba(255, 255, 255, 0.95);\n        border-radius: 15px;\n        padding: 15px; /* Restore padding */\n        z-index: 1001;\n        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);\n        /* Use display: none initially */\n        display: none;\n        /* Keep flex properties for when shown */\n        flex-direction: column;\n      }\n\n      /* Style the inner div containing the DTOutput */\n      .transactions-overlay > div:last-child {\n        flex-grow: 1;\n        overflow-y: auto; /* Restore auto scroll */\n        background-color: white;\n        border-radius: 0 0 10px 10px;\n        padding: 10px;\n        visibility: visible;\n        opacity: 1;\n      }\n      /* Ensure DataTable takes full width */\n      #building_transactions .dataTables_wrapper {\n          width: 100%;\n      }\n      @keyframes fadeIn {\n        from { opacity: 0; }\n        to { opacity: 1; }\n      }\n    ")),
+    # Add JavaScript for responsive overlay behavior
+    tags$script(HTML("
+      function checkWindowSize() {
+        var windowWidth = window.innerWidth;
+        var overlays = document.querySelectorAll('.left-overlay, .right-overlay');
+        
+        // If window width is less than 1200px, hide the overlays
+        if (windowWidth < 1200) {
+          overlays.forEach(function(overlay) {
+            overlay.style.display = 'none';
+          });
+          Shiny.setInputValue('overlays_visible', false);
+        } else {
+          overlays.forEach(function(overlay) {
+            // Reset CSS properties to fix the foggy appearance
+            overlay.style.display = 'block';
+            overlay.style.opacity = '1';
+            overlay.style.background = 'rgba(255, 255, 255, 0.9)';
+            // Force a repaint by triggering a layout calculation
+            overlay.offsetHeight;
+          });
+          Shiny.setInputValue('overlays_visible', true);
+        }
+      }
+      
+      // Run on page load
+      window.addEventListener('load', checkWindowSize);
+      
+      // Run whenever the window is resized
+      window.addEventListener('resize', checkWindowSize);
+      
+      // Run when map is panned or zoomed to ensure correct overlay appearance
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          var leafletMap = document.querySelector('.leaflet-map-pane');
+          if (leafletMap) {
+            var observer = new MutationObserver(function() {
+              var overlays = document.querySelectorAll('.left-overlay, .right-overlay');
+              if (window.innerWidth >= 1200) {
+                overlays.forEach(function(overlay) {
+                  // Refresh overlay appearance when map changes
+                  overlay.style.background = 'rgba(255, 255, 255, 0.9)';
+                });
+              }
+            });
+            
+            observer.observe(leafletMap, {
+              attributes: true,
+              childList: true,
+              subtree: true
+            });
+          }
+        }, 1000); // Small delay to ensure map is loaded
+      });
+    "))
+  ),
+
+  # Full-screen map
+  div(class = "map-container", leafletOutput("property_map", width = "100%", height = "100%")),
+
+  # Top filters
+  div(
+    class = "top-filters",
+    actionButton("filter_house_type", "House Type", class = "btn btn-primary"),
+    actionButton("filter_budget", "Budget", class = "btn btn-primary"),
+    actionButton("filter_area", "Area", class = "btn btn-primary"),
+    actionButton("filter_floor_height", "Floor Height", class = "btn btn-primary"),
+    actionButton("filter_facility", "Facility", class = "btn btn-primary")
+  ),
+
+  # Left overlay: Summary
+  div(
+    class = "left-overlay",
+    div(
+      style = "height: calc(100% - 80px); display: flex; flex-direction: column;",
+      h4("Area Summary"),
+      h5(textOutput("current_region_name", inline = TRUE)),
+      plotOutput("summary_plot", height = "150px"),
+      
+      # Add household income statistics
+      htmlOutput("income_stats")
+    ),
+    # Price legend at the absolute bottom
+    div(
+      style = "position: absolute; bottom: 10px; left: 15px; right: 15px;",
+      htmlOutput("price_legend")
+    )
+  ),
+
+  # Right overlay: Property details
+  div(
+    class = "right-overlay",
+    div(
+      style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
+      h4("Building Details"),
+      uiOutput("property_details"),
+      plotOutput("building_plot", height = "180px")
+      # Past Transactions button removed - will be added dynamically by server
+    )
+  ),
+  
+  # Transactions overlay
+  div(
+    id = "transactions_overlay",
+    class = "transactions-overlay",
+    # Header with title and close button
+    div(
+      style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;",
+      h4("Transaction History", style = "margin: 0;"),
+      actionButton("close_transactions", "×", class = "btn btn-sm close-overlay", style = "border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-weight: bold; padding: 0;")
+    ),
+    # Container for the transaction content, including loading state
+    div(
+      id = "transactions_table_container",
+      style = "height: calc(100% - 50px); overflow-y: auto;",
+      # Use DTOutput for better table rendering
+      DTOutput("transactions_table")
+    )
+  ),
+  
+  # Hidden input to track overlay visibility
+  tags$input(id = "overlays_visible", type = "hidden", value = "false")
+)
