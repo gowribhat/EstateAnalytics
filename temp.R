@@ -2,7 +2,10 @@
 # Server File
 # DBA3702 Team 3
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 server <- function(input, output, session) {
 
   # --- Overlay Visibility Handling ---
@@ -94,16 +97,55 @@ server <- function(input, output, session) {
       ura_data(data)
     })
   })
+<<<<<<< Updated upstream
   # Load Childcare data
+=======
+
+  # Load childcare data
+>>>>>>> Stashed changes
   childcare_data <- reactiveVal(NULL)
   observe({
     # Load RDS file for better performance
     tryCatch({
+<<<<<<< Updated upstream
       data <- readRDS(paste0(resources_path, "childcare.rds"))
       ura_data(data)
     }, error = function(e) {
       # Fallback to CSV if RDS not available
       data <- loadData("ura_private")
+=======
+      data <- readRDS(paste0(resources_path, "childcares.rds"))
+      ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("childcares")
+      childcare_data(data)
+    })
+  })
+  # Load gym data
+  gym_data <- reactiveVal(NULL)
+  observe({
+    # Load RDS file for better performance
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "gyms_data.rds"))
+      ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("gyms_data")
+      ura_data(data)
+    })
+  })
+  # Load gym data
+  gym_data <- reactiveVal(NULL)
+  observe({
+    # Load RDS file for better performance
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "gyms_data.rds"))
+      ura_data(data)
+    }, error = function(e) {
+      # Fallback to CSV if RDS not available
+      data <- loadData("gyms_data")
+>>>>>>> Stashed changes
       ura_data(data)
     })
   })
