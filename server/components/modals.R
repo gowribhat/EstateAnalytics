@@ -88,6 +88,14 @@ output$priority_rank_ui <- renderUI({
     input_id = "facility_priority"
   )
 })
+observeEvent(input$ok_facility, {
+  ranked <- input$facility_priority_order
+  showModal(modalDialog(
+    title = "Your Ranked Facilities",
+    renderPrint({ ranked }),
+    easyClose = TRUE
+  ))
+})
 # Add logic here later to handle priority if needed, or use a different input type
 # --- Update Button Labels on Modal OK ---
 
