@@ -93,8 +93,18 @@ server <- function(input, output, session) {
       ura_data(data)
     })
   })
-  
-  # Property type selection (HDB or Private)
+  # Load childcare data
+  childcares_data <- reactiveVal(NULL)
+  observe({
+    tryCatch({
+      data <- readRDS(paste0(resources_path, "childcares.rds"))
+      childcares_data(data)
+    }, error = function(e) {
+      # Log error but continue app execution
+      message("Error loading household income data: ", e$message)
+    })
+  })
+    # Property type selection (HDB or Private)
   selected_property_type <- reactiveVal("HDB")
   
   observeEvent(input$ok_house_type, {
