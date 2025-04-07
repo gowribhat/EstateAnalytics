@@ -14,7 +14,7 @@ priv <- readRDS(paste0(resource_path,"ura_private.rds"))
 distances <- function(x,y) {
   distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
 }
-get_nearest <- function(a, b, n = 5) {
+get_nearest <- function(a, b, n = 1) {
   # Calculate distances from the HDB location to all childcare centers
   dists <- sapply(1:nrow(b), function(i) {
     distances(a, b[i, ])
@@ -32,3 +32,13 @@ nearest_childcare <- nearest_childcare[,c("centre_address","centre_name","distan
 
 nearest_gym <- get_nearest(hdb[2025, ], gym)
 nearest_mrt <- get_nearest(hdb[2025, ], mrt)
+nearest_park <- get_nearest(hdb[2025,],park)
+nearest_sch <- get_nearest(hdb[2025,],sch)
+nearest_sch <- nearest_sch[,c("address","school_name","distance")]
+nearest_mart <- get_nearest(hdb[2025,],mart)
+nearest_mart <- nearest_mart[,c("address","name","distance")]
+
+weight <- c(0.15,0.1,0.15,0.25,0.15,0.2)
+score <- 400/c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
+           nearest_park$distance,nearest_sch$distance,nearest_mart$distance)
+sum(weight*score)
