@@ -18,23 +18,21 @@ distances <- apply(as.numeric(hdb[, c("latitude", "longitude")]), 1, function(ho
   })
 })
 
-distances <- function(x, y) {
-  lat_diff <- outer(x$latitude, y$latitude, FUN = "-")
-  lon_diff <- outer(x$longitude, y$longitude, FUN = "-")
-  d <- sqrt(lat_diff^2 + lon_diff^2)
-  return(111.1 * d)  # Distance in kilometers
+distances <- function(x,y) {
+  distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
 }
-get_nearest <- function(i, hdb, childcare, num_nearest = 5) {
-  # Calculate the distances for this HDB to all childcare centers
-  dists <- sapply(1:nrow(childcare), function(j) {
-    distances(hdb[i,], childcare[j,])
+get_nearest <- function(hdb, childcare, num_nearest = 5) {
+  # Calculate distances from the HDB location to all childcare centers
+  dists <- sapply(1:nrow(childcare), function(i) {
+    distances(hdb, childcare[i, ])
   })
   
   # Get the indices of the 5 nearest childcare centers
   nearest_indices <- order(dists)[1:num_nearest]
   
-  # Return the nearest childcare center ids
-  return(childcare[nearest_indices,])
+  # Return the rows of the nearest childcare centers
+  return(childcare[nearest_indices, ])
 }
-nearest_childcare <- lapply(1:nrow(hdb), get_nearest, 
-                            hdb = hdb, childcare = childcare)
+nearest_childcare <- lapply(1:nrow(hdb), function(i) {
+  get_nearest(hdb[i, ], childcare)
+})
