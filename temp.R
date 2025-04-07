@@ -820,7 +820,7 @@ server <- function(input, output, session) {
       title = "Select Nearby Facilities (Priority)",
       # Using checkboxes as a simpler alternative to drag-and-drop
       checkboxGroupInput("modal_facility", "Select desired facilities:",
-                         choices = c("Childcares", "Gyms", "LRT/MRT", "Parks", "Schools", "Supermarkets"),
+                         choices = c("Childcare Centres", "Gyms", "LRT/MRT", "Parks", "Schools", "Supermarkets"),
                          selected = c("LRT/MRT", "Schools")),
       # Add logic here later to handle priority if needed, or use a different input type
       footer = tagList(
