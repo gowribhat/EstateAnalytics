@@ -33,8 +33,10 @@ nearest_childcare <- get_nearest(hdb[5639, ], childcare)
 nearest_childcare <- nearest_childcare[,c("centre_address","centre_name","distance")]
 
 nearest_gym <- get_nearest(hdb[5639, ], gym)
+nearest_gym <- nearest_gym[,c("Name","distance")]
 nearest_mrt <- get_nearest(hdb[5639, ], mrt)
 nearest_park <- get_nearest(hdb[5639,],park)
+nearest_park <- nearest_park[,c("NAME","distance")]
 nearest_sch <- get_nearest(hdb[5639,],sch)
 nearest_sch <- nearest_sch[,c("address","school_name","distance")]
 nearest_mart <- get_nearest(hdb[5639,],mart)
@@ -46,14 +48,17 @@ norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_
                nearest_park$distance,nearest_sch$distance,nearest_mart$distance),norm)
 score <- (1600-norm_dist)/1500
 sum(weight*score)
+hdb[5639,]
 
 # For private
 Nearest_childcare <- get_nearest(priv[87299,], childcare)
 Nearest_childcare <- Nearest_childcare[,c("centre_address","centre_name","distance")]
 
 Nearest_gym <- get_nearest(priv[87299,], gym)
+Nearest_gym <- Nearest_gym[,c("Name","distance")]
 Nearest_mrt <- get_nearest(priv[87299,], mrt)
 Nearest_park <- get_nearest(priv[87299,],park)
+Nearest_park <- Nearest_park[,c("NAME","distance")]
 Nearest_sch <- get_nearest(priv[87299,],sch)
 Nearest_sch <- Nearest_sch[,c("address","school_name","distance")]
 Nearest_mart <- get_nearest(priv[87299,],mart)

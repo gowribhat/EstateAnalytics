@@ -93,6 +93,7 @@ server <- function(input, output, session) {
       ura_data(data)
     })
   })
+  
   # Property type selection (HDB or Private)
   selected_property_type <- reactiveVal("HDB")
   
