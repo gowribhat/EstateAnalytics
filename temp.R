@@ -3,7 +3,7 @@
 # DBA3702 Team 3
 
 server <- function(input, output, session) {
-
+  
   # --- Overlay Visibility Handling ---
   # This observes the input value set by our JavaScript to track overlay visibility
   observeEvent(input$overlays_visible, {
@@ -38,14 +38,14 @@ server <- function(input, output, session) {
       session$sendCustomMessage("refreshDataTable", list(tableId = "building_transactions"))
     }
   }, ignoreInit = TRUE)
-
+  
   # --- Selected Building Tracking ---
   # Reactive value to store selected building information
   selected_building <- reactiveVal(NULL)
   
   # Reactive value to track whether transactions overlay is visible
   transactions_overlay_visible <- reactiveVal(FALSE)
-
+  
   # --- Load Data ---
   # Load planning areas data reactively or on startup
   # Using reactiveVal for potential future dynamic loading/updates
@@ -93,7 +93,6 @@ server <- function(input, output, session) {
       ura_data(data)
     })
   })
-  
   # Property type selection (HDB or Private)
   selected_property_type <- reactiveVal("HDB")
   
@@ -120,7 +119,7 @@ server <- function(input, output, session) {
   observeEvent(input$ok_area, {
     area_range(input$modal_area)
   })
-
+  
   # Filtered HDB data based on selected filters
   filtered_hdb_data <- reactive({
     data <- hdb_data()
@@ -178,7 +177,7 @@ server <- function(input, output, session) {
     
     return(filtered)
   })
-
+  
   # --- Base Map Rendering ---
   output$property_map <- renderLeaflet({
     leaflet() %>%
@@ -189,42 +188,42 @@ server <- function(input, output, session) {
         lng2 = 104.2, lat2 = 1.6   # Northeast corner of the bounding box
       )
   })
-
+  
   # --- Reverse Geocoding for Map Center ---
   # Debounce the map center input to avoid rapid updates during panning
   map_center_debounced <- reactive({
     input$property_map_center
   }) %>% debounce(500) # Update 500ms after user stops moving map
-
+  
   current_planning_area <- reactive({
     center <- map_center_debounced()
     pa_sf <- planning_areas_data()
-
+    
     # Ensure data is loaded and center coordinates are available
     req(center, pa_sf)
-
+    
     # Create an sf point for the map center (Leaflet uses WGS84 - EPSG:4326)
     center_point <- st_sfc(st_point(c(center$lng, center$lat)), crs = 4326)
-
+    
     # Transform point CRS to match planning area CRS if necessary
     pa_crs <- st_crs(pa_sf)
     if (st_crs(center_point) != pa_crs) {
       center_point <- st_transform(center_point, crs = pa_crs)
     }
-
+    
     # Check and repair geometry validity
     if (any(!st_is_valid(pa_sf))) {
       pa_sf <- st_make_valid(pa_sf)
     }
-
+    
     # Disable S2 temporarily for spatial intersection
     sf_use_s2(FALSE)
     intersection <- st_intersects(center_point, pa_sf, sparse = FALSE)
     sf_use_s2(TRUE)
-
+    
     # Find the index of the intersecting polygon
     intersecting_index <- which(intersection, arr.ind = TRUE)[, "col"]
-
+    
     if (length(intersecting_index) > 0) {
       # Dynamically identify the planning area column
       pa_col_name <- NULL
@@ -236,7 +235,7 @@ server <- function(input, output, session) {
           pa_col_name <- names(pa_sf)[match_idx]
         }
       }
-
+      
       if (!is.null(pa_col_name)) {
         area_name <- pa_sf[[pa_col_name]][intersecting_index[1]]
         return(toupper(area_name))
@@ -247,13 +246,13 @@ server <- function(input, output, session) {
       return("Outside Planning Area")
     }
   })
-
+  
   # --- Update UI Elements ---
   # Update the region name text
   output$current_region_name <- renderText({
     current_planning_area()
   })
-
+  
   # Income statistics for the current region
   output$income_stats <- renderUI({
     # Get the current planning area
@@ -286,12 +285,12 @@ server <- function(input, output, session) {
     low_income_percent <- round(low_income / total_households * 100, 1)
     
     mid_income <- sum(region_data$X3_000_3_999, region_data$X4_000_4_999, region_data$X5_000_5_999, 
-                     region_data$X6_000_6_999, region_data$X7_000_7_999, region_data$X8_000_8_999)
+                      region_data$X6_000_6_999, region_data$X7_000_7_999, region_data$X8_000_8_999)
     mid_income_percent <- round(mid_income / total_households * 100, 1)
     
     high_income <- sum(region_data$X9_000_9_999, region_data$X10_000_10_999, region_data$X11_000_11_999,
-                      region_data$X12_000_12_999, region_data$X13_000_13_999, region_data$X14_000_14_999,
-                      region_data$X15_000_17_499, region_data$X17_500_19_999)
+                       region_data$X12_000_12_999, region_data$X13_000_13_999, region_data$X14_000_14_999,
+                       region_data$X15_000_17_499, region_data$X17_500_19_999)
     high_income_percent <- round(high_income / total_households * 100, 1)
     
     affluent <- region_data$X20_000andOver
@@ -299,9 +298,9 @@ server <- function(input, output, session) {
     
     # Create data for plotly donut chart
     labels <- c("No Income", "Low Income (<$3K)", "Mid Income ($3-9K)", 
-               "High Income ($9-20K)", "Affluent (>$20K)")
+                "High Income ($9-20K)", "Affluent (>$20K)")
     values <- c(no_income_percent, low_income_percent, mid_income_percent, 
-               high_income_percent, affluent_percent)
+                high_income_percent, affluent_percent)
     colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00")
     
     # Create donut chart using plotly
@@ -316,17 +315,17 @@ server <- function(input, output, session) {
       textposition = 'outside',
       insidetextorientation = 'radial'
     ) %>%
-    layout(
-      title = list(
-        text = paste0('<b>Household Income Profile</b><br>',
-                     '<span style="font-size: 12px;">Total Households: ', 
-                     format(total_households, big.mark=","), '</span>'),
-        font = list(size = 14)
-      ),
-      showlegend = TRUE,
-      legend = list(orientation = "h", y = -0.2),
-      margin = list(t = 80, b = 10, l = 10, r = 10)
-    )
+      layout(
+        title = list(
+          text = paste0('<b>Household Income Profile</b><br>',
+                        '<span style="font-size: 12px;">Total Households: ', 
+                        format(total_households, big.mark=","), '</span>'),
+          font = list(size = 14)
+        ),
+        showlegend = TRUE,
+        legend = list(orientation = "h", y = -0.2),
+        margin = list(t = 80, b = 10, l = 10, r = 10)
+      )
     
     # Return a div containing the plotly chart with appropriate sizing
     div(
@@ -363,12 +362,12 @@ server <- function(input, output, session) {
     low_income_percent <- round(low_income / total_households * 100, 1)
     
     mid_income <- sum(region_data$X3_000_3_999, region_data$X4_000_4_999, region_data$X5_000_5_999, 
-                     region_data$X6_000_6_999, region_data$X7_000_7_999, region_data$X8_000_8_999)
+                      region_data$X6_000_6_999, region_data$X7_000_7_999, region_data$X8_000_8_999)
     mid_income_percent <- round(mid_income / total_households * 100, 1)
     
     high_income <- sum(region_data$X9_000_9_999, region_data$X10_000_10_999, region_data$X11_000_11_999,
-                      region_data$X12_000_12_999, region_data$X13_000_13_999, region_data$X14_000_14_999,
-                      region_data$X15_000_17_499, region_data$X17_500_19_999)
+                       region_data$X12_000_12_999, region_data$X13_000_13_999, region_data$X14_000_14_999,
+                       region_data$X15_000_17_499, region_data$X17_500_19_999)
     high_income_percent <- round(high_income / total_households * 100, 1)
     
     affluent <- region_data$X20_000andOver
@@ -380,7 +379,7 @@ server <- function(input, output, session) {
     hover_labels <- c("No Income", "Low Income (<$3K)", "Mid Income ($3-9K)", 
                       "High Income ($9-20K)", "Affluent (>$20K)")
     values <- c(no_income_percent, low_income_percent, mid_income_percent, 
-               high_income_percent, affluent_percent)
+                high_income_percent, affluent_percent)
     colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00")
     
     # Create a data frame for plot_ly
@@ -405,25 +404,25 @@ server <- function(input, output, session) {
       text = ~paste(hover_label, paste0(value, "%")), # Format hover text using columns
       insidetextorientation = 'radial' 
     ) %>%
-    layout(
-      title = list(
-        text = paste0('<b>Household Income Profile</b><br>',
-                     '<span style="font-size: 12px;">Total Households: ', 
-                     format(total_households, big.mark=","), '</span>'),
-        font = list(size = 14)
-      ),
-      showlegend = TRUE,
-      legend = list(
-        orientation = "h", # Horizontal legend
-        y = -0.1,          # Position below the chart
-        x = 0.5,           # Center the legend horizontally
-        xanchor = 'center',
-        yanchor = 'top'
-      ),
-      margin = list(t = 80, b = 40, l = 10, r = 10) # Adjust bottom margin for legend
-    )
+      layout(
+        title = list(
+          text = paste0('<b>Household Income Profile</b><br>',
+                        '<span style="font-size: 12px;">Total Households: ', 
+                        format(total_households, big.mark=","), '</span>'),
+          font = list(size = 14)
+        ),
+        showlegend = TRUE,
+        legend = list(
+          orientation = "h", # Horizontal legend
+          y = -0.1,          # Position below the chart
+          x = 0.5,           # Center the legend horizontally
+          xanchor = 'center',
+          yanchor = 'top'
+        ),
+        margin = list(t = 80, b = 40, l = 10, r = 10) # Adjust bottom margin for legend
+      )
   })
-
+  
   # Reactive dataset for the area summary plot
   visible_transactions <- reactive({
     data <- filtered_hdb_data()
@@ -456,7 +455,7 @@ server <- function(input, output, session) {
     area_name <- current_planning_area()
     zoom_level <- current_zoom()
     zoom_threshold <- 15 # Define the zoom level threshold
-
+    
     # Determine plot title based on zoom level
     plot_title <- if (zoom_level >= zoom_threshold && area_name != "Outside Planning Area") {
       paste0("Price Distribution in ", area_name)
@@ -468,7 +467,7 @@ server <- function(input, output, session) {
     ggplot(data, aes(x = resale_price)) +
       geom_density(fill = "#4676a9", alpha = 0.7) +
       geom_vline(aes(xintercept = median(resale_price)), 
-                color = "#ff5555", linetype = "dashed", size = 1) +
+                 color = "#ff5555", linetype = "dashed", size = 1) +
       labs(
         title = plot_title, # Use the conditional title
         subtitle = paste0("Median: $", format(median(data$resale_price), big.mark = ",")),
@@ -521,7 +520,7 @@ server <- function(input, output, session) {
           street == building$street
         ) %>%
         arrange(desc(contractDate)
-      )
+        )
     }
     
     return(building_data)
@@ -634,7 +633,7 @@ server <- function(input, output, session) {
         p <- ggplot(building_data, aes(x = price_col)) +
           geom_density(fill = "#4676a9", alpha = 0.7) +
           geom_vline(aes(xintercept = median(price_col)), 
-                    color = "#ff5555", linetype = "dashed", size = 1) +
+                     color = "#ff5555", linetype = "dashed", size = 1) +
           labs(
             title = paste0("Price Distribution for ", plot_title),
             subtitle = paste0("Median: $", format(median(price_col), big.mark = ",")),
@@ -764,9 +763,9 @@ server <- function(input, output, session) {
   }, options = list(pageLength = 10, searching = TRUE, lengthChange = TRUE, scrollY = "calc(100% - 100px)", language = list(
     emptyTable = "No transaction history available for this property"
   )))
-
+  
   # --- Modal Dialog Logic ---
-
+  
   # Observe House Type button click
   observeEvent(input$filter_house_type, {
     showModal(modalDialog(
@@ -778,7 +777,7 @@ server <- function(input, output, session) {
       )
     ))
   })
-
+  
   # Observe Budget button click
   observeEvent(input$filter_budget, {
     showModal(modalDialog(
@@ -790,7 +789,7 @@ server <- function(input, output, session) {
       )
     ))
   })
-
+  
   # Observe Area button click
   observeEvent(input$filter_area, {
     showModal(modalDialog(
@@ -802,7 +801,7 @@ server <- function(input, output, session) {
       )
     ))
   })
-
+  
   # Observe Floor Height button click
   observeEvent(input$filter_floor_height, {
     showModal(modalDialog(
@@ -814,15 +813,15 @@ server <- function(input, output, session) {
       )
     ))
   })
-
+  
   # Observe Facility button click
   observeEvent(input$filter_facility, {
     showModal(modalDialog(
       title = "Select Nearby Facilities (Priority)",
       # Using checkboxes as a simpler alternative to drag-and-drop
       checkboxGroupInput("modal_facility", "Select desired facilities:",
-                         choices = c("Subway", "Hospital", "Supermarket", "Food Court"),
-                         selected = c("Subway", "Supermarket")),
+                         choices = c("Childcare Centres", "Gyms", "LRT/MRT", "Parks", "Schools", "Supermarkets"),
+                         selected = c("LRT/MRT", "Schools")),
       # Add logic here later to handle priority if needed, or use a different input type
       footer = tagList(
         modalButton("Cancel"),
@@ -830,14 +829,14 @@ server <- function(input, output, session) {
       )
     ))
   })
-
+  
   # --- Update Button Labels on Modal OK ---
-
+  
   observeEvent(input$ok_house_type, {
     updateActionButton(session, "filter_house_type", label = paste("Type:", input$modal_house_type))
     removeModal()
   })
-
+  
   observeEvent(input$ok_budget, {
     # Format budget nicely (e.g., $500K - $1.5M)
     min_budget <- format(input$modal_budget[1], big.mark = ",", scientific = FALSE)
@@ -848,19 +847,19 @@ server <- function(input, output, session) {
     updateActionButton(session, "filter_budget", label = label_text)
     removeModal()
   })
-
+  
   observeEvent(input$ok_area, {
     label_text <- paste("Area:", input$modal_area[1], "-", input$modal_area[2], "sqm")
     updateActionButton(session, "filter_area", label = label_text)
     removeModal()
   })
-
+  
   observeEvent(input$ok_floor_height, {
     label_text <- paste("Floor:", input$modal_floor_height[1], "-", input$modal_floor_height[2])
     updateActionButton(session, "filter_floor_height", label = label_text)
     removeModal()
   })
-
+  
   observeEvent(input$ok_facility, {
     # Show number of facilities selected or list them if short
     num_selected <- length(input$modal_facility)
@@ -873,7 +872,7 @@ server <- function(input, output, session) {
     updateActionButton(session, "filter_facility", label = label_text)
     removeModal()
   })
-
+  
   # Marker click observer to update the selected building
   observeEvent(input$property_map_marker_click, {
     click <- input$property_map_marker_click
@@ -977,7 +976,7 @@ server <- function(input, output, session) {
         # First, search using string contains for project name
         similar_projects <- data %>%
           filter(grepl(clicked_id, project, fixed = TRUE) | 
-                 grepl(project, clicked_id, fixed = TRUE)) %>%
+                   grepl(project, clicked_id, fixed = TRUE)) %>%
           head(1)
         
         if(nrow(similar_projects) > 0) {
@@ -1011,7 +1010,7 @@ server <- function(input, output, session) {
     # Hide the overlay
     session$sendCustomMessage("hideTransactionsOverlay", list())
   })
-
+  
   # --- Marker Display Logic ---
   
   # Get current zoom level
