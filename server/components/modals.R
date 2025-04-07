@@ -62,9 +62,11 @@ observeEvent(input$filter_facility, {
   showModal(modalDialog(
     title = "Select Nearby Facilities (Priority)",
     # Using checkboxes as a simpler alternative to drag-and-drop
-    checkboxGroupInput("modal_facility", "Select desired facilities:",
-                       choices = c("Childcare Centres", "Gyms", "LRT/MRT", "Parks", "Schools", "Supermarkets"),
-                       selected = c("LRT/MRT", "Schools")), # Default selection
+    rank_list(
+      text = "Prioritise facilities (drag to reorder):",
+      labels = c("MRT", "Childcare", "Supermarket"),
+      input_id = "facility_priority"
+    ),
     # Add logic here later to handle priority if needed, or use a different input type
     footer = tagList(
       modalButton("Cancel"),

@@ -8,6 +8,7 @@ required_packages <- c(
   "shinythemes", 
   "shinyjs", 
   "shinyWidgets", 
+  "sortable",
   "sf", 
   "viridis", 
   "htmltools", 
