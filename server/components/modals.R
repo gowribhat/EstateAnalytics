@@ -61,13 +61,14 @@ observeEvent(input$filter_floor_height, {
 observeEvent(input$filter_facility, {
   showModal(modalDialog(
     title = "Select Nearby Facilities (Priority)",
-    # Using checkboxes as a simpler alternative to drag-and-drop
-    rank_list(
-      text = "Prioritise facilities (drag to reorder):",
-      labels = c("MRT", "Childcare", "Supermarket"),
-      input_id = "facility_priority"
-    ),
-    # Add logic here later to handle priority if needed, or use a different input type
+    
+    # Checkbox for selection
+    checkboxGroupInput("selected_facilities", "Choose facilities to consider:", 
+                       choices = c("Childcare Centre", "Gym", "MRT", "Park", "School", "Supermarket")),
+    
+    # Placeholder for dynamic priority UI
+    uiOutput("priority_rank_ui"),
+    
     footer = tagList(
       modalButton("Cancel"),
       actionButton("ok_facility", "OK")
@@ -75,6 +76,19 @@ observeEvent(input$filter_facility, {
   ))
 })
 
+# Dynamically render the rank list *after* selection
+output$priority_rank_ui <- renderUI({
+  req(input$selected_facilities)
+  
+  if (length(input$selected_facilities) == 0) return(NULL)
+  
+  sortable::rank_list(
+    text = "Prioritise selected facilities (drag to reorder):",
+    labels = input$selected_facilities,
+    input_id = "facility_priority"
+  )
+})
+# Add logic here later to handle priority if needed, or use a different input type
 # --- Update Button Labels on Modal OK ---
 
 observeEvent(input$ok_house_type, {

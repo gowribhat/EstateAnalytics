@@ -295,8 +295,7 @@ observe({
       popup_content <- paste0(
         "<strong>", data$block, " ", data$street_name, "</strong><br>",
         "Price: $", format(data$resale_price, big.mark = ","), "<br>",
-        "Date: ", data$month,"<br>",
-        "Floor: ", data$storey_range
+        "Date: ", data$month
       )
       data$building_id <- paste(data$block, data$street_name)
     } else {
