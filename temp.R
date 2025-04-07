@@ -93,18 +93,7 @@ server <- function(input, output, session) {
       ura_data(data)
     })
   })
-  # Load childcare data
-  childcares_data <- reactiveVal(NULL)
-  observe({
-    tryCatch({
-      data <- readRDS(paste0(resources_path, "childcares.rds"))
-      childcares_data(data)
-    }, error = function(e) {
-      # Log error but continue app execution
-      message("Error loading household income data: ", e$message)
-    })
-  })
-    # Property type selection (HDB or Private)
+  # Property type selection (HDB or Private)
   selected_property_type <- reactiveVal("HDB")
   
   observeEvent(input$ok_house_type, {
@@ -831,8 +820,8 @@ server <- function(input, output, session) {
       title = "Select Nearby Facilities (Priority)",
       # Using checkboxes as a simpler alternative to drag-and-drop
       checkboxGroupInput("modal_facility", "Select desired facilities:",
-                         choices = c("Subway", "Hospital", "Supermarket", "Food Court"),
-                         selected = c("Subway", "Supermarket")),
+                         choices = c("Childcares", "Gyms", "LRT/MRT", "Parks", "Schools", "Supermarkets"),
+                         selected = c("LRT/MRT", "Schools")),
       # Add logic here later to handle priority if needed, or use a different input type
       footer = tagList(
         modalButton("Cancel"),
