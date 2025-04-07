@@ -11,28 +11,24 @@ mart <- readRDS(paste0(resource_path,"Supermarkets.rds"))
 hdb <- readRDS(paste0(resource_path,"hdb.rds"))
 priv <- readRDS(paste0(resource_path,"ura_private.rds"))
 
-distances <- apply(as.numeric(hdb[, c("latitude", "longitude")]), 1, function(housing_point) {
-  apply(as.numeric(childcare[, c("latitude", "longitude")]), 1, function(childcare_point) {
-    # Calculate the distance using distVincentySphere
-    distVincentySphere(housing_point, childcare_point)
-  })
-})
-
 distances <- function(x,y) {
   distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
 }
-get_nearest <- function(hdb, childcare, num_nearest = 5) {
+get_nearest <- function(a, b, n = 5) {
   # Calculate distances from the HDB location to all childcare centers
-  dists <- sapply(1:nrow(childcare), function(i) {
-    distances(hdb, childcare[i, ])
+  dists <- sapply(1:nrow(b), function(i) {
+    distances(a, b[i, ])
   })
   
   # Get the indices of the 5 nearest childcare centers
-  nearest_indices <- order(dists)[1:num_nearest]
-  
+  nearest_indices <- order(dists)[1:n]
+  clean <- b[nearest_indices, ]
+  clean$distance <- dists[nearest_indices]
   # Return the rows of the nearest childcare centers
-  return(childcare[nearest_indices, ])
+  return(clean)
 }
-nearest_childcare <- lapply(1:nrow(hdb), function(i) {
-  get_nearest(hdb[i, ], childcare)
-})
+nearest_childcare <- get_nearest(hdb[2025, ], childcare)
+nearest_childcare <- nearest_childcare[,c("centre_address","centre_name","distance")]
+
+nearest_gym <- get_nearest(hdb[2025, ], gym)
+nearest_mrt <- get_nearest(hdb[2025, ], mrt)
