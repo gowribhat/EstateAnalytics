@@ -27,18 +27,40 @@ get_nearest <- function(a, b, n = 1) {
   # Return the rows of the nearest childcare centers
   return(clean)
 }
-nearest_childcare <- get_nearest(hdb[2025, ], childcare)
+
+# For HDB
+nearest_childcare <- get_nearest(hdb[5639, ], childcare)
 nearest_childcare <- nearest_childcare[,c("centre_address","centre_name","distance")]
 
-nearest_gym <- get_nearest(hdb[2025, ], gym)
-nearest_mrt <- get_nearest(hdb[2025, ], mrt)
-nearest_park <- get_nearest(hdb[2025,],park)
-nearest_sch <- get_nearest(hdb[2025,],sch)
+nearest_gym <- get_nearest(hdb[5639, ], gym)
+nearest_mrt <- get_nearest(hdb[5639, ], mrt)
+nearest_park <- get_nearest(hdb[5639,],park)
+nearest_sch <- get_nearest(hdb[5639,],sch)
 nearest_sch <- nearest_sch[,c("address","school_name","distance")]
-nearest_mart <- get_nearest(hdb[2025,],mart)
+nearest_mart <- get_nearest(hdb[5639,],mart)
 nearest_mart <- nearest_mart[,c("address","name","distance")]
 
-weight <- c(0.15,0.1,0.15,0.25,0.15,0.2)
-score <- 400/c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
-           nearest_park$distance,nearest_sch$distance,nearest_mart$distance)
+weight <- c(15,10,15,25,15,20)
+norm <- function(x){max(100,min(1600,x))}
+norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
+               nearest_park$distance,nearest_sch$distance,nearest_mart$distance),norm)
+score <- (1600-norm_dist)/1500
+sum(weight*score)
+
+# For private
+Nearest_childcare <- get_nearest(priv[87299,], childcare)
+Nearest_childcare <- Nearest_childcare[,c("centre_address","centre_name","distance")]
+
+Nearest_gym <- get_nearest(priv[87299,], gym)
+Nearest_mrt <- get_nearest(priv[87299,], mrt)
+Nearest_park <- get_nearest(priv[87299,],park)
+Nearest_sch <- get_nearest(priv[87299,],sch)
+Nearest_sch <- Nearest_sch[,c("address","school_name","distance")]
+Nearest_mart <- get_nearest(priv[87299,],mart)
+Nearest_mart <- Nearest_mart[,c("address","name","distance")]
+
+weight <- c(15,10,15,25,15,20)
+norm_dist <- sapply(c(Nearest_childcare$distance, Nearest_gym$distance, Nearest_mrt$distance,
+                      Nearest_park$distance,Nearest_sch$distance,Nearest_mart$distance),norm)
+score <- (1600-norm_dist)/1500
 sum(weight*score)
