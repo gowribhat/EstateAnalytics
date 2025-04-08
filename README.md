@@ -140,3 +140,54 @@ To stay up-to-date:
 - **Open a PR when your feature is ready**
 - **Merge your PR only after review**
 - **Update your local project regularly**
+
+---
+
+## 🤖 Optional: AI-Powered Setup (VS Code + GitHub Copilot + Ollama)
+
+Want to boost your workflow with **AI assistance**? Set up **free AI tools** to help write, understand, and debug code for the project.
+
+### 🛠️ 1. Install Visual Studio Code
+
+1. Go to [https://code.visualstudio.com/](https://code.visualstudio.com/)
+2. Download and install VS Code for your system.
+3. Open the project folder:
+   - Launch VS Code
+   - Go to **File > Open Folder**
+   - Select the project directory of cloned repo
+
+### 🎓 2. Get GitHub Student Pack (Free Copilot Access) <a name="student-pack"></a>
+
+1. Visit: [https://education.github.com/pack](https://education.github.com/pack)
+2. Click **“Get Student Benefits”** / **Sign in for Student Developer Pack**
+3. Sign in with your GitHub account using your NUS email
+4. Follow the verification steps
+
+> ⏳ Approval can take 1–2 days, but gives you:
+>
+> - ✅ Free GitHub Copilot
+> - ✅ Free Codespaces
+> - ✅ More dev tools (free!)
+
+### 🤖 3. Enable GitHub Copilot in VS Code
+
+Once your student access is approved:
+
+1. Open **VS Code**
+2. Go to the **Extensions tab** on the left (or press `Ctrl+Shift+X`)
+3. Search for `GitHub Copilot` and `Github Copilot Chat` and click **Install**
+4. Sign in with your GitHub account
+5. Start coding — Copilot will suggest lines and functions as you type! Copilot chat allows you to ask question and edit files automatically by selecting the context files.
+
+### 💬 4. Use GitHub Copilot Chat in Your Browser instead of VS Code
+
+After your [student pack from step 2](#student-pack) is approved:
+
+1. Open any file in your GitHub repository (like `ui.R`, `server.R`, etc.)
+2. Click on the **Copilot Chat** icon (search for logo if unsure) in the **top-right corner**
+3. Type a question in natural language, such as:
+   - `"Explain what this R function does"`
+   - `"How can I fix this error in my code?"`
+   - `"Suggest improvements for this filter logic"`
+   - `"What does leafletOutput() do in Shiny?"`
+4. You can also go to [https://github.com/copilot/](https://github.com/copilot/) on you browser to start a chat and add the project repository or specific files as attachments.
