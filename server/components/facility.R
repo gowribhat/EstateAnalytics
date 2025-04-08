@@ -87,6 +87,11 @@ output$property_details <- renderUI({
   nearest_park <- get_nearest(building_data,park)
   nearest_sch <- get_nearest(building_data,sch)
   nearest_mart <- get_nearest(building_data,mart)
+  weight <- c(15,10,25,15,20,15)
+  norm <- function(x){max(100,min(1600,x))}
+  norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
+                        nearest_park$distance,nearest_sch$distance,nearest_mart$distance),norm)
+  score <- (1600-norm_dist)/1500
     
   # Include the Past Transactions button only when a building is selected
   HTML(paste0(
@@ -98,13 +103,12 @@ output$property_details <- renderUI({
     "<div><strong>Nearest Park:</strong> ", nearest_park$distance, " m</div>",
     "<div><strong>Nearest School:</strong> ", nearest_sch$distance, " m</div>",
     "<div><strong>Nearest Supermarket:</strong> ", nearest_mart$distance, " m</div>",
+    "<div><strong>Total score based on proximity of facilities:</strong> ", sum(weight*score), " %</div>"
     "<div style='margin-top: 15px;'>",
     # Ensure the button ID matches the observer in overlay_logic.R
     "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
     "</div>",
     "</div>"
-    
-    
     ))
   }
 })
