@@ -1,6 +1,6 @@
 library(geosphere)
 
-resource_path <- "data/"
+resource_path <- "../../data/"
 childcare <- readRDS(paste0(resource_path,"childcares.rds"))
 gym <- readRDS(paste0(resource_path,"gyms_data.rds"))
 mrt <- readRDS(paste0(resource_path,"LRT_MRT.rds"))
@@ -42,7 +42,7 @@ nearest_sch <- nearest_sch[,c("address","school_name","distance")]
 nearest_mart <- get_nearest(hdb[5639,],mart)
 nearest_mart <- nearest_mart[,c("address","name","distance")]
 
-weight <- c(15,10,15,25,15,20)
+weight <- c(15,10,25,15,20,15)
 norm <- function(x){max(100,min(1600,x))}
 norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
                nearest_park$distance,nearest_sch$distance,nearest_mart$distance),norm)
@@ -64,7 +64,6 @@ Nearest_sch <- Nearest_sch[,c("address","school_name","distance")]
 Nearest_mart <- get_nearest(priv[87299,],mart)
 Nearest_mart <- Nearest_mart[,c("address","name","distance")]
 
-weight <- c(15,10,15,25,15,20)
 norm_dist <- sapply(c(Nearest_childcare$distance, Nearest_gym$distance, Nearest_mrt$distance,
                       Nearest_park$distance,Nearest_sch$distance,Nearest_mart$distance),norm)
 score <- (1600-norm_dist)/1500
