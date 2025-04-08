@@ -6,60 +6,55 @@
 
 This project aims to develop a data analytics platform that revolutionizes how people search for and evaluate properties in Singapore. By leveraging multiple government data sources and advanced visualizations, the platform will provide insights into property values, neighborhood characteristics, and lifestyle factors to help users make informed housing decisions.
 
-## Tech Stack
-
-- **R & Shiny** – Interactive web application
-- **ggplot2** – Data visualization
-- **leaflet** – Interactive maps
-- **dplyr & stringr** – Data cleaning & transformation
-
 ## Project Structure
 
 ```
 Project/
-├── global.R                                  # Shared libraries & configurations
+├── global.R                                  # Shared libraries & settings used across the app
 |
-├── ui/
-│   ├── components/                           # UI components for reuse
-│   │   ├── navbar.R
-|   |   └── ...
-|   └── ui.R                                  # Main UI script
+├── ui.R                                      # Defines the user interface layout
 |
 ├── server/
-│   └── server.R                              # Server-side logic
-│   ├── modules/                              # Modular server components
-│   │   ├── map_module.R                      # Server logic for interactive map
-│   │   └── ...
+│   ├── server.R                              # Main server-side logic for the app
+│   ├── components/                           # Modular server-side scripts
+│   │   ├── area_details.R                    # Handles left panel: income stats & price trends
+│   │   ├── building_details.R                # Handles right panel: building-specific info
+│   │   ├── data_loading.R                    # Loads datasets like HDB, private properties, etc.
+│   │   ├── filters.R                         # Filters data based on user choices
+│   │   ├── map_logic.R                       # Manages map display, markers, and interactions
+│   │   ├── modals.R                          # Pop-up windows for user filters
+│   │   ├── transaction_overlay.R             # Manages transaction details overlay
+│   │   └── utils.R                           # Helper functions for charts, maps, and UI
+│   └── guide.md                              # Instructions for adding server components
 |
-├── www/
-│   └── styles.css                            # CSS styling file
-│
-├── data/                                     # Cleaned RDS Datasets
-│   ├── schools.RDS
-│   └── childcares.RDS
-│
-├── scripts/
-│   └── clean_data.R                          # Raw data cleaning functions
-│   └── install_packages.R                    # Script for local developement to install packages
-│   └── packages.R                            # List of packages needed
-│
-├── .env                                      # Secrets (e.g. Google API Key)
-│
-└── rsconnect/                                # Shinyapps.io deployment configs
-    └── shinyapps.io/
-        └── <shiny_username>/
-            └── <R_Project_name>.dcf
+├── www/                                      # Files for the web interface
+│   ├── css/                                  # Custom stylesheets
+│   │   └── custom.css                        # Styling for the app
+│   └── js/                                   # Custom JavaScript files
+│       └── overlays.js                       # Handles overlay visibility and actions
+|
+├── data/                                     # Pre-processed datasets
+│   ├── schools.RDS                           # School locations and details
+│   ├── childcares.RDS                        # Childcare center data
+│   └── ...                                   # Other datasets (e.g., parks, supermarkets)
+|
+├── scripts/                                  # Setup scripts
+│   ├── load_packages.R                       # Loads required R packages
+│   ├── install_packages.R                    # Installs missing packages
+│   └── packages.R                            # List of required packages
+|
+├── temp.R                                    # Temporary server logic for testing
+|
+├── .gitignore                                # Files to exclude from version control
+|
+├── .gitattributes                            # Git settings for the repository
+|
+├── .lintr                                    # Linting configuration for R code
+|
+└── .Rprofile                                 # Project-specific R settings
 ```
 
 ## Getting Started
-
-1.  **Set environment variable**
-
-    Create a file name `.env` in the project root with the following variable and set your private keys.
-
-    ```bash
-    GOOGLE_API_KEY="add_your_key"
-    ```
 
 1.  **Install dependencies**
 
@@ -83,10 +78,10 @@ Ensure that the following files are included when deploying the app:
 
 - `app.R` – Main Shiny app file
 - `global.R` – Shared libraries and configurations
-- `server.R` – Server-side logic
+- `server/` – Folder with server-side logic
 - `ui.R` – UI layout file
-- CSS styling file in the `www/` directory
-- Cleaned datasets located in the `data/cleaned` directory
+- `www/` - CSS and JS files to be rendered on web browser
+- `data/` - Cleaned datasets
 
 ## 🚀 GitHub Workflow Guide
 
