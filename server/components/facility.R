@@ -11,6 +11,46 @@ mart <- readRDS(paste0(resource_path,"Supermarkets.rds"))
 hdb <- readRDS(paste0(resource_path,"hdb.rds"))
 priv <- readRDS(paste0(resource_path,"ura_private.rds"))
 
+facilities <- reactive({
+  building <- selected_building()
+  property_type <- selected_property_type()
+  
+  # If no building is selected, return NULL
+  if (is.null(building)) {
+    return(NULL)
+  }
+  
+  # Get appropriate dataset
+  if (property_type == "HDB") {
+    data <- filtered_hdb_data() # Assumes filtered_hdb_data is defined elsewhere
+    req(data)
+    
+    # Extract block and street name from selected building
+    # Filter data for the specific building
+    building_data <- data %>%
+      filter(
+        block == building$block,
+        street_name == building$street_name
+      ) %>%
+      arrange(desc(month))
+    
+  } else {
+    data <- filtered_ura_data() # Assumes filtered_ura_data is defined elsewhere
+    req(data)
+    
+    # Filter data for the specific building/project
+    building_data <- data %>%
+      filter(
+        project == building$project,
+        street == building$street
+      ) %>%
+      arrange(desc(contractDate)
+      )
+  }
+  
+  return(building_data)
+})
+
 distances <- function(x,y) {
   distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
 }
