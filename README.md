@@ -10,57 +10,48 @@ This project aims to develop a data analytics platform that revolutionizes how p
 
 ```
 Project/
-├── global.R                                  # Shared libraries & configurations
+├── global.R                                  # Shared libraries & settings used across the app
 |
-├── ui.R                                      # Main UI script
+├── ui.R                                      # Defines the user interface layout
 |
 ├── server/
-│   ├── server.R                              # Main server-side logic
-│   ├── components/                           # Modular server components
-│   │   ├── area_details.R                    # Left overlay logic
-│   │   ├── building_details.R                # Right overlay logic
-│   │   ├── data_loading.R                    # Data loading logic
-│   │   ├── filters.R                         # Data filtering logic
-│   │   ├── map_logic.R                       # Map rendering and interaction logic
-│   │   ├── modals.R                          # Modal dialog logic
-│   │   ├── transaction_overlay.R             # Transactions overlay logic
-│   │   └── utils.R                           # Utility functions
-│   └── guide.md                              # Guide for adding server components
+│   ├── server.R                              # Main server-side logic for the app
+│   ├── components/                           # Modular server-side scripts
+│   │   ├── area_details.R                    # Handles left panel: income stats & price trends
+│   │   ├── building_details.R                # Handles right panel: building-specific info
+│   │   ├── data_loading.R                    # Loads datasets like HDB, private properties, etc.
+│   │   ├── filters.R                         # Filters data based on user choices
+│   │   ├── map_logic.R                       # Manages map display, markers, and interactions
+│   │   ├── modals.R                          # Pop-up windows for user filters
+│   │   ├── transaction_overlay.R             # Manages transaction details overlay
+│   │   └── utils.R                           # Helper functions for charts, maps, and UI
+│   └── guide.md                              # Instructions for adding server components
 |
-├── www/                                      # Elements to be rendered on web browser
-│   ├── css/                                  # Custom CSS files
-│   │   └── custom.css                        # Styling for the application
+├── www/                                      # Files for the web interface
+│   ├── css/                                  # Custom stylesheets
+│   │   └── custom.css                        # Styling for the app
 │   └── js/                                   # Custom JavaScript files
-│       └── overlays.js                       # Overlay handling logic
+│       └── overlays.js                       # Handles overlay visibility and actions
 |
-├── data/                                     # Cleaned RDS Datasets
-│   ├── schools.RDS
-│   ├── childcares.RDS
-│   └── ...
+├── data/                                     # Pre-processed datasets
+│   ├── schools.RDS                           # School locations and details
+│   ├── childcares.RDS                        # Childcare center data
+│   └── ...                                   # Other datasets (e.g., parks, supermarkets)
 |
-├── scripts/                                  # Scripts for setup
-│   ├── load_packages.R                       # Load all relevant packages
-│   ├── install_packages.R                    # Script for local development to install packages
-│   └── packages.R                            # List of packages needed
-|
-├── temp.R                                    # Temporary server logic for testing
-|
-|
-├── scripts/                                  # Scripts for setup
-│   ├── load_packages.R                       # Load all relevant packages
-│   ├── install_packages.R                    # Script for local development to install packages
-│   └── packages.R                            # List of packages needed
+├── scripts/                                  # Setup scripts
+│   ├── load_packages.R                       # Loads required R packages
+│   ├── install_packages.R                    # Installs missing packages
+│   └── packages.R                            # List of required packages
 |
 ├── temp.R                                    # Temporary server logic for testing
 |
-├── .gitignore                                # Files to excluding version control
+├── .gitignore                                # Files to exclude from version control
 |
-├── .gitattributes                            # Git attributes file for defining repository settings
+├── .gitattributes                            # Git settings for the repository
 |
-├── .lintr                                    # Configuration file for linting R code
+├── .lintr                                    # Linting configuration for R code
 |
-└── .Rprofile                                 # R profile for project-specific settings
-
+└── .Rprofile                                 # Project-specific R settings
 ```
 
 ## Getting Started
