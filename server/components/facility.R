@@ -1,3 +1,10 @@
+# Building Details Logic (Right Overlay)
+# This script manages the logic for displaying nearby facilities in the right overlay.
+# It includes reactive datasets, UI rendering, and visualizations for selected buildings.
+# Key components:
+# - Nearby facilities: Displays detailed information about facilities near the selected building.
+# - Visualizations: Generates plots and tables for building-specific data.
+
 library(geosphere)
 
 resource_path <- "../../data/"
@@ -31,8 +38,7 @@ facilities <- reactive({
       filter(
         block == building$block,
         street_name == building$street_name
-      ) %>%
-      arrange(desc(month))
+      ) 
     
   } else {
     data <- filtered_ura_data() # Assumes filtered_ura_data is defined elsewhere
@@ -43,9 +49,7 @@ facilities <- reactive({
       filter(
         project == building$project,
         street == building$street
-      ) %>%
-      arrange(desc(contractDate)
-      )
+      ) 
   }
   
   return(building_data)
@@ -68,43 +72,39 @@ get_nearest <- function(a, b, n = 1) {
   return(clean)
 }
 
-# For HDB
-nearest_childcare <- get_nearest(hdb[5639, ], childcare)
-nearest_childcare <- nearest_childcare[,c("centre_address","centre_name","distance")]
-
-nearest_gym <- get_nearest(hdb[5639, ], gym)
-nearest_gym <- nearest_gym[,c("Name","distance")]
-nearest_mrt <- get_nearest(hdb[5639, ], mrt)
-nearest_park <- get_nearest(hdb[5639,],park)
-nearest_park <- nearest_park[,c("NAME","distance")]
-nearest_sch <- get_nearest(hdb[5639,],sch)
-nearest_sch <- nearest_sch[,c("address","school_name","distance")]
-nearest_mart <- get_nearest(hdb[5639,],mart)
-nearest_mart <- nearest_mart[,c("address","name","distance")]
-
-weight <- c(15,10,25,15,20,15)
-norm <- function(x){max(100,min(1600,x))}
-norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
-               nearest_park$distance,nearest_sch$distance,nearest_mart$distance),norm)
-score <- (1600-norm_dist)/1500
-sum(weight*score)
-hdb[5639,]
-
-# For private
-Nearest_childcare <- get_nearest(priv[87299,], childcare)
-Nearest_childcare <- Nearest_childcare[,c("centre_address","centre_name","distance")]
-
-Nearest_gym <- get_nearest(priv[87299,], gym)
-Nearest_gym <- Nearest_gym[,c("Name","distance")]
-Nearest_mrt <- get_nearest(priv[87299,], mrt)
-Nearest_park <- get_nearest(priv[87299,],park)
-Nearest_park <- Nearest_park[,c("NAME","distance")]
-Nearest_sch <- get_nearest(priv[87299,],sch)
-Nearest_sch <- Nearest_sch[,c("address","school_name","distance")]
-Nearest_mart <- get_nearest(priv[87299,],mart)
-Nearest_mart <- Nearest_mart[,c("address","name","distance")]
-
-norm_dist <- sapply(c(Nearest_childcare$distance, Nearest_gym$distance, Nearest_mrt$distance,
-                      Nearest_park$distance,Nearest_sch$distance,Nearest_mart$distance),norm)
-score <- (1600-norm_dist)/1500
-sum(weight*score)
+output$property_details <- renderUI({
+  building <- selected_building()
+  building_data <- building_transactions()
+  
+  # If no building is selected or no data is available, show a prompt message (without the button)
+  if (is.null(building) || is.null(building_data) || nrow(building_data) == 0) {
+    return(HTML("<p>Click on a property marker to see details.</p>"))
+  }
+  
+  nearest_childcare <- get_nearest(building_data, childcare)
+  nearest_gym <- get_nearest(building_data, gym)
+  nearest_mrt <- get_nearest(building_data, mrt)
+  nearest_park <- get_nearest(building_data,park)
+  nearest_sch <- get_nearest(building_data,sch)
+  nearest_mart <- get_nearest(building_data,mart)
+    
+  # Include the Past Transactions button only when a building is selected
+  HTML(paste0(
+    "<div style='font-size: 18px; font-weight: bold;'>", building$block, " ", building$street_name, "</div>",
+    "<div style='margin-top: 10px;'>",
+    "<div><strong>Nearest Childcare Centre:</strong>", nearest_childcare$distance,  " m</div>",
+    "<div><strong>Nearest Gym:</strong>", nearest_gym$distance, " m</div>",
+    "<div><strong>Nearest LRT/MRT station:</strong> ", nearest_mrt$distance, " m</div>",
+    "<div><strong>Nearest Park:</strong> ", nearest_park$distance, " m</div>",
+    "<div><strong>Nearest School:</strong> ", nearest_sch$distance, " m</div>",
+    "<div><strong>Nearest Supermarket:</strong> ", nearest_mart$distance, " m</div>",
+    "<div style='margin-top: 15px;'>",
+    # Ensure the button ID matches the observer in overlay_logic.R
+    "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
+    "</div>",
+    "</div>"
+    
+    
+    ))
+  }
+})
