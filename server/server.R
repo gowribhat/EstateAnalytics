@@ -38,7 +38,7 @@ server <- function(input, output, session) {
   
   # Then load the remaining components in alphabetical order
   remaining_components <- list.files("server/components", pattern = "\\.R$", full.names = TRUE)
-  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R|utils\\.R)$", remaining_components)]
+  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R|utils\\.R|facility\\.R)$", remaining_components)]
   lapply(remaining_components, function(file) source(file, local = TRUE))
   
   # Make sure the overlay is not shown at startup
