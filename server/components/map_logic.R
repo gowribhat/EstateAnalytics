@@ -8,7 +8,7 @@
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
 # --- Base Map Rendering ---
-resource_path <- "/data/"
+resource_path <- "C:/Users/User/R-4.4.3/Project/data/"
 childcare <- readRDS(paste0(resource_path,"childcares.rds"))
 gym <- readRDS(paste0(resource_path,"gyms_data.rds"))
 mrt <- readRDS(paste0(resource_path,"LRT_MRT.rds"))
