@@ -8,7 +8,7 @@
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
 # --- Base Map Rendering ---
-source("facility.R")
+source("C:/Users/User/R-4.4.3/Project/temp.R")
 output$property_map <- renderLeaflet({
   leaflet() %>%
     addTiles() %>% # Add default OpenStreetMap map tiles
@@ -296,7 +296,7 @@ observe({
         "<strong>", data$block, " ", data$street_name, "</strong><br>",
         "Price: $", format(data$resale_price, big.mark = ","), "<br>",
         "Date: ", data$month, "<br>",
-        "Total score based on proximity of facilities: ", sum(weight*score)
+        "Total score based on proximity of facilities: ", sum(score*weight)
       )
       data$building_id <- paste(data$block, data$street_name)
     } else {

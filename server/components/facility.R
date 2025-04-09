@@ -43,4 +43,6 @@ weight <- c(15,10,25,15,20,15)
 norm <- function(x){max(100,min(1600,x))}
 norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
                       nearest_park$distance,nearest_sch$distance,nearest_mart$distance),norm)
+
 score <- (1600-norm_dist)/1500
+data <- c(building_data,norm_dist,score)
