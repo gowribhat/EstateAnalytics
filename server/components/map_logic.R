@@ -8,6 +8,46 @@
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
 # --- Base Map Rendering ---
+resource_path <- "/data/"
+childcare <- readRDS(paste0(resource_path,"childcares.rds"))
+gym <- readRDS(paste0(resource_path,"gyms_data.rds"))
+mrt <- readRDS(paste0(resource_path,"LRT_MRT.rds"))
+park <- readRDS(paste0(resource_path,"parks_data.rds"))
+sch <- readRDS(paste0(resource_path,"schools.rds"))
+mart <- readRDS(paste0(resource_path,"Supermarkets.rds"))
+
+hdb <- readRDS(paste0(resource_path,"hdb.rds"))
+priv <- readRDS(paste0(resource_path,"ura_private.rds"))
+
+compute_scores <- function(data, childcare, gym, mrt, park, sch, mart) {
+  weight <- c(15,10,25,15,20,15)
+  norm <- function(x) pmax(100, pmin(1600, x))  # Vector-safe norm
+  
+  # This ensures there are no NA coordinates
+  valid_data <- data %>% filter(!is.na(longitude), !is.na(latitude))
+  
+  get_min_dist <- function(a, b) {
+    if (nrow(b) == 0) return(rep(1600, nrow(a)))  # Safe fallback
+    geosphere::dist2Line(p = a[, c("longitude", "latitude")], line = b[, c("longitude", "latitude")])[,1]
+  }
+  
+  dist_mat <- cbind(
+    get_min_dist(valid_data, childcare),
+    get_min_dist(valid_data, gym),
+    get_min_dist(valid_data, mrt),
+    get_min_dist(valid_data, park),
+    get_min_dist(valid_data, sch),
+    get_min_dist(valid_data, mart)
+  )
+  
+  norm_dist <- apply(dist_mat, 2, norm)
+  scores <- (1600 - norm_dist) / 1500
+  valid_data$score <- as.vector(scores %*% weight)
+  
+  # Join scores back to the original data
+  data <- left_join(data, valid_data[, c("longitude", "latitude", "score")], by = c("longitude", "latitude"))
+  return(data)
+}
 output$property_map <- renderLeaflet({
   leaflet() %>%
     addTiles() %>% # Add default OpenStreetMap map tiles
@@ -199,7 +239,7 @@ visible_filtered_data <- reactive({
   if (nrow(data) > limit) {
     data <- head(data, limit)
   }
-
+  data <- compute_scores(data, childcare, gym, mrt, park, sch, mart)
   return(data)
 })
 
@@ -295,7 +335,8 @@ observe({
       popup_content <- paste0(
         "<strong>", data$block, " ", data$street_name, "</strong><br>",
         "Price: $", format(data$resale_price, big.mark = ","), "<br>",
-        "Date: ", data$month
+        "Date: ", data$month,
+        "Total score based on proximity of facilities: ", data$score
       )
       data$building_id <- paste(data$block, data$street_name)
     } else {
