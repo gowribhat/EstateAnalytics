@@ -5,8 +5,6 @@
 # - Nearby facilities: Displays detailed information about facilities near the selected building.
 # - Visualizations: Generates plots and tables for building-specific data.
 
-library(geosphere)
-
 resource_path <- "../../data/"
 childcare <- readRDS(paste0(resource_path,"childcares.rds"))
 gym <- readRDS(paste0(resource_path,"gyms_data.rds"))

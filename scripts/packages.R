@@ -5,6 +5,7 @@ required_packages <- c(
   "ggplot2", 
   "DT", 
   "plotly", 
+  "geosphere",
   "shinythemes", 
   "shinyjs", 
   "shinyWidgets", 
