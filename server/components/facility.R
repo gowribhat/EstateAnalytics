@@ -109,9 +109,5 @@ output$property_details <- renderUI({
     "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
     "</div>",
     "</div>"
-<<<<<<< Updated upstream
   ))
-=======
-    ))
->>>>>>> Stashed changes
 })
