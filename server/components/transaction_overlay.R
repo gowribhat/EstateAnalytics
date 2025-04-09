@@ -1,8 +1,9 @@
-# Overlay Handling Logic
-# This script manages the visibility and interactions of overlays in the application.
-# It includes logic for toggling overlays, handling user interactions, and refreshing data tables.
+# filepath: /Users/youngwooeun/Project/server/components/transaction_overlay.R
+# Building Analytics Dashboard
+# This script manages the visibility and interactions of the analytics dashboard overlay.
+# It includes logic for toggling the dashboard, handling user interactions, and generating visualizations.
 # Key components:
-# - Transactions overlay: Displays detailed transaction data for selected properties.
+# - Analytics dashboard: Displays interactive visualizations for selected buildings.
 # - Overlay visibility: Tracks and updates the visibility state of overlays.
 # - JavaScript integration: Sends custom messages to the frontend for overlay actions.
 
@@ -54,14 +55,14 @@ get_transaction_data <- reactive({
   return(building_data)
 })
 
-# --- Transactions Overlay Handler ---
-# Toggle transactions overlay when button is clicked
+# --- Analytics Dashboard Overlay Handler ---
+# Toggle analytics dashboard overlay when button is clicked
 observeEvent(input$toggle_transactions_overlay, {
-  # Toggle the transaction overlay visibility status
+  # Toggle the dashboard overlay visibility status
   current_visibility <- !transactions_overlay_visible()
   transactions_overlay_visible(current_visibility)
 
-  # Use JavaScript to actually show/hide the transactions overlay
+  # Use JavaScript to actually show/hide the dashboard overlay
   if(current_visibility) {
     # Show the overlay
     session$sendCustomMessage("showTransactionsOverlay", list())
@@ -71,8 +72,17 @@ observeEvent(input$toggle_transactions_overlay, {
   }
 })
 
-# Render the transaction data table
-output$transactions_table <- renderDT({
+# Handler for refreshing the analytics dashboard from JavaScript
+observeEvent(input$refresh_analytics_dashboard, {
+  # Only proceed if the dashboard is supposed to be visible
+  req(transactions_overlay_visible())
+  
+  # Force reactivity by invalidating the context
+  invalidateLater(10)
+})
+
+# Render the analytics dashboard content
+output$analytics_dashboard <- renderUI({
   # First check if the overlay is visible - this prevents data processing when hidden
   req(transactions_overlay_visible())
   
@@ -89,65 +99,271 @@ output$transactions_table <- renderDT({
   # Format data based on property type
   property_type <- selected_property_type()
   
+  # Determine column names based on property type
   if(property_type == "HDB") {
-    # Format HDB data
-    result <- building_data %>%
-      select(month, resale_price, flat_type, storey_range, floor_area_sqm) %>%
-      rename(
-        Date = month,
-        Price = resale_price,
-        Type = flat_type,
-        Floor = storey_range,
-        Area = floor_area_sqm
-      )
+    date_col <- "month"
+    price_col <- "resale_price"
+    area_col <- "floor_area_sqm"
+    floor_col <- "storey_range"
+    type_col <- "flat_type"
   } else {
-    # Format private property data
-    result <- building_data %>%
-      select(contractDate, price, propertyType, floorRange, area, tenure) %>%
-      rename(
-        Date = contractDate,
-        Price = price,
-        Type = propertyType,
-        Floor = floorRange,
-        Area = area,
-        Tenure = tenure
-      )
+    date_col <- "contractDate"
+    price_col <- "price"
+    area_col <- "area"
+    floor_col <- "floorRange"
+    type_col <- "propertyType"
   }
   
-  # Format price as currency
-  result <- result %>%
-    mutate(Price = paste0("$", format(Price, big.mark = ",")),
-           Area = paste(Area, "sqm"))
-  
-  # Return the formatted data table with options
-  datatable(
-    result,
-    options = list(
-      pageLength = 10,
-      searching = TRUE,
-      lengthChange = TRUE,
-      scrollY = "calc(100% - 100px)",
-      dom = 'lftip',
-      language = list(
-        emptyTable = "No transaction history available for this property"
-      ),
-      initComplete = JS("
-        function(settings, json) {
-          // Force the DataTable to resize properly when shown
-          setTimeout(function() {
-            $(window).trigger('resize');
-          }, 200);
-        }
-      ")
+  # Create UI elements for the dashboard
+  fluidRow(
+    column(
+      width = 4,
+      div(
+        style = "height: 100%; overflow-y: auto;", # Make only the controls panel scrollable
+        wellPanel(
+          style = "background-color: #f8f9fa;",
+          h4("Analytics Controls"),
+          # Visualization type selector
+          radioButtons("viz_type", "Visualization Type:", 
+                      choices = c("Price Trend" = "price_trend", 
+                                "Price per SQM" = "price_per_sqm",
+                                "Unit Distribution" = "unit_distribution"),
+                      selected = "price_trend"),
+          
+          # Room type filter (if applicable)
+          conditionalPanel(
+            condition = "input.viz_type == 'price_trend' || input.viz_type == 'price_per_sqm'",
+            selectInput("room_type_filter", "Filter by Room Type:",
+                      choices = c("All Types" = "all", 
+                                  as.character(unique(building_data[[type_col]]))),
+                      selected = "all")
+          ),
+          
+          # Time period filter
+          conditionalPanel(
+            condition = "input.viz_type == 'price_trend' || input.viz_type == 'price_per_sqm'",
+            sliderInput("time_period", "Time Period:",
+                      min = min(year(building_data[[date_col]])),
+                      max = max(year(building_data[[date_col]])),
+                      value = c(min(year(building_data[[date_col]])), 
+                                max(year(building_data[[date_col]]))),
+                      step = 1)
+          ),
+          
+          # Floor range filter
+          conditionalPanel(
+            condition = "input.viz_type == 'price_per_sqm'",
+            checkboxGroupInput("floor_range", "Floor Range:",
+                            choices = unique(building_data[[floor_col]]),
+                            selected = unique(building_data[[floor_col]])[1])
+          )
+        )
+      )
     ),
-    rownames = FALSE,
-    class = 'stripe hover cell-border display',
-    style = 'bootstrap',
-    fillContainer = TRUE
+    column(
+      width = 8,
+      div(
+        style = "height: 100%;",
+        # Show different plots based on viz_type
+        conditionalPanel(
+          condition = "input.viz_type == 'price_trend'",
+          plotOutput("price_trend_plot", height = "250px")
+        ),
+        conditionalPanel(
+          condition = "input.viz_type == 'price_per_sqm'",
+          plotOutput("price_per_sqm_plot", height = "250px")
+        ),
+        conditionalPanel(
+          condition = "input.viz_type == 'unit_distribution'",
+          plotOutput("unit_distribution_plot", height = "250px")
+        )
+      )
+    )
   )
 })
 
-# --- Transactions Overlay Close Button ---
+# Price Trend Plot
+output$price_trend_plot <- renderPlot({
+  # Get inputs
+  req(input$viz_type == "price_trend")
+  req(transactions_overlay_visible())
+  
+  building_data <- get_transaction_data()
+  req(building_data)
+  
+  property_type <- selected_property_type()
+  
+  # Determine column names based on property type
+  if(property_type == "HDB") {
+    date_col <- "month"
+    price_col <- "resale_price"
+    type_col <- "flat_type"
+  } else {
+    date_col <- "contractDate"
+    price_col <- "price"
+    type_col <- "propertyType"
+  }
+  
+  # Filter by room type if not "all"
+  if(input$room_type_filter != "all") {
+    building_data <- building_data %>%
+      filter(!!sym(type_col) == input$room_type_filter)
+  }
+  
+  # Filter by time period
+  building_data <- building_data %>%
+    filter(year(!!sym(date_col)) >= input$time_period[1],
+           year(!!sym(date_col)) <= input$time_period[2])
+  
+  # Check if we have data after filtering
+  if(nrow(building_data) == 0) {
+    return(ggplot() + 
+             annotate("text", x = 0.5, y = 0.5, label = "No data for selected filters", size = 5) +
+             theme_void())
+  }
+  
+  # Convert date to proper format for plotting
+  building_data <- building_data %>%
+    mutate(plot_date = as.Date(!!sym(date_col)))
+  
+  # Create price trend plot
+  ggplot(building_data, aes(x = plot_date, y = !!sym(price_col))) +
+    geom_point(aes(color = !!sym(type_col)), alpha = 0.7) +
+    geom_smooth(method = "loess", se = TRUE, alpha = 0.2) +
+    labs(
+      title = "Price Trend Over Time",
+      x = "Date",
+      y = "Transaction Price (SGD)",
+      color = "Unit Type"
+    ) +
+    scale_y_continuous(labels = scales::dollar_format(prefix = "$", suffix = "", big.mark = ",")) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid.minor = element_blank()
+    )
+})
+
+# Price Per SQM Plot
+output$price_per_sqm_plot <- renderPlot({
+  # Get inputs
+  req(input$viz_type == "price_per_sqm")
+  req(transactions_overlay_visible())
+  
+  building_data <- get_transaction_data()
+  req(building_data)
+  
+  property_type <- selected_property_type()
+  
+  # Determine column names based on property type
+  if(property_type == "HDB") {
+    date_col <- "month"
+    price_col <- "resale_price"
+    area_col <- "floor_area_sqm"
+    floor_col <- "storey_range"
+    type_col <- "flat_type"
+  } else {
+    date_col <- "contractDate"
+    price_col <- "price"
+    area_col <- "area"
+    floor_col <- "floorRange"
+    type_col <- "propertyType"
+  }
+  
+  # Filter by room type if not "all"
+  if(input$room_type_filter != "all") {
+    building_data <- building_data %>%
+      filter(!!sym(type_col) == input$room_type_filter)
+  }
+  
+  # Filter by time period
+  building_data <- building_data %>%
+    filter(year(!!sym(date_col)) >= input$time_period[1],
+           year(!!sym(date_col)) <= input$time_period[2])
+  
+  # Filter by floor range if selected
+  if(!is.null(input$floor_range) && length(input$floor_range) > 0) {
+    building_data <- building_data %>%
+      filter(!!sym(floor_col) %in% input$floor_range)
+  }
+  
+  # Check if we have data after filtering
+  if(nrow(building_data) == 0) {
+    return(ggplot() + 
+             annotate("text", x = 0.5, y = 0.5, label = "No data for selected filters", size = 5) +
+             theme_void())
+  }
+  
+  # Create price per sqm column
+  building_data <- building_data %>%
+    mutate(price_per_sqm = !!sym(price_col) / !!sym(area_col),
+           plot_date = as.Date(!!sym(date_col)))
+  
+  # Create price per sqm plot
+  ggplot(building_data, aes(x = plot_date, y = price_per_sqm)) +
+    geom_point(aes(color = !!sym(floor_col)), alpha = 0.7) +
+    geom_smooth(method = "loess", se = TRUE, alpha = 0.2) +
+    labs(
+      title = "Price per Square Meter Over Time",
+      x = "Date",
+      y = "Price per SQM (SGD)",
+      color = "Floor Range"
+    ) +
+    scale_y_continuous(labels = scales::dollar_format(prefix = "$", suffix = "", big.mark = ",")) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid.minor = element_blank()
+    )
+})
+
+# Unit Distribution Plot
+output$unit_distribution_plot <- renderPlot({
+  # Get inputs
+  req(input$viz_type == "unit_distribution")
+  req(transactions_overlay_visible())
+  
+  building_data <- get_transaction_data()
+  req(building_data)
+  
+  property_type <- selected_property_type()
+  
+  # Determine column names based on property type
+  if(property_type == "HDB") {
+    type_col <- "flat_type"
+    area_col <- "floor_area_sqm"
+  } else {
+    type_col <- "propertyType"
+    area_col <- "area"
+  }
+  
+  # Check if we have data
+  if(nrow(building_data) == 0) {
+    return(ggplot() + 
+             annotate("text", x = 0.5, y = 0.5, label = "No data available", size = 5) +
+             theme_void())
+  }
+  
+  # Create unit distribution plot
+  ggplot(building_data, aes(x = !!sym(type_col), y = !!sym(area_col), fill = !!sym(type_col))) +
+    geom_boxplot() +
+    labs(
+      title = "Unit Size Distribution by Type",
+      x = "Unit Type",
+      y = "Area (SQM)",
+      fill = "Unit Type"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid.minor = element_blank()
+    )
+})
+
+# --- Dashboard Overlay Close Button ---
 observeEvent(input$close_transactions, {
   # Set reactive value to track state
   transactions_overlay_visible(FALSE)

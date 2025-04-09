@@ -67,7 +67,7 @@ output$property_details <- renderUI({
     total_transactions <- nrow(building_data)
     year_built <- building_data$lease_commence_date[1]
 
-    # Include the Past Transactions button only when a building is selected
+    # Include the Building Analytics button only when a building is selected
     HTML(paste0(
       "<div style='font-size: 18px; font-weight: bold;'>", building$block, " ", building$street_name, "</div>",
       "<div style='margin-top: 10px;'>",
@@ -79,7 +79,7 @@ output$property_details <- renderUI({
       "<div><strong>Area Range:</strong> ", min(building_data$floor_area_sqm), " - ", max(building_data$floor_area_sqm), " sqm</div>",
       "<div style='margin-top: 15px;'>",
       # Ensure the button ID matches the observer in overlay_logic.R
-      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
+      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Building Analytics</button>",
       "</div>",
       "</div>"
     ))
@@ -89,7 +89,7 @@ output$property_details <- renderUI({
     recent_price <- building_data$price[1]
     total_transactions <- nrow(building_data)
 
-    # Include the Past Transactions button only when a building is selected
+    # Include the Building Analytics button only when a building is selected
     HTML(paste0(
       "<div style='font-size: 18px; font-weight: bold;'>", building$project, "</div>",
       "<div style='margin-top: 10px;'>",
@@ -102,7 +102,7 @@ output$property_details <- renderUI({
       "<div><strong>Tenure:</strong> ", building_data$tenure[1], "</div>",
       "<div style='margin-top: 15px;'>",
       # Ensure the button ID matches the observer in overlay_logic.R
-      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
+      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Building Analytics</button>",
       "</div>",
       "</div>"
     ))

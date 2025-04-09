@@ -2,26 +2,38 @@
 // JavaScript functions for handling overlay visibility
 
 $(document).ready(function() {
-  // Handler for showing the transactions overlay
+  // Handler for showing the analytics dashboard overlay
   Shiny.addCustomMessageHandler('showTransactionsOverlay', function(message) {
-    console.log("JS: Showing transactions overlay");
+    console.log("JS: Showing analytics dashboard overlay");
     var overlay = $('#transactions_overlay');
     
-    // Make the overlay visible
-    overlay.css('display', 'flex');
+    // Set dashboard as not ready initially
+    Shiny.setInputValue('analytics_dashboard_ready', false);
     
-    // Add a small delay before triggering resize to help DataTable initialize properly
-    setTimeout(function() {
-      $(window).trigger('resize');
-      
-      // If DataTable exists, adjust columns
-      if ($.fn.DataTable.isDataTable('#transactions_table')) {
-        $('#transactions_table').DataTable().columns.adjust().draw();
-      }
-    }, 100);
+    // Make the overlay visible immediately with the loading indicator
+    overlay.css('display', 'flex');
     
     // Update hidden input to track general overlay state
     Shiny.setInputValue('overlays_visible', true);
+    
+    // Force Shiny to recalculate the analytics_dashboard UI immediately
+    Shiny.setInputValue('refresh_analytics_dashboard', Date.now(), {priority: 'event'});
+    
+    // Trigger window resize to ensure proper layout
+    $(window).trigger('resize');
+    
+    // After a short delay, trigger a more comprehensive update 
+    // This ensures plots and other elements render properly
+    setTimeout(function() {
+      // Force Shiny to update all reactive elements
+      Shiny.setInputValue('refresh_analytics_dashboard', Date.now() + 1, {priority: 'event'});
+      
+      // Notify Shiny that the dashboard is ready to be shown
+      Shiny.setInputValue('analytics_dashboard_ready', true);
+      
+      // If there are any plots, manually trigger their update
+      $(document).trigger('shiny:visualchange');
+    }, 800); // Longer delay to ensure dashboard is fully rendered
   });
 
   // Handler for hiding the transactions overlay
