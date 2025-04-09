@@ -385,9 +385,11 @@ observeEvent(input$property_map_marker_click, {
   # Reset selection when no click or no id
   if (is.null(click) || is.null(click$id)) {
     selected_building(NULL)
+    # Hide the right overlay when clicking outside of markers
+    session$sendCustomMessage("hideRightOverlay", list())
     return()
   }
-
+  
   property_type <- selected_property_type()
 
   # Get appropriate dataset
@@ -397,6 +399,8 @@ observeEvent(input$property_map_marker_click, {
     filtered_ura_data()
   }
 
+  building_found <- FALSE  # Flag to track if we found a matching building
+  
   # Parse the building_id to identify which building was clicked
   if(property_type == "HDB") {
     # For HDB, the ID is in format "block street_name"
@@ -426,6 +430,7 @@ observeEvent(input$property_map_marker_click, {
 
     if(nrow(matches) > 0) {
       selected_building(matches)
+      building_found <- TRUE
     } else {
       # Last resort - try to match by coordinates
       if(!is.null(click$lat) && !is.null(click$lng)) {
@@ -437,6 +442,7 @@ observeEvent(input$property_map_marker_click, {
 
         if(nrow(closest_match) > 0) {
           selected_building(closest_match)
+          building_found <- TRUE
         }
       }
     }
@@ -484,7 +490,15 @@ observeEvent(input$property_map_marker_click, {
 
     if(!is.null(matches) && nrow(matches) > 0) {
       selected_building(matches)
+      building_found <- TRUE
     }
+  }
+  
+  # Show right overlay only if a building was found
+  if(building_found) {
+    session$sendCustomMessage("showRightOverlay", list())
+  } else {
+    session$sendCustomMessage("hideRightOverlay", list())
   }
 })
 

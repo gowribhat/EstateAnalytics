@@ -2,6 +2,37 @@
 // JavaScript functions for handling overlay visibility
 
 $(document).ready(function() {
+  // Handler for showing the right overlay with building details
+  Shiny.addCustomMessageHandler('showRightOverlay', function(message) {
+    console.log("JS: Showing right overlay with building details");
+    var overlay = $('#right_overlay');
+    
+    // Make the overlay visible
+    overlay.css('display', 'block');
+    
+    // Update hidden input to track general overlay state
+    Shiny.setInputValue('overlays_visible', true);
+    
+    // Trigger window resize to ensure proper layout
+    $(window).trigger('resize');
+  });
+
+  // Handler for hiding the right overlay
+  Shiny.addCustomMessageHandler('hideRightOverlay', function(message) {
+    console.log("JS: Hiding right overlay");
+    var overlay = $('#right_overlay');
+    
+    // Hide the overlay
+    overlay.css('display', 'none');
+    
+    // Update hidden input to track overlay state
+    if ($('.left-overlay:visible, #transactions_overlay:visible').length === 0) {
+      Shiny.setInputValue('overlays_visible', false);
+    } else {
+      Shiny.setInputValue('overlays_visible', true);
+    }
+  });
+  
   // Handler for showing the analytics dashboard overlay
   Shiny.addCustomMessageHandler('showTransactionsOverlay', function(message) {
     console.log("JS: Showing analytics dashboard overlay");

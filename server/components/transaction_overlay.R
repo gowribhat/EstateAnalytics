@@ -119,7 +119,7 @@ output$analytics_dashboard <- renderUI({
     column(
       width = 4,
       div(
-        style = "height: 100%; overflow-y: auto;", # Make only the controls panel scrollable
+        style = "height: 100%; overflow-y: auto; overflow-x: hidden; max-height: 400px;", # Only vertical scrolling with fixed height
         wellPanel(
           style = "background-color: #f8f9fa;",
           h4("Analytics Controls"),
@@ -127,7 +127,7 @@ output$analytics_dashboard <- renderUI({
           radioButtons("viz_type", "Visualization Type:", 
                       choices = c("Price Trend" = "price_trend", 
                                 "Price per SQM" = "price_per_sqm",
-                                "Unit Distribution" = "unit_distribution"),
+                                "Transaction Volume" = "transaction_volume"),
                       selected = "price_trend"),
           
           # Room type filter (if applicable)
@@ -147,15 +147,16 @@ output$analytics_dashboard <- renderUI({
                       max = max(year(building_data[[date_col]])),
                       value = c(min(year(building_data[[date_col]])), 
                                 max(year(building_data[[date_col]]))),
-                      step = 1)
+                      step = 1,
+                      sep = "")  # Remove comma separator for year values
           ),
           
-          # Floor range filter
+          # Floor range filter - sorted from low to high floors with all floors selected by default
           conditionalPanel(
             condition = "input.viz_type == 'price_per_sqm'",
             checkboxGroupInput("floor_range", "Floor Range:",
-                            choices = unique(building_data[[floor_col]]),
-                            selected = unique(building_data[[floor_col]])[1])
+                            choices = sort_floor_ranges(unique(building_data[[floor_col]])),
+                            selected = sort_floor_ranges(unique(building_data[[floor_col]])))
           )
         )
       )
@@ -163,7 +164,7 @@ output$analytics_dashboard <- renderUI({
     column(
       width = 8,
       div(
-        style = "height: 100%;",
+        style = "height: 400px; overflow: hidden;", # Prevent all scrolling with fixed height
         # Show different plots based on viz_type
         conditionalPanel(
           condition = "input.viz_type == 'price_trend'",
@@ -174,8 +175,8 @@ output$analytics_dashboard <- renderUI({
           plotOutput("price_per_sqm_plot", height = "250px")
         ),
         conditionalPanel(
-          condition = "input.viz_type == 'unit_distribution'",
-          plotOutput("unit_distribution_plot", height = "250px")
+          condition = "input.viz_type == 'transaction_volume'",
+          plotOutput("transaction_volume_plot", height = "250px")
         )
       )
     )
@@ -240,7 +241,7 @@ output$price_trend_plot <- renderPlot({
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14),
-      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.text.x = element_text(angle = 0, hjust = 0.5),
       panel.grid.minor = element_blank()
     )
 })
@@ -314,15 +315,15 @@ output$price_per_sqm_plot <- renderPlot({
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14),
-      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.text.x = element_text(angle = 0, hjust = 0.5),
       panel.grid.minor = element_blank()
     )
 })
 
-# Unit Distribution Plot
-output$unit_distribution_plot <- renderPlot({
+# Transaction Volume Plot with Market Insights
+output$transaction_volume_plot <- renderPlot({
   # Get inputs
-  req(input$viz_type == "unit_distribution")
+  req(input$viz_type == "transaction_volume")
   req(transactions_overlay_visible())
   
   building_data <- get_transaction_data()
@@ -332,11 +333,11 @@ output$unit_distribution_plot <- renderPlot({
   
   # Determine column names based on property type
   if(property_type == "HDB") {
-    type_col <- "flat_type"
-    area_col <- "floor_area_sqm"
+    date_col <- "month"
+    price_col <- "resale_price"
   } else {
-    type_col <- "propertyType"
-    area_col <- "area"
+    date_col <- "contractDate"
+    price_col <- "price"
   }
   
   # Check if we have data
@@ -346,21 +347,70 @@ output$unit_distribution_plot <- renderPlot({
              theme_void())
   }
   
-  # Create unit distribution plot
-  ggplot(building_data, aes(x = !!sym(type_col), y = !!sym(area_col), fill = !!sym(type_col))) +
-    geom_boxplot() +
+  # Process data for transaction volume analysis
+  volume_data <- building_data %>%
+    mutate(
+      transaction_date = as.Date(!!sym(date_col)),
+      transaction_year = year(transaction_date)
+    ) %>%
+    group_by(transaction_year) %>%
+    summarize(
+      volume = n(),
+      avg_price = mean(!!sym(price_col)),
+      .groups = "drop"
+    ) %>%
+    arrange(transaction_year) %>%
+    # Calculate year-to-year price changes
+    mutate(
+      price_change = c(0, diff(avg_price)),
+      price_change_pct = c(0, diff(avg_price) / avg_price[-n()] * 100),
+      market_direction = case_when(
+        price_change_pct > 2 ~ "Rising",
+        price_change_pct < -2 ~ "Falling",
+        TRUE ~ "Stable"
+      )
+    )
+  
+  # Create a dual-axis plot for volume and price trends
+  ggplot(volume_data, aes(x = factor(transaction_year))) +
+    # Volume bars
+    geom_col(aes(y = volume, fill = market_direction), alpha = 0.8) +
+    # Price trend line (on secondary y-axis)
+    geom_line(aes(y = avg_price / max(avg_price) * max(volume) * 0.8, 
+                 group = 1), 
+             color = "#2C3E50", size = 1, linetype = "dashed") +
+    geom_point(aes(y = avg_price / max(avg_price) * max(volume) * 0.8), 
+              color = "#2C3E50", size = 3) +
+    # Market direction color scale
+    scale_fill_manual(values = c(
+      "Rising" = "#1a9850", 
+      "Stable" = "#4575b4", 
+      "Falling" = "#d73027"
+    )) +
+    # Labels
     labs(
-      title = "Unit Size Distribution by Type",
-      x = "Unit Type",
-      y = "Area (SQM)",
-      fill = "Unit Type"
+      title = "Transaction Volume & Market Trends",
+      subtitle = "Volume bars with price trend overlay (dashed line)",
+      x = "Year",
+      y = "Number of Transactions",
+      fill = "Market Direction"
     ) +
+    # Custom theme
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.grid.minor = element_blank()
-    )
+      axis.text.x = element_text(angle = 0, hjust = 0.5),
+      panel.grid.minor = element_blank(),
+      legend.position = "right"
+    ) +
+    # Add annotations
+    annotate("text", 
+             x = length(volume_data$transaction_quarter), 
+             y = max(volume_data$volume) * 0.95,
+             label = "Price Trend →",
+             color = "#2C3E50",
+             hjust = 1,
+             fontface = "italic")
 })
 
 # --- Dashboard Overlay Close Button ---
