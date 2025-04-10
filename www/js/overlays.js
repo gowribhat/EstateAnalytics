@@ -8,7 +8,7 @@ $(document).ready(function() {
     var overlay = $('#right_overlay');
     
     // Make the overlay visible
-    overlay.css('display', 'block');
+    overlay.css('display', 'flex');
     
     // Update hidden input to track general overlay state
     Shiny.setInputValue('overlays_visible', true);
