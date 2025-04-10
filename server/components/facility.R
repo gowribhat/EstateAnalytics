@@ -54,11 +54,11 @@ distances <- function(x, y) {
 }
 
 # Find nearest facilities
-get_nearest <- function(a, b, n = 1) {
+get_nearest <- function(a, b) {
   dists <- sapply(1:nrow(b), function(i) {
     distances(a, b[i, ])
   })
-  nearest_indices <- order(dists)[1:n]
+  nearest_indices <- order(dists)[1]
   clean <- b[nearest_indices, ]
   clean$distance <- dists[nearest_indices]
   return(clean)
