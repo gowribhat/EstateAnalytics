@@ -135,11 +135,10 @@ nearby_facilities <- reactive({
     facility_data$park <- get_nearest(building, park)
   }
   if ("School" %in% selected) {
-    facility_data$school <- get_nearest(building, sch)
+    facility_data$sch <- get_nearest(building, sch)
   }
   if ("Supermarket" %in% selected) {
-    facility_data$supermarket <- get_nearest(building, mart)
+    facility_data$mart <- get_nearest(building, mart)
   }
-  
   return(facility_data)
 })

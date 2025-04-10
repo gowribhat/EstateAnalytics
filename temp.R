@@ -192,17 +192,17 @@ server <- function(input, output, session) {
   distances <- function(x,y) {
     distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
   }
-  get_nearest <- function(a, b, n = 1) {
+  get_nearest <- function(a, b) {
     # Calculate distances from the HDB location to all childcare centers
     dists <- sapply(1:nrow(b), function(i) {
       distances(a, b[i, ])
     })
     
-    # Get the indices of the 5 nearest childcare centers
-    nearest_indices <- order(dists)[1:n]
+    # Get the indices of the nearest facility
+    nearest_indices <- order(dists)[1]
     clean <- b[nearest_indices, ]
     clean$distance <- dists[nearest_indices]
-    # Return the rows of the nearest childcare centers
+    # Return the rows of the nearest facility
     return(clean)
   }
   

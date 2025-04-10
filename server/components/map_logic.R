@@ -8,7 +8,7 @@
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
 # --- Base Map Rendering ---
-source("server/components/facility.R")
+source("C:/Users/User/R-4.4.3/Project/server/components/facility.R")
 output$property_map <- renderLeaflet({
   leaflet() %>%
     addTiles() %>% # Add default OpenStreetMap map tiles
@@ -114,37 +114,26 @@ markers_to_show <- reactive({
 })
 
 # Reactive to get visible data with spatial filtering - supports both HDB and private properties
+# Reactive to get visible data with spatial filtering - supports both HDB and private properties
 visible_filtered_data <- reactive({
   # Check selected property type
   property_type <- selected_property_type()
-
+  
   # Get appropriate dataset based on property type
   data <- if(property_type == "HDB") {
     filtered_hdb_data()
   } else {
     filtered_ura_data()
   }
-  visible_filtered_data <- reactive({
-  data <- if(selected_property_type() == "HDB") {
-    filtered_hdb_data()
-  } else {
-    filtered_ura_data()
-  }
-
-  # Add facility distances
-  data <- data %>%
-    mutate(distance_to_facility = calculate_distances(property_location, facilities))
   
-  return(data)
-})
   req(data)
   show_markers <- should_show_markers()
-
+  
   # Exit early if zoom level is too low or no data
   if (!show_markers || nrow(data) == 0) {
     return(NULL)
   }
-
+  
   # Get current map bounds if available for spatial filtering
   bounds <- input$property_map_bounds
   
@@ -166,16 +155,16 @@ visible_filtered_data <- reactive({
         latitude <= bounds_expanded$north
       )
   }
-
+  
   # Optional early exit if no data in view
   if (nrow(data) == 0) {
     return(NULL)
   }
-
+  
   # Filter for recent transactions (within 5 years from current date)
   current_date <- as.Date("2025-04-03")  # Current date from context
   five_years_ago <- current_date - (5 * 365)
-
+  
   # Date column has different names in HDB vs URA
   if(property_type == "HDB") {
     data <- data %>%
@@ -186,7 +175,7 @@ visible_filtered_data <- reactive({
       filter(as.Date(contractDate) >= five_years_ago) %>%
       arrange(desc(contractDate))
   }
-
+  
   # Implement spatial pre-clustering to reduce markers
   zoom <- current_zoom()
   grid_size <- if(zoom >= 16) 0.0005 else if(zoom >= 14) 0.001 else if(zoom >= 13) 0.002 else 0.004
@@ -212,6 +201,7 @@ visible_filtered_data <- reactive({
   if (nrow(data) > limit) {
     data <- head(data, limit)
   }
+  
   return(data)
 })
 
@@ -307,16 +297,14 @@ observe({
       popup_content <- paste0(
         "<strong>", data$block, " ", data$street_name, "</strong><br>",
         "Price: $", format(data$resale_price, big.mark = ","), "<br>",
-        "Date: ", data$month, "<br>",
-        "Distance to Facility: ", data$distance_to_facility, " meters"
+        "Date: ", data$month
       )
       data$building_id <- paste(data$block, data$street_name)
     } else {
       popup_content <- paste0(
         "<strong>", data$project, " - ", data$street, "</strong><br>",
         "Price: $", format(data$price, big.mark = ","), "<br>",
-        "Date: ", data$contractDate, "<br>",
-        "Distance to Facility: ", data$distance_to_facility, " meters"
+        "Date: ", data$contractDate
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
@@ -410,7 +398,17 @@ observeEvent(input$property_map_marker_click, {
   } else {
     filtered_ura_data()
   }
-
+  
+  facility_data <- nearby_facilities()
+  data <- data %>%
+    mutate(dist_to_childcare = get_nearest(data, childcare))
+  popup_content <- paste0(popup_content,"<br>",
+                          "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
+                          "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
+                          "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
+                          "Nearest Park is ", data$dist_to_park, " m away", "<br>",
+                          "Nearest School is ", data$dist_to_sch, " m away", "<br>",
+                          "Nearest Supermarket is ", data$dist_to_mart, " m away")
   # Parse the building_id to identify which building was clicked
   if(property_type == "HDB") {
     # For HDB, the ID is in format "block street_name"
