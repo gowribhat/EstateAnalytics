@@ -19,7 +19,6 @@ output$property_map <- renderLeaflet({
     )
 })
 
-facilities_data <- nearby_facilities()
 # --- Reverse Geocoding for Map Center ---
 # Debounce the map center input to avoid rapid updates during panning
 map_center_debounced <- reactive({
