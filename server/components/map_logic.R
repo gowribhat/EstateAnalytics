@@ -8,7 +8,7 @@
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
 # --- Base Map Rendering ---
-source("C:/Users/User/R-4.4.3/Project/temp.R")
+source("server/components/facility.R")
 output$property_map <- renderLeaflet({
   leaflet() %>%
     addTiles() %>% # Add default OpenStreetMap map tiles
@@ -19,6 +19,7 @@ output$property_map <- renderLeaflet({
     )
 })
 
+facilities_data <- nearby_facilities()
 # --- Reverse Geocoding for Map Center ---
 # Debounce the map center input to avoid rapid updates during panning
 map_center_debounced <- reactive({
@@ -124,7 +125,19 @@ visible_filtered_data <- reactive({
   } else {
     filtered_ura_data()
   }
+  visible_filtered_data <- reactive({
+  data <- if(selected_property_type() == "HDB") {
+    filtered_hdb_data()
+  } else {
+    filtered_ura_data()
+  }
 
+  # Add facility distances
+  data <- data %>%
+    mutate(distance_to_facility = calculate_distances(property_location, facilities))
+  
+  return(data)
+})
   req(data)
   show_markers <- should_show_markers()
 
@@ -296,7 +309,7 @@ observe({
         "<strong>", data$block, " ", data$street_name, "</strong><br>",
         "Price: $", format(data$resale_price, big.mark = ","), "<br>",
         "Date: ", data$month, "<br>",
-        "Total score based on proximity of facilities: ", sum(score*weight)
+        "Distance to Facility: ", data$distance_to_facility, " meters"
       )
       data$building_id <- paste(data$block, data$street_name)
     } else {
@@ -304,7 +317,7 @@ observe({
         "<strong>", data$project, " - ", data$street, "</strong><br>",
         "Price: $", format(data$price, big.mark = ","), "<br>",
         "Date: ", data$contractDate, "<br>",
-        "Total score based on proximity of facilities: ", sum(weight*score)
+        "Distance to Facility: ", data$distance_to_facility, " meters"
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }

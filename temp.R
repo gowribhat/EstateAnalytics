@@ -624,7 +624,45 @@ server <- function(input, output, session) {
       ))
     }
   })
-  
+  # Render property details including user-selected facilities, distances, and total score
+  output$property_details <- renderUI({
+    building <- selected_building()
+    facility_data <- nearest_facilities()
+    ranking <- facility_ranking()
+    total_score <- score()
+    
+    if (is.null(building) || is.null(facility_data)) {
+      return(HTML("<p>Click on a property marker to see details.</p>"))
+    }
+    
+    # Build HTML content for display
+    content <- paste0(
+      "<div style='font-size: 18px; font-weight: bold;'>", building$block, " ", building$street_name, "</div>",
+      "<div style='margin-top: 10px;'>"
+    )
+    
+    for (i in seq_len(nrow(ranking))) {
+      facility <- ranking$facility[i]
+      if (!is.null(facility_data[[tolower(facility)]])) {
+        content <- paste0(
+          content,
+          "<div><strong>", facility, " (Weight: ", round(ranking$weight[i], 2), "):</strong> ",
+          facility_data[[tolower(facility)]]$distance, " m</div>"
+        )
+      }
+    }
+    
+    content <- paste0(
+      content,
+      "<div><strong>Total Score:</strong> ", round(total_score, 2), " %</div>",
+      "<div style='margin-top: 15px;'>",
+      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
+      "</div>",
+      "</div>"
+    )
+    
+    HTML(content)
+  })
   # Building-specific price density plot
   output$building_plot <- renderPlot({
     # Add tryCatch to gracefully handle errors
