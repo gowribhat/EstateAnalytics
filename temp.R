@@ -897,7 +897,7 @@ server <- function(input, output, session) {
     showModal(modalDialog(
       title = "Select Nearby Facilities (Priority)",
       # Using checkboxes as a simpler alternative to drag-and-drop
-      checkboxGroupInput("modal_facility", "Select desired facilities:",
+      checkboxGroupInput(inputId="modal_facility", label="Select desired facilities:",
                          choices = c("Childcare Centres", "Gyms", "LRT/MRT", "Parks", "Schools", "Supermarkets"),
                          selected = c("LRT/MRT", "Schools")),
       # Add logic here later to handle priority if needed, or use a different input type

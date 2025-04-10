@@ -115,30 +115,32 @@ score <- reactive({
 })
 
 # Generate nearest facility data based on user selection
-nearby_facilities <- reactive({
-  selected <- input$selected_facilities
-  building <- facilities()
-  
-  if (is.null(building)) return(NULL)
-  
-  facility_data <- list()
-  if ("Childcare" %in% selected) {
-    facility_data$childcare <- get_nearest(building, childcare)
-  }
-  if ("Gym" %in% selected) {
-    facility_data$gym <- get_nearest(building, gym)
-  }
-  if ("MRT" %in% selected) {
-    facility_data$mrt <- get_nearest(building, mrt)
-  }
-  if ("Park" %in% selected) {
-    facility_data$park <- get_nearest(building, park)
-  }
-  if ("School" %in% selected) {
-    facility_data$sch <- get_nearest(building, sch)
-  }
-  if ("Supermarket" %in% selected) {
-    facility_data$mart <- get_nearest(building, mart)
-  }
-  return(facility_data)
-})
+server <- function(input, output,session){
+  nearby_facilities <- reactive({
+    selected <- input$selected_facilities
+    building <- facilities()
+    
+    if (is.null(building)) return(NULL)
+    
+    facility_data <- list()
+    if ("Childcare" %in% selected) {
+      facility_data$childcare <- get_nearest(building, childcare)
+    }
+    if ("Gym" %in% selected) {
+      facility_data$gym <- get_nearest(building, gym)
+    }
+    if ("MRT" %in% selected) {
+      facility_data$mrt <- get_nearest(building, mrt)
+    }
+    if ("Park" %in% selected) {
+      facility_data$park <- get_nearest(building, park)
+    }
+    if ("School" %in% selected) {
+      facility_data$sch <- get_nearest(building, sch)
+    }
+    if ("Supermarket" %in% selected) {
+      facility_data$mart <- get_nearest(building, mart)
+    }
+    return(facility_data)
+  })
+}

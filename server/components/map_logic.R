@@ -125,7 +125,6 @@ visible_filtered_data <- reactive({
   } else {
     filtered_ura_data()
   }
-  
   req(data)
   show_markers <- should_show_markers()
   
@@ -308,7 +307,16 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    
+    #facility_data <- nearby_facilities()
+
+    #data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
+    popup_content <- paste0(popup_content,"<br>",
+                            "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
+                            "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
+                            "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
+                            "Nearest Park is ", data$dist_to_park, " m away", "<br>",
+                            "Nearest School is ", data$dist_to_sch, " m away", "<br>",
+                            "Nearest Supermarket is ", data$dist_to_mart, " m away")
     # Use a different marker rendering approach based on the number of points
     if(nrow(data) > 500) {
       # For large datasets, use more aggressive clustering and simpler markers
@@ -399,16 +407,6 @@ observeEvent(input$property_map_marker_click, {
     filtered_ura_data()
   }
   
-  facility_data <- nearby_facilities()
-  data <- data %>%
-    mutate(dist_to_childcare = get_nearest(data, childcare))
-  popup_content <- paste0(popup_content,"<br>",
-                          "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
-                          "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
-                          "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
-                          "Nearest Park is ", data$dist_to_park, " m away", "<br>",
-                          "Nearest School is ", data$dist_to_sch, " m away", "<br>",
-                          "Nearest Supermarket is ", data$dist_to_mart, " m away")
   # Parse the building_id to identify which building was clicked
   if(property_type == "HDB") {
     # For HDB, the ID is in format "block street_name"
