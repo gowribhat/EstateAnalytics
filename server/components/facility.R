@@ -60,15 +60,24 @@ facilities <- reactive({
         street == building$street
       )
   }
-  building_data$childcare <- get_nearest(building, childcare)$distance
-  building_data$gym <- get_nearest(building, gym)$distance
-  building_data$mrt <- get_nearest(building, mrt)$distance
-  building_data$park <- get_nearest(building,park)$distance
-  building_data$sch <- get_nearest(building, sch)$distance
-  building_data$mart <- get_nearest(building, mart)$distance
+  building_data$childcare <- round(get_nearest(building, childcare)$distance)
+  building_data$gym <- round(get_nearest(building, gym)$distance)
+  building_data$mrt <- round(get_nearest(building, mrt)$distance)
+  building_data$park <- round(get_nearest(building,park)$distance)
+  building_data$sch <- round(get_nearest(building, sch)$distance)
+  building_data$mart <- round(get_nearest(building, mart)$distance)
   
+  weight <- c(15,10,25,15,20,15)
+  norm <- function(x){max(100,min(1600,x))}
+  norm_dist <- sapply(c(building_data$childcare, building_data$gym, building_data$mrt,
+                        building_data$park,building_data$sch,building_data$mart),norm)
+  
+  score <- (1600-norm_dist)/1500
+  building_data$total_score <- sum(weight*score)
   return(building_data)
 })
+
+
 
 # Calculate dynamic weights based on user-selected facilities
 calculate_weights <- function(selected_facilities) {

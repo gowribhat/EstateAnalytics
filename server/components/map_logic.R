@@ -319,14 +319,16 @@ observe({
              dist_to_mrt = facility_data()$mrt[1],
              dist_to_park = facility_data()$park[1],
              dist_to_sch = facility_data()$sch[1],
-             dist_to_mart = facility_data()$mart[1])
+             dist_to_mart = facility_data()$mart[1],
+             total = facility_data()$total_score[1])
     popup_content <- paste0(popup_content,"<br>",
-                            "Nearest Childcare Centre is ", round(data$dist_to_childcare), " m away", "<br>",
+                            "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
                             "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
                             "Nearest Park is ", data$dist_to_park, " m away", "<br>",
                             "Nearest School is ", data$dist_to_sch, " m away", "<br>",
-                            "Nearest Supermarket is ", data$dist_to_mart, " m away")
+                            "Nearest Supermarket is ", data$dist_to_mart, " m away", "<br>",
+                            "Total Proximity Score is ", data$total, "%")
     
     
     # Use a different marker rendering approach based on the number of points
