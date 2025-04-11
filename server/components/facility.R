@@ -63,7 +63,7 @@ facilities <- reactive({
   building_data$childcare <- get_nearest(building, childcare)$distance
   building_data$gym <- get_nearest(building, gym)$distance
   building_data$mrt <- get_nearest(building, mrt)$distance
-  building_data$park <- get_nearest(building, park)$distance
+  building_data$park <- get_nearest(building,park)$distance
   building_data$sch <- get_nearest(building, sch)$distance
   building_data$mart <- get_nearest(building, mart)$distance
   

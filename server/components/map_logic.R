@@ -314,14 +314,14 @@ observe({
       facilities()
     })
     data <- data %>% 
-      mutate(dist_to_childcare = facility_data()$childcare,
-             dist_to_gym = facility_data()$gym,
-             dist_to_mrt = facility_data()$mrt,
-             dist_to_park = facility_data()$park,
-             dist_to_sch = facility_data()$sch,
-             dist_to_mart = facility_data()$mart)
+      mutate(dist_to_childcare = facility_data()$childcare[1],
+             dist_to_gym = facility_data()$gym[1],
+             dist_to_mrt = facility_data()$mrt[1],
+             dist_to_park = facility_data()$park[1],
+             dist_to_sch = facility_data()$sch[1],
+             dist_to_mart = facility_data()$mart[1])
     popup_content <- paste0(popup_content,"<br>",
-                            "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
+                            "Nearest Childcare Centre is ", round(data$dist_to_childcare), " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
                             "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
                             "Nearest Park is ", data$dist_to_park, " m away", "<br>",
