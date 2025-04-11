@@ -315,13 +315,13 @@ observe({
     })
     
     output$Table <- renderTable({
-    data$dist_to_childcare <- facility_data()$childcare
-    data$dist_to_gym <- facility_data()$gym
-    data$dist_to_mrt <- facility_data()$mrt
-    data$dist_to_park <- facility_data()$park
-    data$dist_to_sch <- facility_data()$sch
-    data$dist_to_mart <- facility_data()$mart
-    return(data)
+      data$dist_to_childcare <- facility_data()$childcare
+      data$dist_to_gym <- facility_data()$gym
+      data$dist_to_mrt <- facility_data()$mrt
+      data$dist_to_park <- facility_data()$park
+      data$dist_to_sch <- facility_data()$sch
+      data$dist_to_mart <- facility_data()$mart
+      return(data)
     })
     
     popup_content <- paste0(popup_content,"<br>",
