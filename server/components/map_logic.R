@@ -314,12 +314,16 @@ observe({
       facilities()
     })
     
-    server <- function(input,output,session){
-      output$Table <- renderTable({
-      data$dist_to_childcare <- facility_data()$childcare
-      return(data)
+    output$Table <- renderTable({
+    data$dist_to_childcare <- facility_data()$childcare
+    data$dist_to_gym <- facility_data()$gym
+    data$dist_to_mrt <- facility_data()$mrt
+    data$dist_to_park <- facility_data()$park
+    data$dist_to_sch <- facility_data()$sch
+    data$dist_to_mart <- facility_data()$mart
+    return(data)
     })
-    }
+    
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
