@@ -33,7 +33,6 @@ get_nearest <- function(a, b) {
   return(clean)
 }
 
-
 # Reactive data for selected building and its facilities
 facilities <- reactive({
   building <- selected_building()
@@ -77,7 +76,7 @@ facilities <- reactive({
     building_data$sch <- get_nearest(building, sch)
   }
   if ("Supermarket" %in% selected) {
-    building$mart <- get_nearest(building, mart)
+    facility_data$mart <- get_nearest(building, mart)
   }
   return(building_data)
 })
