@@ -308,7 +308,13 @@ observe({
     facility_data <- reactive({
       facilities()
     })
-    data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
+    
+    output$Table <- renderTable({
+      facility_data <- facilities()
+      req(facility_data)
+      data <- data %>% mutate(dist_to_childcare = facility_data()$childcare)
+      return(data)
+    })
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
