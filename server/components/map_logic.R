@@ -309,9 +309,14 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
+    
+    facility_data <- reactive({
+      facilities()
+    })
+    
     server <- function(input,output,session){
       output$Table <- renderTable({
-      data$dist_to_childcare <- facilities()$childcare
+      data$dist_to_childcare <- facility_data()$childcare
       return(data)
     })
     }
