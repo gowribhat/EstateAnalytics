@@ -313,16 +313,13 @@ observe({
     facility_data <- reactive({
       facilities()
     })
-    output$Table <- renderTable({
-      data <- data %>% 
-        mutate(dist_to_childcare = facility_data()$childcare,
-               dist_to_gym = facility_data()$gym,
-               dist_to_mrt = facility_data()$mrt,
-               dist_to_park = facility_data()$park,
-               dist_to_sch = facility_data()$sch,
-               dist_to_mart = facility_data()$mart)
-      return(data)
-    })
+    data <- data %>% 
+      mutate(dist_to_childcare = facility_data()$childcare,
+             dist_to_gym = facility_data()$gym,
+             dist_to_mrt = facility_data()$mrt,
+             dist_to_park = facility_data()$park,
+             dist_to_sch = facility_data()$sch,
+             dist_to_mart = facility_data()$mart)
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",

@@ -186,8 +186,8 @@ server <- function(input, output, session) {
   sch <- readRDS(paste0(resource_path,"schools.rds"))
   mart <- readRDS(paste0(resource_path,"Supermarkets.rds"))
   
-  #hdb <- readRDS(paste0(resource_path,"hdb.rds"))
-  #priv <- readRDS(paste0(resource_path,"ura_private.rds"))
+  hdb <- readRDS(paste0(resource_path,"hdb.rds"))
+  priv <- readRDS(paste0(resource_path,"ura_private.rds"))
   
   distances <- function(x,y) {
     distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
