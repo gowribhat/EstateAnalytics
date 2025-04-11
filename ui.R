@@ -27,8 +27,8 @@ ui <- fluidPage(
         var windowWidth = window.innerWidth;
         var overlays = document.querySelectorAll('.left-overlay, .right-overlay');
         
-        // If window width is less than 600px, hide the overlays
-        if (windowWidth < 600) {
+        // If window width is less than 1000px, hide the overlays
+        if (windowWidth < 1000) {
           overlays.forEach(function(overlay) {
             overlay.style.display = 'none';
           });
