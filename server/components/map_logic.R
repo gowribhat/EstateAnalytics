@@ -9,6 +9,7 @@
 
 # --- Base Map Rendering ---
 source("C:/Users/User/R-4.4.3/Project/server/components/facility.R")
+source("C:/Users/User/R-4.4.3/Project/temp.R")
 output$property_map <- renderLeaflet({
   leaflet() %>%
     addTiles() %>% # Add default OpenStreetMap map tiles
@@ -252,13 +253,11 @@ observe({
       }
     }
   }
-  
   # Exit if no data to show
   if (is.null(data) || nrow(data) == 0) {
     output$price_legend <- renderUI({ NULL })
     return()
   }
-
   # Create price palette based on property type
   if(property_type == "HDB") {
     price_palette <- colorNumeric(
@@ -275,7 +274,6 @@ observe({
     )
     price_col <- data$price
   }
-  
   # Apply the appropriate visualization based on mode
   if (vis_mode == "heatmap") {
     # Add heatmap layer
@@ -307,10 +305,7 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    reactive({
-      facility_data <- nearby_facilities()
-      data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
-    })
+    #facility_data <- facilities()
     #data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",

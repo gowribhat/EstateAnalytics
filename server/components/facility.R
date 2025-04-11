@@ -5,6 +5,7 @@
 # - Nearby facilities: Displays detailed information about facilities near the selected building.
 # - Visualizations: Generates plots and tables for building-specific data.
 
+source("C:/Users/User/R-4.4.3/Project/temp.R")
 resource_path <- here("data")
 
 childcare <- readRDS(paste0(resource_path, "/childcares.rds"))
@@ -41,7 +42,6 @@ facilities <- reactive({
   if (is.null(building)) {
     return(NULL)  # No building selected
   }
-  
   # Filter building data based on property type
   if (property_type == "HDB") {
     data <- filtered_hdb_data()
@@ -105,57 +105,3 @@ facility_ranking <- reactive({
 
 # Calculate total score based on selected facilities and weights
 # Generate nearest facility data based on user selection
-server <- function(input, output,session){
-  nearby_facilities <- reactive({
-    selected <- input$selected_facilities
-    building <- facilities()
-    
-    if (is.null(building)) return(NULL)
-    
-    facility_data <- list()
-    if ("Childcare" %in% selected) {
-      facility_data$childcare <- get_nearest(building, childcare)
-    }
-    if ("Gym" %in% selected) {
-      facility_data$gym <- get_nearest(building, gym)
-    }
-    if ("MRT" %in% selected) {
-      facility_data$mrt <- get_nearest(building, mrt)
-    }
-    if ("Park" %in% selected) {
-      facility_data$park <- get_nearest(building, park)
-    }
-    if ("School" %in% selected) {
-      facility_data$sch <- get_nearest(building, sch)
-    }
-    if ("Supermarket" %in% selected) {
-      facility_data$mart <- get_nearest(building, mart)
-    }
-    return(facility_data)
-  })
-}
-score <- reactive({
-  building_data <- facilities()
-  facility_data <- nearby_facilities()  # Nearest facility data
-  ranking <- facility_ranking()  # User ranking and weights
-  
-  if (is.null(building_data) || is.null(facility_data) || is.null(ranking)) {
-    return(0)
-  }
-  
-  # Normalize distances and calculate weighted score
-  norm <- function(x) { max(100, min(1600, x)) }
-  total_score <- 0
-  
-  for (i in seq_len(nrow(ranking))) {
-    facility <- ranking$facility[i]
-    weight <- ranking$weight[i]
-    
-    if (!is.null(facility_data[[tolower(facility)]])) {
-      distance <- facility_data[[tolower(facility)]]$distance
-      norm_dist <- norm(distance)
-      total_score <- total_score + (1600 - norm_dist) / 1500 * weight
-    }
-  }
-  return(total_score)
-})
