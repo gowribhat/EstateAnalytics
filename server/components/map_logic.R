@@ -252,7 +252,6 @@ observe({
         data <- data[sample(nrow(data), 5000), ]
       }
     }
-  }
   # Exit if no data to show
   if (is.null(data) || nrow(data) == 0) {
     output$price_legend <- renderUI({ NULL })
@@ -305,18 +304,14 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    
-    server<- function(input,output,session) {
-      facility_data <- reactive({
-        facilities()
-      })
-      output$Table <- renderTable({
-        req(facility_data())
-        data <- data %>% 
-          mutate(dist_to_childcare = facility_data()$childcare)
-        return(data)
-      })
-    }
+    facility_data <- reactive({
+      facilities()
+    })
+    output$Table <- renderTable({
+      data <- data %>% 
+        mutate(dist_to_childcare = facility_data()$childcare)
+      return(data)
+    })
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
@@ -324,6 +319,7 @@ observe({
                             "Nearest Park is ", data$dist_to_park, " m away", "<br>",
                             "Nearest School is ", data$dist_to_sch, " m away", "<br>",
                             "Nearest Supermarket is ", data$dist_to_mart, " m away")
+    }
     # Use a different marker rendering approach based on the number of points
     if(nrow(data) > 500) {
       # For large datasets, use more aggressive clustering and simpler markers
@@ -367,32 +363,7 @@ observe({
   }
 
   # Show price legend for any visualization type
-  if(nrow(data) > 0) {
-    output$price_legend <- renderUI({
-      min_price <- if(property_type == "HDB") min(data$resale_price) else min(data$price)
-      max_price <- if(property_type == "HDB") max(data$resale_price) else max(data$price)
-
-      tags$div(
-        style = "width: 100%; padding: 8px 0;",
-        tags$h5("Property Price Legend", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px;"),
-        tags$div(
-          style = "display: flex; flex-direction: row; align-items: center;",
-          # Create a gradient bar for the legend
-          tags$div(
-            style = "flex-grow: 1; height: 15px; background: linear-gradient(to right, #440154, #414487, #2a788e, #22a884, #7ad151, #fde725); border-radius: 3px;"
-          )
-        ),
-        tags$div(
-          style = "display: flex; justify-content: space-between; margin-top: 2px; font-size: 12px;",
-          tags$span(paste0("$", format(min_price, big.mark = ",")), style = "font-weight: bold;"),
-          tags$span(paste0("$", format(max_price, big.mark = ",")), style = "font-weight: bold;")
-        )
-      )
-    })
-  } else {
-    # Clear the legend if no data
-    output$price_legend <- renderUI({ NULL })
-  }
+  
 })
 
 # Marker click observer to update the selected building
