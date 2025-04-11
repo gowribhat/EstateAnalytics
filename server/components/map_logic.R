@@ -9,7 +9,7 @@
 
 # --- Base Map Rendering ---
 source("C:/Users/User/R-4.4.3/Project/server/components/facility.R")
-source("C:/Users/User/R-4.4.3/Project/temp.R")
+
 output$property_map <- renderLeaflet({
   leaflet() %>%
     addTiles() %>% # Add default OpenStreetMap map tiles
@@ -305,8 +305,10 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    #facility_data <- facilities()
-    #data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
+    facility_data <- reactive({
+      facilities()
+    })
+    data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
