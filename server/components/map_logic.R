@@ -10,6 +10,7 @@
 # --- Base Map Rendering ---
 source("C:/Users/User/R-4.4.3/Project/server/components/facility.R")
 
+# --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
   leaflet() %>%
     addTiles() %>% # Add default OpenStreetMap map tiles
@@ -29,32 +30,32 @@ map_center_debounced <- reactive({
 current_planning_area <- reactive({
   center <- map_center_debounced()
   pa_sf <- planning_areas_data()
-
+  
   # Ensure data is loaded and center coordinates are available
   req(center, pa_sf)
-
+  
   # Create an sf point for the map center (Leaflet uses WGS84 - EPSG:4326)
   center_point <- st_sfc(st_point(c(center$lng, center$lat)), crs = 4326)
-
+  
   # Transform point CRS to match planning area CRS if necessary
   pa_crs <- st_crs(pa_sf)
   if (st_crs(center_point) != pa_crs) {
     center_point <- st_transform(center_point, crs = pa_crs)
   }
-
+  
   # Check and repair geometry validity
   if (any(!st_is_valid(pa_sf))) {
     pa_sf <- st_make_valid(pa_sf)
   }
-
+  
   # Disable S2 temporarily for spatial intersection
   sf_use_s2(FALSE)
   intersection <- st_intersects(center_point, pa_sf, sparse = FALSE)
   sf_use_s2(TRUE)
-
+  
   # Find the index of the intersecting polygon
   intersecting_index <- which(intersection, arr.ind = TRUE)[, "col"]
-
+  
   if (length(intersecting_index) > 0) {
     # Dynamically identify the planning area column
     pa_col_name <- NULL
@@ -66,7 +67,7 @@ current_planning_area <- reactive({
         pa_col_name <- names(pa_sf)[match_idx]
       }
     }
-
+    
     if (!is.null(pa_col_name)) {
       area_name <- pa_sf[[pa_col_name]][intersecting_index[1]]
       return(toupper(area_name))
@@ -115,7 +116,6 @@ markers_to_show <- reactive({
 })
 
 # Reactive to get visible data with spatial filtering - supports both HDB and private properties
-# Reactive to get visible data with spatial filtering - supports both HDB and private properties
 visible_filtered_data <- reactive({
   # Check selected property type
   property_type <- selected_property_type()
@@ -126,6 +126,7 @@ visible_filtered_data <- reactive({
   } else {
     filtered_ura_data()
   }
+  
   req(data)
   show_markers <- should_show_markers()
   
@@ -217,7 +218,7 @@ observe({
     clearMarkerClusters() %>%
     clearHeatmap() %>%
     clearControls() # Clear all legends and other controls
-    
+  
   # Exit early if we should show nothing (very zoomed out)
   if (vis_mode == "none") {
     output$price_legend <- renderUI({ NULL })
@@ -252,11 +253,14 @@ observe({
         data <- data[sample(nrow(data), 5000), ]
       }
     }
+  }
+  
   # Exit if no data to show
   if (is.null(data) || nrow(data) == 0) {
     output$price_legend <- renderUI({ NULL })
     return()
   }
+  
   # Create price palette based on property type
   if(property_type == "HDB") {
     price_palette <- colorNumeric(
@@ -273,6 +277,7 @@ observe({
     )
     price_col <- data$price
   }
+  
   # Apply the appropriate visualization based on mode
   if (vis_mode == "heatmap") {
     # Add heatmap layer
@@ -304,14 +309,12 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    facility_data <- reactive({
-      facilities()
-    })
-    output$Table <- renderTable({
-      data <- data %>% 
-        mutate(dist_to_childcare = facility_data()$childcare)
+    server <- function(input,output,session){
+      output$Table <- renderTable({
+      data$dist_to_childcare <- facilities()$childcare
       return(data)
     })
+    }
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
@@ -319,7 +322,7 @@ observe({
                             "Nearest Park is ", data$dist_to_park, " m away", "<br>",
                             "Nearest School is ", data$dist_to_sch, " m away", "<br>",
                             "Nearest Supermarket is ", data$dist_to_mart, " m away")
-    }
+    
     # Use a different marker rendering approach based on the number of points
     if(nrow(data) > 500) {
       # For large datasets, use more aggressive clustering and simpler markers
@@ -361,23 +364,48 @@ observe({
       )
     }
   }
-
-  # Show price legend for any visualization type
   
+  # Show price legend for any visualization type
+  if(nrow(data) > 0) {
+    output$price_legend <- renderUI({
+      min_price <- if(property_type == "HDB") min(data$resale_price) else min(data$price)
+      max_price <- if(property_type == "HDB") max(data$resale_price) else max(data$price)
+      
+      tags$div(
+        style = "width: 100%; padding: 8px 0;",
+        tags$h5("Property Price Legend", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px;"),
+        tags$div(
+          style = "display: flex; flex-direction: row; align-items: center;",
+          # Create a gradient bar for the legend
+          tags$div(
+            style = "flex-grow: 1; height: 15px; background: linear-gradient(to right, #440154, #414487, #2a788e, #22a884, #7ad151, #fde725); border-radius: 3px;"
+          )
+        ),
+        tags$div(
+          style = "display: flex; justify-content: space-between; margin-top: 2px; font-size: 12px;",
+          tags$span(paste0("$", format(min_price, big.mark = ",")), style = "font-weight: bold;"),
+          tags$span(paste0("$", format(max_price, big.mark = ",")), style = "font-weight: bold;")
+        )
+      )
+    })
+  } else {
+    # Clear the legend if no data
+    output$price_legend <- renderUI({ NULL })
+  }
 })
 
 # Marker click observer to update the selected building
 observeEvent(input$property_map_marker_click, {
   click <- input$property_map_marker_click
-
+  
   # Reset selection when no click or no id
   if (is.null(click) || is.null(click$id)) {
     selected_building(NULL)
     return()
   }
-
+  
   property_type <- selected_property_type()
-
+  
   # Get appropriate dataset
   data <- if(property_type == "HDB") {
     filtered_hdb_data()
@@ -389,19 +417,19 @@ observeEvent(input$property_map_marker_click, {
   if(property_type == "HDB") {
     # For HDB, the ID is in format "block street_name"
     clicked_id <- click$id
-
+    
     # First try exact match on the full ID
     matches <- data %>%
       filter(paste(block, street_name) == clicked_id) %>%
       head(1)
-
+    
     if(nrow(matches) == 0) {
       # If no direct match, try parsing the ID
       parts <- strsplit(clicked_id, " ")[[1]]
       if(length(parts) >= 2) {
         block <- parts[1]
         street_name <- paste(parts[-1], collapse = " ")
-
+        
         # Find the first matching transaction
         matches <- data %>%
           filter(
@@ -411,7 +439,7 @@ observeEvent(input$property_map_marker_click, {
           head(1)
       }
     }
-
+    
     if(nrow(matches) > 0) {
       selected_building(matches)
     } else {
@@ -422,7 +450,7 @@ observeEvent(input$property_map_marker_click, {
         closest_match <- data %>%
           arrange(dist) %>%
           head(1)
-
+        
         if(nrow(closest_match) > 0) {
           selected_building(closest_match)
         }
@@ -431,16 +459,16 @@ observeEvent(input$property_map_marker_click, {
   } else {
     # For private properties, the ID is more complex
     clicked_id <- click$id
-
+    
     # Try direct match on project and street first
     matches <- NULL
-
+    
     # Extract project and street from the clicked ID
     parts <- strsplit(clicked_id, " - ")[[1]]
     if(length(parts) >= 2) {
       project_name <- parts[1]
       street_name <- parts[2]
-
+      
       # Try to find by exact project and street match
       matches <- data %>%
         filter(
@@ -455,7 +483,7 @@ observeEvent(input$property_map_marker_click, {
         filter(grepl(clicked_id, project, fixed = TRUE) |
                  grepl(project, clicked_id, fixed = TRUE)) %>%
         head(1)
-
+      
       if(nrow(similar_projects) > 0) {
         matches <- similar_projects
       } else {
@@ -469,7 +497,7 @@ observeEvent(input$property_map_marker_click, {
         }
       }
     }
-
+    
     if(!is.null(matches) && nrow(matches) > 0) {
       selected_building(matches)
     }
