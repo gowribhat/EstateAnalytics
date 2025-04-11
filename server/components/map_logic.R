@@ -305,14 +305,13 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    ui <- fluidPage(
-      tableOutput("Table")
-    )
+    
     server<- function(input,output,session) {
       facility_data <- reactive({
         facilities()
       })
       output$Table <- renderTable({
+        req(facility_data())
         data <- data %>% 
           mutate(dist_to_childcare = facility_data()$childcare)
         return(data)
