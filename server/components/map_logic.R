@@ -307,8 +307,10 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    #facility_data <- nearby_facilities()
-
+    reactive({
+      facility_data <- nearby_facilities()
+      data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
+    })
     #data <- data %>%mutate(dist_to_childcare = facility_data$childcare)
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",

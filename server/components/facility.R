@@ -17,6 +17,23 @@ mart <- readRDS(paste0(resource_path, "/Supermarkets.rds"))
 hdb <- readRDS(paste0(resource_path, "/hdb.rds"))
 priv <- readRDS(paste0(resource_path, "/ura_private.rds"))
 
+# Distance calculation utility
+distances <- function(x, y) {
+  distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
+}
+
+# Find nearest facilities
+get_nearest <- function(a, b) {
+  dists <- sapply(1:nrow(b), function(i) {
+    distances(a, b[i, ])
+  })
+  nearest_indices <- order(dists)[1]
+  clean <- b[nearest_indices, ]
+  clean$distance <- dists[nearest_indices]
+  return(clean)
+}
+
+
 # Reactive data for selected building and its facilities
 facilities <- reactive({
   building <- selected_building()
@@ -44,25 +61,26 @@ facilities <- reactive({
         street == building$street
       )
   }
-  
+  if ("Childcare" %in% selected) {
+    building_data$childcare <- get_nearest(building, childcare)
+  }
+  if ("Gym" %in% selected) {
+    building_data$gym <- get_nearest(building, gym)
+  }
+  if ("MRT" %in% selected) {
+    building_data$mrt <- get_nearest(building, mrt)
+  }
+  if ("Park" %in% selected) {
+    building_data$park <- get_nearest(building, park)
+  }
+  if ("School" %in% selected) {
+    building_data$sch <- get_nearest(building, sch)
+  }
+  if ("Supermarket" %in% selected) {
+    building$mart <- get_nearest(building, mart)
+  }
   return(building_data)
 })
-
-# Distance calculation utility
-distances <- function(x, y) {
-  distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
-}
-
-# Find nearest facilities
-get_nearest <- function(a, b) {
-  dists <- sapply(1:nrow(b), function(i) {
-    distances(a, b[i, ])
-  })
-  nearest_indices <- order(dists)[1]
-  clean <- b[nearest_indices, ]
-  clean$distance <- dists[nearest_indices]
-  return(clean)
-}
 
 # Calculate dynamic weights based on user-selected facilities
 calculate_weights <- function(selected_facilities) {
@@ -87,33 +105,6 @@ facility_ranking <- reactive({
 })
 
 # Calculate total score based on selected facilities and weights
-score <- reactive({
-  building_data <- facilities()
-  facility_data <- nearby_facilities()  # Nearest facility data
-  ranking <- facility_ranking()  # User ranking and weights
-  
-  if (is.null(building_data) || is.null(facility_data) || is.null(ranking)) {
-    return(0)
-  }
-  
-  # Normalize distances and calculate weighted score
-  norm <- function(x) { max(100, min(1600, x)) }
-  total_score <- 0
-  
-  for (i in seq_len(nrow(ranking))) {
-    facility <- ranking$facility[i]
-    weight <- ranking$weight[i]
-    
-    if (!is.null(facility_data[[tolower(facility)]])) {
-      distance <- facility_data[[tolower(facility)]]$distance
-      norm_dist <- norm(distance)
-      total_score <- total_score + (1600 - norm_dist) / 1500 * weight
-    }
-  }
-  
-  return(total_score)
-})
-
 # Generate nearest facility data based on user selection
 server <- function(input, output,session){
   nearby_facilities <- reactive({
@@ -144,3 +135,28 @@ server <- function(input, output,session){
     return(facility_data)
   })
 }
+score <- reactive({
+  building_data <- facilities()
+  facility_data <- nearby_facilities()  # Nearest facility data
+  ranking <- facility_ranking()  # User ranking and weights
+  
+  if (is.null(building_data) || is.null(facility_data) || is.null(ranking)) {
+    return(0)
+  }
+  
+  # Normalize distances and calculate weighted score
+  norm <- function(x) { max(100, min(1600, x)) }
+  total_score <- 0
+  
+  for (i in seq_len(nrow(ranking))) {
+    facility <- ranking$facility[i]
+    weight <- ranking$weight[i]
+    
+    if (!is.null(facility_data[[tolower(facility)]])) {
+      distance <- facility_data[[tolower(facility)]]$distance
+      norm_dist <- norm(distance)
+      total_score <- total_score + (1600 - norm_dist) / 1500 * weight
+    }
+  }
+  return(total_score)
+})
