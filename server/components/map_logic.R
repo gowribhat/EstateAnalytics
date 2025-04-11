@@ -313,17 +313,16 @@ observe({
     facility_data <- reactive({
       facilities()
     })
-    
     output$Table <- renderTable({
-      data$dist_to_childcare <- facility_data()$childcare
-      data$dist_to_gym <- facility_data()$gym
-      data$dist_to_mrt <- facility_data()$mrt
-      data$dist_to_park <- facility_data()$park
-      data$dist_to_sch <- facility_data()$sch
-      data$dist_to_mart <- facility_data()$mart
+      data <- data %>% 
+        mutate(dist_to_childcare = facility_data()$childcare,
+               dist_to_gym = facility_data()$gym,
+               dist_to_mrt = facility_data()$mrt,
+               dist_to_park = facility_data()$park,
+               dist_to_sch = facility_data()$sch,
+               dist_to_mart = facility_data()$mart)
       return(data)
     })
-    
     popup_content <- paste0(popup_content,"<br>",
                             "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                             "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
@@ -331,6 +330,7 @@ observe({
                             "Nearest Park is ", data$dist_to_park, " m away", "<br>",
                             "Nearest School is ", data$dist_to_sch, " m away", "<br>",
                             "Nearest Supermarket is ", data$dist_to_mart, " m away")
+    
     
     # Use a different marker rendering approach based on the number of points
     if(nrow(data) > 500) {

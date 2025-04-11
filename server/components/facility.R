@@ -60,24 +60,13 @@ facilities <- reactive({
         street == building$street
       )
   }
-  if ("Childcare" %in% selected) {
-    building_data$childcare <- get_nearest(building, childcare)$distance
-  }
-  if ("Gym" %in% selected) {
-    building_data$gym <- get_nearest(building, gym)$distance
-  }
-  if ("MRT" %in% selected) {
-    building_data$mrt <- get_nearest(building, mrt)$distance
-  }
-  if ("Park" %in% selected) {
-    building_data$park <- get_nearest(building, park)$distance
-  }
-  if ("School" %in% selected) {
-    building_data$sch <- get_nearest(building, sch)$distance
-  }
-  if ("Supermarket" %in% selected) {
-    building_data$mart <- get_nearest(building, mart)$distance
-  }
+  building_data$childcare <- get_nearest(building, childcare)$distance
+  building_data$gym <- get_nearest(building, gym)$distance
+  building_data$mrt <- get_nearest(building, mrt)$distance
+  building_data$park <- get_nearest(building, park)$distance
+  building_data$sch <- get_nearest(building, sch)$distance
+  building_data$mart <- get_nearest(building, mart)$distance
+  
   return(building_data)
 })
 

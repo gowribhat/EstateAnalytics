@@ -33,6 +33,9 @@ server <- function(input, output, session) {
   # Then load data
   source("server/components/data_loading.R", local = TRUE)
   
+  # Then load facilities
+  source("server/components/facility.R", local = TRUE)
+  
   # Then load filters which depend on the data
   source("server/components/filters.R", local = TRUE)
   
