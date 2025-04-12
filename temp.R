@@ -213,9 +213,9 @@ server <- function(input, output, session) {
   nearest_sch <- get_nearest(data,sch)
   nearest_mart <- get_nearest(data,mart)
   weight <- c(15,10,25,15,20,15)
-  norm <- function(x){max(100,min(1600,x))}
+  normal <- function(x){max(100,min(1600,x))}
   norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
-                        nearest_park$distance,nearest_sch$distance,nearest_mart$distance),norm)
+                        nearest_park$distance,nearest_sch$distance,nearest_mart$distance),normal)
   
   score <- (1600-norm_dist)/1500
   # --- Base Map Rendering ---
