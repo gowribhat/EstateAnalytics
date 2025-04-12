@@ -320,8 +320,7 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    selected_facilities <- facility_ranking()
-    if(is.null(selected_facilities) || length(selected_facilities)==0){
+    if(is.null(user_selection)){
       popup_content <- paste0(popup_content,"<br>",
                               "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                               "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
@@ -332,6 +331,7 @@ observe({
                               "Total Proximity Score is ", data$total, "%")
     }
     else{
+      selected_facilities <- facility_ranking()
       if("Childcare" %in% selected_facilities){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")
@@ -356,9 +356,10 @@ observe({
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Supermarket is ", data$dist_to_mart, " m away")
       }
-    }
-    popup_content <- paste0(popup_content, "<br>",
+      popup_content <- paste0(popup_content, "<br>",
                             "Total Proximity Score is ", "%")
+    }
+    
     
     # Use a different marker rendering approach based on the number of points
     if(nrow(data) > 500) {

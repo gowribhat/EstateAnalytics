@@ -78,8 +78,8 @@ facilities <- reactive({
 })
 
 # Calculate dynamic weights based on user-selected facilities
-calculate_weights <- function(selected_facilities) {
-  n <- length(selected_facilities)
+calculate_weights <- function(facil) {
+  n <- length(facil)
   if (n == 0){
     return(data.frame(
       facility = character(0),
@@ -90,7 +90,7 @@ calculate_weights <- function(selected_facilities) {
     total_weight <- n * (n + 1)/2  # Total weight sum
     weights <- rev(seq_len(n)) / total_weight*100  # Descending weights
     return(data.frame(
-      facility = selected_facilities,
+      facility = facil,
       weight = weights
     ))
   }
@@ -144,9 +144,15 @@ server <- function(input, output, session) {
       easyClose = TRUE
     ))
     removeModal()  # Close the selection modal
-    #Calculate weights dynamically (example implementation)
-    calculate_weights(ranked)
   })
+  
+  # Reactive expression for facility ranking
+  facility_ranking <- reactive({
+    req(user_selection())  # Ensure the user has made a selection
+    ranked <- input$facility_priority
+    calculate_weights(ranked)  # Dynamically calculate weights
+  })
+  
   # Output table for facility ranking
   output$facility_table <- renderTable({
     facility_ranking()
