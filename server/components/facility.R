@@ -5,19 +5,6 @@
 # - Nearby facilities: Displays detailed information about facilities near the selected building.
 # - Visualizations: Generates plots and tables for building-specific data.
 
-source("C:/Users/User/R-4.4.3/Project/temp.R")
-resource_path <- here("data")
-
-childcare <- readRDS(paste0(resource_path, "/childcares.rds"))
-gym <- readRDS(paste0(resource_path, "/gyms_data.rds"))
-mrt <- readRDS(paste0(resource_path, "/LRT_MRT.rds"))
-park <- readRDS(paste0(resource_path, "/parks_data.rds"))
-sch <- readRDS(paste0(resource_path, "/schools.rds"))
-mart <- readRDS(paste0(resource_path, "/Supermarkets.rds"))
-
-hdb <- readRDS(paste0(resource_path, "/hdb.rds"))
-priv <- readRDS(paste0(resource_path, "/ura_private.rds"))
-
 # Distance calculation utility
 distances <- function(x, y) {
   distVincentySphere(c(x$longitude, x$latitude), c(y$longitude, y$latitude))
@@ -66,12 +53,12 @@ facilities <- reactive({
         street == building$street
       )
   }
-  building_data$childcare <- round(get_nearest(building, childcare)$distance)
-  building_data$gym <- round(get_nearest(building, gym)$distance)
-  building_data$mrt <- round(get_nearest(building, mrt)$distance)
-  building_data$park <- round(get_nearest(building,park)$distance)
-  building_data$sch <- round(get_nearest(building, sch)$distance)
-  building_data$mart <- round(get_nearest(building, mart)$distance)
+  building_data$childcare <- round(get_nearest(building, childcare())$distance)
+  building_data$gym <- round(get_nearest(building, gym())$distance)
+  building_data$mrt <- round(get_nearest(building, mrt())$distance)
+  building_data$park <- round(get_nearest(building,park())$distance)
+  building_data$sch <- round(get_nearest(building, sch())$distance)
+  building_data$mart <- round(get_nearest(building, mart())$distance)
   
   norm_dist <- sapply(list(building_data$childcare, building_data$gym, building_data$mrt,
                            building_data$park,building_data$sch,building_data$mart),normal)

@@ -7,8 +7,8 @@
 # - Marker display: Dynamically updates markers based on zoom level and filters.
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
-# --- Base Map Rendering ---
-source("C:/Users/User/R-4.4.3/Project/server/components/facility.R")
+source("./server/components/facility.R")
+source("./server/components/data_loading.R")
 
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({

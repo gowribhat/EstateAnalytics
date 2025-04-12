@@ -37,3 +37,57 @@ observe({
     message("Error loading URA private data: ", e$message)
   })
 })
+
+# Load Childcare Centre data
+observe({
+  tryCatch({
+    childcare(loadData("childcares"))
+  }, error = function(e) {
+    message("Error loading Childcare Centre data: ", e$message)
+  })
+})
+
+# Load Gym data
+observe({
+  tryCatch({
+    gym(loadData("gyms_data"))
+  }, error = function(e) {
+    message("Error loading Gym data: ", e$message)
+  })
+})
+
+# Load LRT/MRT data
+observe({
+  tryCatch({
+    mrt(loadData("LRT_MRT"))
+  }, error = function(e) {
+    message("Error loading LRT/MRT data: ", e$message)
+  })
+})
+
+# Load Park data
+observe({
+  tryCatch({
+    park(loadData("parks_data"))
+  }, error = function(e) {
+    message("Error loading Park data: ", e$message)
+  })
+})
+
+# Load School data
+observe({
+  tryCatch({
+    sch(loadData("schools"))
+  }, error = function(e) {
+    message("Error loading School data: ", e$message)
+  })
+})
+
+# Load Supermarket data
+observe({
+  tryCatch({
+    mart(loadData("Supermarkets"))
+  }, error = function(e) {
+    message("Error loading Supermarket data: ", e$message)
+  })
+})
