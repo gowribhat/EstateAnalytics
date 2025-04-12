@@ -82,14 +82,3 @@ filtered_ura_data <- reactive({
 
   return(filtered)
 })
-observeEvent(input$filter_facility, {
-  showModal(modalDialog(
-    title = "Select Nearby Facilities",
-    checkboxGroupInput("selected_facilities", "Choose facilities:",
-                       choices = c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")),
-    footer = tagList(
-      modalButton("Cancel"),
-      actionButton("confirm_facilities", "Next")
-    )
-  ))
-})

@@ -77,33 +77,72 @@ facilities <- reactive({
   return(building_data)
 })
 
-
 # Calculate dynamic weights based on user-selected facilities
 calculate_weights <- function(selected_facilities) {
   n <- length(selected_facilities)
-  if (n == 0) return(NULL)
-  
-  total_weight <-n * (n + 1)/2  # Total weight sum
-  weights <- rev(seq_len(n)) / total_weight  # Descending weights
-  return(data.frame(
-    facility = selected_facilities,
-    weight = weights
-  ))
+  if (n == 0){
+    return(data.frame(
+      facility = character(0),
+      weight = c(15,10,25,15,20,15)
+    ))
+  } 
+  else{
+    total_weight <- n * (n + 1)/2  # Total weight sum
+    weights <- rev(seq_len(n)) / total_weight*100  # Descending weights
+    return(data.frame(
+      facility = selected_facilities,
+      weight = weights
+    ))
+  }
 }
 
 # Reactive ranking and weight calculation based on user selection
 server <- function(input, output, session) {
-  facility_ranking <- reactive({
-    req(input$selected_facilities)  # User-selected facilities
-    selected_facilities <- input$selected_facilities
-    
-    # Calculate weights dynamically
-    calculate_weights(selected_facilities)
-  })
-  output$facility_table <- renderTable({
-    facility_ranking()
-  })
+   # Reactive value to store the user's selected facilities
+   user_selection <- reactiveVal(NULL)
+   
+   # Observer for filter facility button
+   observeEvent(input$filter_facility, {
+       showModal(modalDialog(
+           title = "Select Nearby Facilities",
+           checkboxGroupInput("selected_facilities", "Choose facilities:",
+                              choices = c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")),
+           # Placeholder for dynamic priority UI
+           uiOutput("priority_rank_ui"),
+           
+           footer = tagList(
+             modalButton("Cancel"),
+             actionButton("ok_facility", "OK")
+           )
+       ))
+   })
+   
+   # Observer for confirm facilities button
+   observeEvent(input$confirm_facilities, {
+       # Store the selected facilities in the reactive value
+       user_selection(input$selected_facilities)
+       removeModal()  # Close the modal dialog
+   })
+   
+   # Reactive expression for facility ranking
+   facility_ranking <- reactive({
+     
+     req(user_selection())  # Ensure the user has made a selection
+     selected_facilities <- user_selection()
+       
+     # Calculate weights dynamically
+     calculate_weights(selected_facilities)
+   })
+   
+   # Output table for selected facilities
+   output$selected_facilities_table <- renderTable({
+     if (!is.null(user_selection())) {
+       data.frame(Facilities = user_selection())
+     }
+   })
+   
+   # Output table for facility ranking
+   output$facility_table <- renderTable({
+       facility_ranking()
+   })
 }
-
-# Calculate total score based on selected facilities and weights
-# Generate nearest facility data based on user selection
