@@ -152,10 +152,4 @@ server <- function(input, output, session) {
     req(ranked_selection())
     ranked_selection()
   })
-  
-  # Calculate score based on dynamic selection of facilities
-  facility_ranking <- reactive({
-    #req(ranked_selection()) 
-    print((calculate_weights(ranked_selection()))  )
-  })
 }
