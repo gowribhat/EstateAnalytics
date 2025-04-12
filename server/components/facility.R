@@ -100,7 +100,7 @@ calculate_weights <- function(facil) {
 server <- function(input, output, session) {
   # Reactive value to store the user's selected facilities
   user_selection <- reactiveVal(NULL)
-  facility_ranking <- reactiveVal(NULL)
+  ranked_selection <- reactiveVal(NULL)
   
   # Observer for the filter facility button
   observeEvent(input$filter_facility, {
@@ -132,9 +132,8 @@ server <- function(input, output, session) {
   observeEvent(input$ok_facility, {
     # Store the selected facilities (reactive value)
     user_selection(input$selected_facilities)
-    })
     # Retrieve the ranked order from the rank list
-    facility_ranking(input$facility_priority)
+    ranked_selection(input$facility_priority)
     # Display the ranked facilities in a modal dialog
     showModal(modalDialog(
       title = "Your Ranked Facilities",
