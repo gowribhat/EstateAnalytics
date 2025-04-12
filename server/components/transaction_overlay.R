@@ -1,4 +1,3 @@
-# filepath: /Users/youngwooeun/Project/server/components/transaction_overlay.R
 # Building Analytics Dashboard
 # This script manages the visibility and interactions of the analytics dashboard overlay.
 # It includes logic for toggling the dashboard, handling user interactions, and generating visualizations.
