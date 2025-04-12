@@ -320,10 +320,7 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    selected_facilities <- reactive({
-      facility_ranking()
-    })
-    if(is.null(selected_facilities) || length(selected_facilities)==0){
+    if(is.null(user_selection())){
       popup_content <- paste0(popup_content,"<br>",
                               "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                               "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
@@ -334,6 +331,9 @@ observe({
                               "Total Proximity Score is ", data$total, "%")
     }
     else{
+      selected_facilities <- reactive({
+        facility_ranking()
+      })
       if("Childcare" %in% selected_facilities()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")

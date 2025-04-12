@@ -57,18 +57,14 @@ observeEvent(input$filter_floor_height, {
   ))
 })
 
-# Observe Facility button click
 observeEvent(input$filter_facility, {
   showModal(modalDialog(
-    title = "Select Nearby Facilities (Priority)",
-    
-    # Checkbox for selection
-    checkboxGroupInput("selected_facilities", "Choose facilities to consider:", 
-                       choices = c("Childcare Centre", "Gym", "MRT", "Park", "School", "Supermarket")),
-    
+    title = "Select Nearby Facilities",
+    # Checkbox input for selecting facilities
+    checkboxGroupInput("selected_facilities", "Choose facilities:",
+                       choices = c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")),
     # Placeholder for dynamic priority UI
     uiOutput("priority_rank_ui"),
-    
     footer = tagList(
       modalButton("Cancel"),
       actionButton("ok_facility", "OK")
@@ -76,25 +72,33 @@ observeEvent(input$filter_facility, {
   ))
 })
 
-# Dynamically render the rank list *after* selection
+# Render the dynamic rank list UI
 output$priority_rank_ui <- renderUI({
-  req(input$selected_facilities)
-  
+  req(input$selected_facilities)  # Ensure facilities have been selected
   if (length(input$selected_facilities) == 0) return(NULL)
-  
+  # Render a draggable rank list
   sortable::rank_list(
     text = "Prioritise selected facilities (drag to reorder):",
     labels = input$selected_facilities,
     input_id = "facility_priority"
   )
 })
+
+# Observer for confirming facility selection
 observeEvent(input$ok_facility, {
-  ranked <- input$facility_priority_order
+  # Store the selected facilities
+  user_selection(input$selected_facilities)
+  # Retrieve the ranked order from the rank list
+  ranked_selection(input$facility_priority)
+  print(user_selection())          # Debug: Check updated reactive value
+  print(ranked_selection()) 
+  # Display the ranked facilities in a modal dialog
   showModal(modalDialog(
     title = "Your Ranked Facilities",
-    renderPrint({ ranked }),
+    verbatimTextOutput("ranked_output"),  # Output for ranked facilities
     easyClose = TRUE
   ))
+  removeModal()  # Close the selection modal
 })
 # Add logic here later to handle priority if needed, or use a different input type
 # --- Update Button Labels on Modal OK ---
