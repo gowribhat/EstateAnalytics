@@ -320,7 +320,10 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    if(is.null(user_selection)){
+    selected_facilities <- reactive({
+      facility_ranking()
+    })
+    if(is.null(selected_facilities) || length(selected_facilities)==0){
       popup_content <- paste0(popup_content,"<br>",
                               "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
                               "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
@@ -331,28 +334,27 @@ observe({
                               "Total Proximity Score is ", data$total, "%")
     }
     else{
-      selected_facilities <- facility_ranking()
-      if("Childcare" %in% selected_facilities){
+      if("Childcare" %in% selected_facilities()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")
       }
-      if("Gym" %in% selected_facilities){
+      if("Gym" %in% selected_facilities()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Gym is ", data$dist_to_gym, " m away")
       }
-      if("LRT/MRT" %in% selected_facilities){
+      if("LRT/MRT" %in% selected_facilities()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest LRT/MRT is ", data$dist_to_mrt, " m away")
       }
-      if("Park" %in% selected_facilities){
+      if("Park" %in% selected_facilities()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Park is ", data$dist_to_park, " m away")
       }
-      if("School" %in% selected_facilities){
+      if("School" %in% selected_facilities()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest School is ", data$dist_to_sch, " m away")
       }
-      if("Supermarket" %in% selected_facilities){
+      if("Supermarket" %in% selected_facilities()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Supermarket is ", data$dist_to_mart, " m away")
       }

@@ -83,7 +83,7 @@ calculate_weights <- function(facil) {
   if (n == 0){
     return(data.frame(
       facility = character(0),
-      weight = c(15,10,25,15,20,15)
+      weight = character(0)
     ))
   } 
   else{
@@ -100,6 +100,7 @@ calculate_weights <- function(facil) {
 server <- function(input, output, session) {
   # Reactive value to store the user's selected facilities
   user_selection <- reactiveVal(NULL)
+  facility_ranking <- reactiveVal(NULL)
   
   # Observer for the filter facility button
   observeEvent(input$filter_facility, {
@@ -116,13 +117,10 @@ server <- function(input, output, session) {
       )
     ))
   })
-  
   # Render the dynamic rank list UI
   output$priority_rank_ui <- renderUI({
     req(input$selected_facilities)  # Ensure facilities have been selected
-    
     if (length(input$selected_facilities) == 0) return(NULL)
-    
     # Render a draggable rank list
     sortable::rank_list(
       text = "Prioritise selected facilities (drag to reorder):",
@@ -130,31 +128,35 @@ server <- function(input, output, session) {
       input_id = "facility_priority"
     )
   })
-  
   # Observer for confirming facility selection
   observeEvent(input$ok_facility, {
     # Store the selected facilities (reactive value)
     user_selection(input$selected_facilities)
+    })
     # Retrieve the ranked order from the rank list
-    ranked <- input$facility_priority
+    facility_ranking(input$facility_priority)
     # Display the ranked facilities in a modal dialog
     showModal(modalDialog(
       title = "Your Ranked Facilities",
-      renderPrint({ ranked }),
+      renderPrint({req(ranked_selection()) ranked_selection() }),
       easyClose = TRUE
     ))
     removeModal()  # Close the selection modal
   })
-  
+
+  output$ranked_output <- renderPrint({
+    req(ranked_selection())
+    ranked_selection()
+  })
   # Reactive expression for facility ranking
   facility_ranking <- reactive({
     req(user_selection())  # Ensure the user has made a selection
-    ranked <- input$facility_priority
-    calculate_weights(ranked)  # Dynamically calculate weights
+    calculate_weights(ranked_selection())  # Dynamically calculate weights
   })
   
   # Output table for facility ranking
   output$facility_table <- renderTable({
+    req(facility_ranking())
     facility_ranking()
   })
 }

@@ -82,3 +82,5 @@ filtered_ura_data <- reactive({
 
   return(filtered)
 })
+
+# Filtered facilities data based on selected filters
