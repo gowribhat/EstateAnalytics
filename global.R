@@ -32,32 +32,32 @@ data_registry <- list(
     read_func = "readRDS"
   ),
   childcares = list(
-    var_name = "childcares_data",
+    var_name = "childcare",
     file_path = "childcares.rds",
     read_func = "readRDS"
   ),
   gyms = list(
-    var_name = "gyms_data",
+    var_name = "gym",
     file_path = "gyms_data.rds",
     read_func = "readRDS"
   ),
   lrt_mrt = list(
-    var_name = "mrt_data",
+    var_name = "mrt",
     file_path = "LRT_MRT.rds",
     read_func = "readRDS"
   ),
   parks = list(
-    var_name = "parks_data",
+    var_name = "park",
     file_path = "parks_data.rds",
     read_func = "readRDS"
   ),
   schools = list(
-    var_name = "schools_data",
+    var_name = "sch",
     file_path = "schools.rds",
     read_func = "readRDS"
   ),
   supermarkets = list(
-    var_name = "mart_data",
+    var_name = "mart",
     file_path = "Supermarkets.rds",
     read_func = "readRDS"
   ),

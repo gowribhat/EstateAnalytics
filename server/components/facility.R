@@ -21,7 +21,7 @@ get_nearest <- function(a, b) {
   return(clean)
 }
 # Default weights for different facilities
-weight <- c(15,10,25,15,20,15)
+weight <- c(15,10,25,15,15,20)
 # Normalisation of distances
 # Anything less than 100m treated as 100m (close enough)
 # Anything more than 1600m treated as 1600m (too far)
@@ -68,20 +68,6 @@ facilities <- reactive({
   return(building_data)
 })
 
-# Calculate dynamic weights based on user-selected facilities
-calculate_weights <- function(facil) {
-  n <- length(facil)
-  if (n == 0){
-    return(0)
-  } 
-  else{
-    total_weight <- n * (n + 1)/2  # Total weight sum
-    weights <- rev(seq_len(n)) / total_weight*100 # Descending weights
-    norm_dist <- sapply(list(facil),normal)
-    score <- (1600-norm_dist)/1500
-    return(sum(weights*score))
-  }
-}
 # Reactive value to store the user's selected facilities
 user_selection <- reactiveVal(NULL)
 # Filtered facilities data based on selected filters

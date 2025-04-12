@@ -4,7 +4,7 @@
 # Key components:
 # - Reactive data loading: Loads data reactively to ensure it is available when needed.
 # - Error handling: Provides fallback mechanisms and error logging for data loading issues.
-
+source("./global.R")
 # --- Load Data ---
 # Load planning areas data
 observe({
@@ -50,7 +50,7 @@ observe({
 # Load Gym data
 observe({
   tryCatch({
-    gym(loadData("gyms_data"))
+    gym(loadData("gyms"))
   }, error = function(e) {
     message("Error loading Gym data: ", e$message)
   })
@@ -59,7 +59,7 @@ observe({
 # Load LRT/MRT data
 observe({
   tryCatch({
-    mrt(loadData("LRT_MRT"))
+    mrt(loadData("lrt_mrt"))
   }, error = function(e) {
     message("Error loading LRT/MRT data: ", e$message)
   })
@@ -68,7 +68,7 @@ observe({
 # Load Park data
 observe({
   tryCatch({
-    park(loadData("parks_data"))
+    park(loadData("parks"))
   }, error = function(e) {
     message("Error loading Park data: ", e$message)
   })
@@ -86,7 +86,7 @@ observe({
 # Load Supermarket data
 observe({
   tryCatch({
-    mart(loadData("Supermarkets"))
+    mart(loadData("supermarkets"))
   }, error = function(e) {
     message("Error loading Supermarket data: ", e$message)
   })

@@ -8,7 +8,6 @@
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
 source("./server/components/facility.R")
-source("./server/components/data_loading.R")
 
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
@@ -358,9 +357,27 @@ observe({
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Supermarket is ", data$dist_to_mart, " m away")
       }
-      #data <- data %>% mutate(proximity_score=)
+      # Calculate dynamic weights based on user-selected facilities
+      calculate_weights <- function(facil) {
+        n <- length(facil)
+        if (n == 0){
+          return(0)
+        } 
+        else{
+          total_weight <- n * (n + 1)/2  # Total weight sum
+          weights <- rev(seq_len(n)) / total_weight*100 # Descending weights
+          f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
+                 facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
+          names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+          f <- f[names(f) %in% facil]
+          norm_dist <- sapply(f,normal)
+          score <- (1600-norm_dist)/1500
+          return(sum(weights*score))
+        }
+      }
+      data <- data %>% mutate(proximity_score=round(calculate_weights(ranked_selection()),1))
       popup_content <- paste0(popup_content, "<br>",
-                            "Total Proximity Score is ", proximity_score(), "%")
+                            "Total Proximity Score is ", data$proximity_score, "%")
     }
     
     
