@@ -138,7 +138,7 @@ server <- function(input, output, session) {
     # Display the ranked facilities in a modal dialog
     showModal(modalDialog(
       title = "Your Ranked Facilities",
-      renderPrint({req(ranked_selection()) ranked_selection() }),
+      verbatimTextOutput("ranked_output"),
       easyClose = TRUE
     ))
     removeModal()  # Close the selection modal
