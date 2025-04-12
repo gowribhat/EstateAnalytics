@@ -293,6 +293,17 @@ observe({
       radius = 15
     )
   } else if (vis_mode == "markers") {
+    facility_data <- reactive({
+      facilities()
+    })
+    data <- data %>% 
+      mutate(dist_to_childcare = facility_data()$childcare[1],
+             dist_to_gym = facility_data()$gym[1],
+             dist_to_mrt = facility_data()$mrt[1],
+             dist_to_park = facility_data()$park[1],
+             dist_to_sch = facility_data()$sch[1],
+             dist_to_mart = facility_data()$mart[1],
+             total = facility_data()$total_score[1])
     # Create popup content and building IDs based on property type
     if(property_type == "HDB") {
       popup_content <- paste0(
@@ -309,26 +320,42 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    
-    facility_data <- reactive({
-      facilities()
-    })
-    data <- data %>% 
-      mutate(dist_to_childcare = facility_data()$childcare[1],
-             dist_to_gym = facility_data()$gym[1],
-             dist_to_mrt = facility_data()$mrt[1],
-             dist_to_park = facility_data()$park[1],
-             dist_to_sch = facility_data()$sch[1],
-             dist_to_mart = facility_data()$mart[1],
-             total = facility_data()$total_score[1])
-    popup_content <- paste0(popup_content,"<br>",
-                            "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
-                            "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
-                            "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
-                            "Nearest Park is ", data$dist_to_park, " m away", "<br>",
-                            "Nearest School is ", data$dist_to_sch, " m away", "<br>",
-                            "Nearest Supermarket is ", data$dist_to_mart, " m away", "<br>",
-                            "Total Proximity Score is ", data$total, "%")
+    if(length(selected_facilities)==0){
+      popup_content <- paste0(popup_content,"<br>",
+                              "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
+                              "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
+                              "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
+                              "Nearest Park is ", data$dist_to_park, " m away", "<br>",
+                              "Nearest School is ", data$dist_to_sch, " m away", "<br>",
+                              "Nearest Supermarket is ", data$dist_to_mart, " m away", "<br>",
+                              "Total Proximity Score is ", data$total, "%")
+    }
+    else{
+      if("Childcare" %in% selected_facilities){
+        popup_content <- paste0(popup_content,"<br>",
+                                "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")
+      }
+      if("Gym" %in% selected_facilities){
+        popup_content <- paste0(popup_content,"<br>",
+                                "Nearest Gym is ", data$dist_to_gym, " m away")
+      }
+      if("LRT/MRT" %in% selected_facilities){
+        popup_content <- paste0(popup_content,"<br>",
+                                "Nearest LRT/MRT is ", data$dist_to_mrt, " m away")
+      }
+      if("Park" %in% selected_facilities){
+        popup_content <- paste0(popup_content,"<br>",
+                                "Nearest Park is ", data$dist_to_park, " m away")
+      }
+      if("School" %in% selected_facilities){
+        popup_content <- paste0(popup_content,"<br>",
+                                "Nearest School is ", data$dist_to_sch, " m away")
+      }
+      if("Supermarket" %in% selected_facilities){
+        popup_content <- paste0(popup_content,"<br>",
+                                "Nearest Supermarket is ", data$dist_to_mart, " m away")
+      }
+    }
     
     
     # Use a different marker rendering approach based on the number of points

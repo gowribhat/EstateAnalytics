@@ -83,7 +83,7 @@ calculate_weights <- function(selected_facilities) {
   n <- length(selected_facilities)
   if (n == 0) return(NULL)
   
-  total_weight <- 0.5 * n * (n + 1)  # Total weight sum
+  total_weight <-n * (n + 1)/2  # Total weight sum
   weights <- rev(seq_len(n)) / total_weight  # Descending weights
   return(data.frame(
     facility = selected_facilities,
@@ -92,13 +92,18 @@ calculate_weights <- function(selected_facilities) {
 }
 
 # Reactive ranking and weight calculation based on user selection
-facility_ranking <- reactive({
-  req(input$selected_facilities)  # User-selected facilities
-  selected_facilities <- input$selected_facilities
-  
-  # Calculate weights dynamically
-  calculate_weights(selected_facilities)
-})
+server <- function(input, output, session) {
+  facility_ranking <- reactive({
+    req(input$selected_facilities)  # User-selected facilities
+    selected_facilities <- input$selected_facilities
+    
+    # Calculate weights dynamically
+    calculate_weights(selected_facilities)
+  })
+  output$facility_table <- renderTable({
+    facility_ranking()
+  })
+}
 
 # Calculate total score based on selected facilities and weights
 # Generate nearest facility data based on user selection

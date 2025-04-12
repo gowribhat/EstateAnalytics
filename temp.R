@@ -214,7 +214,7 @@ server <- function(input, output, session) {
   nearest_mart <- get_nearest(data,mart)
   weight <- c(15,10,25,15,20,15)
   normal <- function(x){max(100,min(1600,x))}
-  norm_dist <- sapply(c(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
+  norm_dist <- sapply(list(nearest_childcare$distance, nearest_gym$distance, nearest_mrt$distance,
                         nearest_park$distance,nearest_sch$distance,nearest_mart$distance),normal)
   
   score <- (1600-norm_dist)/1500

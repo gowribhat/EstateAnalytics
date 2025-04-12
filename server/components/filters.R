@@ -25,19 +25,6 @@ observeEvent(input$ok_area, {
   area_range(input$modal_area)
 })
 
-observeEvent(input$filter_facility, {
-  showModal(modalDialog(
-    title = "Select Nearby Facilities",
-    
-    checkboxGroupInput("selected_facilities", "Choose facilities:",
-                       choices = c("Childcare Centre", "Gym", "MRT", "Park", "School", "Supermarket")),
-    
-    footer = tagList(
-      modalButton("Cancel"),
-      actionButton("confirm_facilities", "Next")
-    )
-  ))
-})
 # Filtered HDB data based on selected filters
 filtered_hdb_data <- reactive({
   data <- hdb_data()
@@ -94,4 +81,15 @@ filtered_ura_data <- reactive({
     )
 
   return(filtered)
+})
+observeEvent(input$filter_facility, {
+  showModal(modalDialog(
+    title = "Select Nearby Facilities",
+    checkboxGroupInput("selected_facilities", "Choose facilities:",
+                       choices = c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")),
+    footer = tagList(
+      modalButton("Cancel"),
+      actionButton("confirm_facilities", "Next")
+    )
+  ))
 })
