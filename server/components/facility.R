@@ -33,6 +33,12 @@ get_nearest <- function(a, b) {
   clean$distance <- dists[nearest_indices]
   return(clean)
 }
+# Default weights for different facilities
+weight <- c(15,10,25,15,20,15)
+# Normalisation of distances
+# Anything less than 100m treated as 100m (close enough)
+# Anything more than 1600m treated as 1600m (too far)
+normal <- function(x){max(100,min(1600,x))}
 
 # Reactive data for selected building and its facilities
 facilities <- reactive({
@@ -67,8 +73,6 @@ facilities <- reactive({
   building_data$sch <- round(get_nearest(building, sch)$distance)
   building_data$mart <- round(get_nearest(building, mart)$distance)
   
-  weight <- c(15,10,25,15,20,15)
-  normal <- function(x){max(100,min(1600,x))}
   norm_dist <- sapply(list(building_data$childcare, building_data$gym, building_data$mrt,
                            building_data$park,building_data$sch,building_data$mart),normal)
   
@@ -81,24 +85,21 @@ facilities <- reactive({
 calculate_weights <- function(facil) {
   n <- length(facil)
   if (n == 0){
-    return(data.frame(
-      facility = character(0),
-      weight = character(0)
-    ))
+    return(0)
   } 
   else{
     total_weight <- n * (n + 1)/2  # Total weight sum
-    weights <- rev(seq_len(n)) / total_weight*100  # Descending weights
-    return(data.frame(
-      facility = facil,
-      weight = weights
-    ))
+    weights <- rev(seq_len(n)) / total_weight*100 # Descending weights
+    norm_dist <- sapply(list(facil),normal)
+    score <- (1600-norm_dist)/1500
+    return(sum(weights*score))
   }
 }
 # Reactive value to store the user's selected facilities
 user_selection <- reactiveVal(NULL)
 # Filtered facilities data based on selected filters
 ranked_selection <- reactiveVal(NULL)
+proximity_score <- reactiveVal(NULL)
 
 # Reactive ranking and weight calculation based on user selection
 server <- function(input, output, session) {
@@ -136,8 +137,7 @@ server <- function(input, output, session) {
     user_selection(input$selected_facilities)
     # Retrieve the ranked order from the rank list
     ranked_selection(input$facility_priority)
-    print(user_selection())          # Debug: Check updated reactive value
-    print(ranked_selection()) 
+    
     # Display the ranked facilities in a modal dialog
     showModal(modalDialog(
       title = "Your Ranked Facilities",
@@ -153,15 +153,9 @@ server <- function(input, output, session) {
     ranked_selection()
   })
   
-  # Reactive expression for facility ranking
+  # Calculate score based on dynamic selection of facilities
   facility_ranking <- reactive({
-    req(ranked_selection())  # Ensure the user has made a selection
-    calculate_weights(ranked_selection())  # Dynamically calculate weights
-  })
-  
-  # Output table for facility ranking
-  output$facility_table <- renderTable({
-    req(facility_ranking())
-    facility_ranking()
+    #req(ranked_selection()) 
+    print((calculate_weights(ranked_selection()))  )
   })
 }

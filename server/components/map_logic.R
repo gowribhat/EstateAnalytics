@@ -334,32 +334,33 @@ observe({
       selected_facilities <- reactive({
         facility_ranking()
       })
-      if("Childcare" %in% selected_facilities()){
+      if("Childcare Centre" %in% ranked_selection()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")
       }
-      if("Gym" %in% selected_facilities()){
+      if("Gym" %in% ranked_selection()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Gym is ", data$dist_to_gym, " m away")
       }
-      if("LRT/MRT" %in% selected_facilities()){
+      if("LRT/MRT" %in% ranked_selection()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest LRT/MRT is ", data$dist_to_mrt, " m away")
       }
-      if("Park" %in% selected_facilities()){
+      if("Park" %in% ranked_selection()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Park is ", data$dist_to_park, " m away")
       }
-      if("School" %in% selected_facilities()){
+      if("School" %in% ranked_selection()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest School is ", data$dist_to_sch, " m away")
       }
-      if("Supermarket" %in% selected_facilities()){
+      if("Supermarket" %in% ranked_selection()){
         popup_content <- paste0(popup_content,"<br>",
                                 "Nearest Supermarket is ", data$dist_to_mart, " m away")
       }
+      #data <- data %>% mutate(proximity_score=)
       popup_content <- paste0(popup_content, "<br>",
-                            "Total Proximity Score is ", "%")
+                            "Total Proximity Score is ", proximity_score(), "%")
     }
     
     
