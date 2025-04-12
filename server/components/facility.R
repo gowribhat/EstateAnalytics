@@ -117,6 +117,7 @@ server <- function(input, output, session) {
       )
     ))
   })
+  
   # Render the dynamic rank list UI
   output$priority_rank_ui <- renderUI({
     req(input$selected_facilities)  # Ensure facilities have been selected
@@ -128,28 +129,32 @@ server <- function(input, output, session) {
       input_id = "facility_priority"
     )
   })
+  
   # Observer for confirming facility selection
   observeEvent(input$ok_facility, {
-    # Store the selected facilities (reactive value)
+    # Store the selected facilities
     user_selection(input$selected_facilities)
     # Retrieve the ranked order from the rank list
     ranked_selection(input$facility_priority)
+    
     # Display the ranked facilities in a modal dialog
     showModal(modalDialog(
       title = "Your Ranked Facilities",
-      verbatimTextOutput("ranked_output"),
+      verbatimTextOutput("ranked_output"),  # Output for ranked facilities
       easyClose = TRUE
     ))
     removeModal()  # Close the selection modal
   })
-
+  
+  # Output for displaying ranked facilities
   output$ranked_output <- renderPrint({
     req(ranked_selection())
     ranked_selection()
   })
+  
   # Reactive expression for facility ranking
   facility_ranking <- reactive({
-    req(user_selection())  # Ensure the user has made a selection
+    req(ranked_selection())  # Ensure the user has made a selection
     calculate_weights(ranked_selection())  # Dynamically calculate weights
   })
   
