@@ -8,6 +8,8 @@
 
 # Right overlay: Building-specific data and visualization
 # Get transactions for specific building when selected
+source("./server/components/facility.R")
+
 building_transactions <- reactive({
   building <- selected_building()
   property_type <- selected_property_type()
