@@ -20,7 +20,7 @@ ui <- fluidPage(
     tags$link(rel = "stylesheet", type = "text/css", href = "shared/datatables/css/dataTables.bootstrap.css"),
     # Load our custom overlays.js file
     tags$script(src = "js/overlays.js"),
-    tags$style(HTML("\n      body, html {\n        height: 100%;\n        margin: 0;\n        overflow: hidden;\n        font-family: 'Roboto', sans-serif;\n      }\n      .map-container {\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 1;\n      }\n      .top-filters {\n        position: absolute;\n        top: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        z-index: 1000;\n        display: flex;\n        gap: 10px;\n      }\n      .top-filters .btn {\n        border-radius: 20px;\n        transition: all 0.3s ease;\n      }\n      .top-filters .btn:hover {\n        background-color: #007bff;\n        color: white;\n        transform: scale(1.1);\n      }\n      .left-overlay, .right-overlay {\n        position: absolute;\n        top: 50px;\n        bottom: 10px;\n        width: 300px;\n        background: rgba(255, 255, 255, 0.9);\n        border-radius: 15px;\n        padding: 15px;\n        overflow-y: auto;\n        z-index: 1000;\n        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);\n        transition: all 0.3s ease;\n      }\n      .left-overlay:hover, .right-overlay:hover {\n        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);\n      }\n      .left-overlay {\n        left: 10px;\n      }\n      .right-overlay {\n        right: 10px;\n      }\n      /* Transactions overlay styling */\n      .transactions-overlay {\n        position: absolute;\n        bottom: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        width: calc(100% - 640px); /* Adjusted width */\n        max-width: 900px;\n        height: 50%; /* Restore fixed height */\n        background: rgba(255, 255, 255, 0.95);\n        border-radius: 15px;\n        padding: 15px; /* Restore padding */\n        z-index: 1001;\n        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);\n        /* Use display: none initially */\n        display: none;\n        /* Keep flex properties for when shown */\n        flex-direction: column;\n      }\n\n      /* Style the inner div containing the DTOutput */\n      .transactions-overlay > div:last-child {\n        flex-grow: 1;\n        overflow-y: auto; /* Restore auto scroll */\n        background-color: white;\n        border-radius: 0 0 10px 10px;\n        padding: 10px;\n        visibility: visible;\n        opacity: 1;\n      }\n      /* Ensure DataTable takes full width */\n      #building_transactions .dataTables_wrapper {\n          width: 100%;\n      }\n      @keyframes fadeIn {\n        from { opacity: 0; }\n        to { opacity: 1; }\n      }\n    ")),
+    tags$style(HTML("\n      body, html {\n        height: 100%;\n        margin: 0;\n        overflow: hidden;\n        font-family: 'Roboto', sans-serif;\n      }\n      .map-container {\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 1;\n      }\n      .top-filters {\n        position: absolute;\n        top: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        z-index: 1000;\n        display: flex;\n        gap: 10px;\n      }\n      .top-filters .btn {\n        border-radius: 20px;\n        transition: all 0.3s ease;\n      }\n      .top-filters .btn:hover {\n        background-color: #007bff;\n        color: white;\n        transform: scale(1.1);\n      }\n      .left-overlay, .right-overlay {\n        position: absolute;\n        top: 50px;\n        bottom: 10px;\n        width: 300px;\n        background: rgba(255, 255, 255, 0.9);\n        border-radius: 15px;\n        padding: 15px;\n        overflow-y: auto;\n        z-index: 1000;\n        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);\n        transition: all 0.3s ease;\n      }\n      .left-overlay:hover, .right-overlay:hover {\n        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);\n      }\n      .left-overlay {\n        left: 10px;\n      }\n      .right-overlay {\n        right: 10px;\n      }\n      /* Transactions overlay styling */\n      #transactions_overlay {\n        position: absolute;\n        bottom: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        width: calc(100% - 640px); /* Adjusted width */\n        max-width: 900px;\n        height: 60%; /* Increased height for analytics dashboard */\n        background: rgba(255, 255, 255, 0.95);\n        border-radius: 15px;\n        padding: 15px;\n        z-index: 1001;\n        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);\n        display: none; /* Use display: none initially */\n        flex-direction: column;\n        overflow: hidden; /* Prevent the main overlay from scrolling */\n      }\n\n      /* Style the container holding the conditional panels */\n      #analytics_dashboard_container {\n        flex-grow: 1; /* Allow container to fill space */\n        overflow: hidden; /* Prevent this container itself from scrolling */\n        /* Background, padding, border-radius are applied via inline style */\n      }\n\n      /* Style the inner div that should scroll (inside the conditionalPanel) */\n      #analytics_dashboard_container .conditionalPanel > div {\n         /* Height and overflow are set via inline style */\n         /* Ensure no conflicting styles here */\n      }\n\n      /* Ensure DataTable takes full width */\n      #building_transactions .dataTables_wrapper {\n          width: 100%;\n      }\n      @keyframes fadeIn {\n        from { opacity: 0; }\n        to { opacity: 1; }\n      }\n    ")),
     # Add JavaScript for responsive overlay behavior
     tags$script(HTML("
       function checkWindowSize() {
@@ -110,9 +110,11 @@ ui <- fluidPage(
     )
   ),
 
-  # Right overlay: Property details
+  # Right overlay: Property details (initially hidden)
   div(
+    id = "right_overlay",
     class = "right-overlay",
+    style = "display: none;", # Initially hidden
     div(
       style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
       h4("Building Details"),
@@ -122,22 +124,42 @@ ui <- fluidPage(
     )
   ),
   
-  # Transactions overlay
+  # Building Analytics Dashboard overlay
   div(
     id = "transactions_overlay",
-    class = "transactions-overlay",
+    class = "transactions-overlay", # Class is kept for potential JS selection, ID used for styling
     # Header with title and close button
     div(
       style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;",
-      h4("Transaction History", style = "margin: 0;"),
+      h4("Building Analytics Dashboard", style = "margin: 0;"),
       actionButton("close_transactions", "×", class = "btn btn-sm close-overlay", style = "border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-weight: bold; padding: 0;")
     ),
-    # Container for the transaction content, including loading state
+    # Container for the analytics dashboard content
     div(
-      id = "transactions_table_container",
-      style = "height: calc(100% - 50px); overflow-y: auto;",
-      # Use DTOutput for better table rendering
-      DTOutput("transactions_table")
+      id = "analytics_dashboard_container",
+      class = "scrollable-content", # Added class for scrollable content
+      style = "height: calc(100% - 50px); background-color: white; border-radius: 0 0 10px 10px; padding: 10px; overflow: hidden;", # Added overflow: hidden inline as well for certainty
+
+      # Loading UI
+      conditionalPanel(
+        condition = "typeof input.analytics_dashboard_ready === 'undefined' || !input.analytics_dashboard_ready",
+        div(
+          style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column;",
+          tags$i(class = "fa fa-spinner fa-spin", style = "font-size: 48px; color: #4676a9; margin-bottom: 15px;"),
+          h4("Loading building analytics...", style = "color: #4676a9;")
+        )
+      ),
+
+      # Dashboard UI - hidden by default, shown when ready
+      conditionalPanel(
+        condition = "typeof input.analytics_dashboard_ready !== 'undefined' && input.analytics_dashboard_ready",
+        # This div allows the content generated by uiOutput to scroll vertically
+        div(
+          class = "dashboard-content-scroll", # Added a class for potential targeting
+          style = "height: 100%; overflow-y: auto; overflow-x: hidden;", # Explicitly hide horizontal scroll
+          uiOutput("analytics_dashboard")
+        )
+      )
     )
   ),
   
