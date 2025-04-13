@@ -377,7 +377,7 @@ observe({
       }
       data <- data %>% mutate(proximity_score=round(calculate_weights(ranked_selection()),1))
       popup_content <- paste0(popup_content, "<br>",
-                            "Total Proximity Score is ", data$proximity_score, "%")
+                              "Total Proximity Score is ", data$proximity_score, "%")
     }
     
     
