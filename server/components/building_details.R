@@ -109,6 +109,28 @@ output$property_details <- renderUI({
       "</div>"
     ))
   }
+  facility_data <- reactive({
+    facilities()
+  })
+  data <- building_data %>% 
+    mutate(dist_to_childcare = facility_data()$childcare[1],
+           dist_to_gym = facility_data()$gym[1],
+           dist_to_mrt = facility_data()$mrt[1],
+           dist_to_park = facility_data()$park[1],
+           dist_to_sch = facility_data()$sch[1],
+           dist_to_mart = facility_data()$mart[1],
+           total = facility_data()$total_score[1])
+  HTML(paste0(
+    "<div style='font-size: 18px; font-weight: bold;'>", building$project, "</div>",
+    "<div style='margin-top: 10px;'>",
+    "Nearest Childcare Centre is </strong> ", data$dist_to_childcare, " m away", "</div>",
+    "Nearest Gym is ", data$dist_to_gym, " m away", "</div>",
+    "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "</div>",
+    "Nearest Park is ", data$dist_to_park, " m away", "</div>",
+    "Nearest School is ", data$dist_to_sch, " m away", "</div>",
+    "Nearest Supermarket is ", data$dist_to_mart, " m away", "</div>",
+    "Total Proximity Score is ", data$total, "%"
+  ))
 })
 
 # Building-specific price density plot
