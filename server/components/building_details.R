@@ -149,7 +149,7 @@ output$property_details <- renderUI({
     # Calculate dynamic weights based on user-selected facilities
     calculate_weights <- function(f) {
       total_weight <- n * (n + 1)/2  # Total weight sum
-      weights <- rev(seq_len(n)) / total_weight*100 # Descending weights
+      weights <- (n:1) / total_weight*100 # Descending weights
       norm_dist <- sapply(f,normal)
       score <- (1600-norm_dist)/1500
       return(sum(weights*score))
