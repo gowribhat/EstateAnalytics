@@ -121,7 +121,8 @@ output$property_details <- renderUI({
     "<div><strong>Nearest Park: </strong> ", data$dist_to_park[1], " m away", "</div>",
     "<div><strong>Nearest School: </strong> ", data$dist_to_sch[1], " m away", "</div>",
     "<div><strong>Nearest Supermarket: </strong> ", data$dist_to_mart[1], " m away", "</div>",
-    "<div><strong>Total Proximity Score: </strong> ", data$total[1], "%",
+    "<div><strong>Total Proximity Score: </strong> ", "</div>",
+    "<div style='font-size: 20px'>", data$total[1], "%","</div>",
     "<div style='margin-top: 15px;'>",
     # Ensure the button ID matches the observer in overlay_logic.R
     "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
@@ -133,48 +134,30 @@ output$property_details <- renderUI({
     selected_facilities <- reactive({
       facility_ranking()
     })
-    if("Childcare Centre" %in% ranked_selection()){
+    f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
+           facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
+    names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+    
+    # Rearranges the vector of distances by user-selected priority
+    f <- f[match(ranked_selection(),names(f))]
+    n <- length(f)
+    # Lists the distances to facilities in order specified by user
+    for(i in 1:n){
       html <- HTML(paste0(html,
-                     "<div><strong>","Nearest Childcare Centre:</strong> ", data$dist_to_childcare[1], " m away", "</div>"))
-    }
-    if("Gym" %in% ranked_selection()){
-      html <- HTML(paste0(html,
-                     "<div><strong>Nearest Gym: </strong> ", data$dist_to_gym[1], " m away", "</div>"))
-    }
-    if("LRT/MRT" %in% ranked_selection()){
-      html <- HTML(paste0(html,
-                     "<div><strong>Nearest LRT/MRT: </strong> ", data$dist_to_mrt[1], " m away", "</div>"))
-    }
-    if("Park" %in% ranked_selection()){
-      html <- HTML(paste0(html,
-                     "<div><strong>Nearest Park: </strong> ", data$dist_to_park[1], " m away", "</div>"))
-    }
-    if("School" %in% ranked_selection()){
-      html <- HTML(paste0(html,
-                     "<div><strong>Nearest School: </strong> ", data$dist_to_sch[1], " m away", "</div>"))
-    }
-    if("Supermarket" %in% ranked_selection()){
-      html <- HTML(paste0(html,
-                     "<div><strong>Nearest Supermarket: </strong> ", data$dist_to_mart[1], " m away", "</div>"))
+                          "<div><strong>","Nearest ", names(f)[i], ":</strong> ", f[i], " m away", "</div>"))
     }
     # Calculate dynamic weights based on user-selected facilities
-    calculate_weights <- function(facil) {
-      n <- length(facil)
+    calculate_weights <- function(f) {
       total_weight <- n * (n + 1)/2  # Total weight sum
       weights <- rev(seq_len(n)) / total_weight*100 # Descending weights
-      f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
-             facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
-      names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
-      
-      # Rearranges the vector of distances by user-selected priority
-      f <- f[match(facil,names(f))]
       norm_dist <- sapply(f,normal)
       score <- (1600-norm_dist)/1500
       return(sum(weights*score))
     }
-    data <- data %>% mutate(proximity_score=round(calculate_weights(ranked_selection()),1))
+    data <- data %>% mutate(proximity_score=round(calculate_weights(f),1))
     html <- HTML(paste0(html, 
-                   "<div><strong>Total Proximity Score:</strong> ", data$proximity_score[1], "%", "</div>",
+                   "<div><strong>Total Proximity Score: </strong> ", "</div>",
+                   "<div style='font-size: 20px'>", data$proximity_score[1], "%", "</div>",
                    "<div style='margin-top: 15px;'>",
                    # Ensure the button ID matches the observer in overlay_logic.R
                    "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
@@ -303,6 +286,25 @@ output$building_transactions <- renderUI({
     div(
       class = "alert alert-danger",
       "Error loading transaction history. Please check logs."
+    )
+  })
+})
+# Building-specific proximity plot
+output$distance_plot <- renderPlot({
+  # Add tryCatch to gracefully handle errors
+  tryCatch({
+    # Only proceed if we have a selected building
+    building <- selected_building()
+    return(
+      barplot(
+        f,
+        names.arg = names(f),
+        col = "skyblue",
+        main = "Distance from Different Facilities",
+        xlab = "Facilities",
+        ylab = "Distance (m)",
+        ylim = c(0, max(f) + 400)
+      )
     )
   })
 })
