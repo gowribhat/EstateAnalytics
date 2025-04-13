@@ -291,6 +291,9 @@ output$building_transactions <- renderUI({
 })
 # Building-specific proximity plot
 output$distance_plot <- renderPlot({
+  f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
+         facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
+  names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
   # Add tryCatch to gracefully handle errors
   tryCatch({
     # Only proceed if we have a selected building
@@ -299,11 +302,12 @@ output$distance_plot <- renderPlot({
       barplot(
         f,
         names.arg = names(f),
+        horiz = TRUE, 
         col = "skyblue",
         main = "Distance from Different Facilities",
-        xlab = "Facilities",
-        ylab = "Distance (m)",
-        ylim = c(0, max(f) + 400)
+        ylab = "Facilities",
+        xlab = "Distance (m)",
+        xlim = c(0, max(f) + 400)
       )
     )
   })
