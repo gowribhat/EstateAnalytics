@@ -369,7 +369,8 @@ observe({
           f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
                  facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
           names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
-          f <- f[names(f) %in% facil]
+          # Rearranges the vector of distances by user-selected priority
+          f <- f[match(facil,names(f))]
           norm_dist <- sapply(f,normal)
           score <- (1600-norm_dist)/1500
           return(sum(weights*score))
