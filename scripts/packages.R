@@ -7,7 +7,7 @@ required_packages <- c(
   "plotly", 
   "geosphere",
   "here",
-  "fmsb",
+  "graphics",
   "shinythemes", 
   "shinyjs", 
   "shinyWidgets", 

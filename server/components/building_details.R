@@ -264,6 +264,36 @@ output$building_plot <- renderPlot({
   })
 })
 
+output$facility_plot <- renderPlot({
+  # Add tryCatch to gracefully handle errors
+  tryCatch({
+    facility_data <- reactive({
+      facilities()
+    })
+    f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
+           facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
+    names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+    
+    # Only proceed if we have a selected building
+    building <- selected_building()
+    req(!is.null(building))
+    par(mar = c(0.5, 0.5, 0.5, 0.5))
+    p <-
+      barplot(
+        f,
+        names.arg = names(f),
+        horiz = TRUE, 
+        las = 1,
+        col = "skyblue",
+        main = "Distance from Different Facilities",
+        ylab = "Facilities",
+        xlab = "Distance (m)",
+        xlim = c(0, max(f,600))
+                 
+    )
+    return(p)
+  })
+})
 # Building-specific transaction list for right overlay (transactions overlay)
 output$building_transactions <- renderUI({
   # Add tryCatch to gracefully handle errors
@@ -290,25 +320,3 @@ output$building_transactions <- renderUI({
   })
 })
 # Building-specific proximity plot
-output$distance_plot <- renderPlot({
-  f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
-         facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
-  names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
-  # Add tryCatch to gracefully handle errors
-  tryCatch({
-    # Only proceed if we have a selected building
-    building <- selected_building()
-    return(
-      barplot(
-        f,
-        names.arg = names(f),
-        horiz = TRUE, 
-        col = "skyblue",
-        main = "Distance from Different Facilities",
-        ylab = "Facilities",
-        xlab = "Distance (m)",
-        xlim = c(0, max(f) + 400)
-      )
-    )
-  })
-})

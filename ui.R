@@ -117,7 +117,8 @@ ui <- fluidPage(
       style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
       h4("Building Details"),
       uiOutput("property_details"),
-      plotOutput("building_plot", height = "180px")
+      plotOutput("building_plot", height = "180px"),
+      plotOutput("facility_plot", height = "180px")
       # Past Transactions button removed - will be added dynamically by server
     )
   ),
