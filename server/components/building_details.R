@@ -134,28 +134,28 @@ output$property_details <- renderUI({
       facility_ranking()
     })
     if("Childcare Centre" %in% ranked_selection()){
-      popup_content <- paste0(popup_content,"<br>",
-                              "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")
+      html <- HTML(paste0(html,
+                     "<div><strong>","Nearest Childcare Centre:</strong> ", data$dist_to_childcare[1], " m away", "</div>"))
     }
     if("Gym" %in% ranked_selection()){
-      popup_content <- paste0(popup_content,"<br>",
-                              "Nearest Gym is ", data$dist_to_gym, " m away")
+      html <- HTML(paste0(html,
+                     "<div><strong>Nearest Gym: </strong> ", data$dist_to_gym[1], " m away", "</div>"))
     }
     if("LRT/MRT" %in% ranked_selection()){
-      popup_content <- paste0(popup_content,"<br>",
-                              "Nearest LRT/MRT is ", data$dist_to_mrt, " m away")
+      html <- HTML(paste0(html,
+                     "<div><strong>Nearest LRT/MRT: </strong> ", data$dist_to_mrt[1], " m away", "</div>"))
     }
     if("Park" %in% ranked_selection()){
-      popup_content <- paste0(popup_content,"<br>",
-                              "Nearest Park is ", data$dist_to_park, " m away")
+      html <- HTML(paste0(html,
+                     "<div><strong>Nearest Park: </strong> ", data$dist_to_park[1], " m away", "</div>"))
     }
     if("School" %in% ranked_selection()){
-      popup_content <- paste0(popup_content,"<br>",
-                              "Nearest School is ", data$dist_to_sch, " m away")
+      html <- HTML(paste0(html,
+                     "<div><strong>Nearest School: </strong> ", data$dist_to_sch[1], " m away", "</div>"))
     }
     if("Supermarket" %in% ranked_selection()){
-      popup_content <- paste0(popup_content,"<br>",
-                              "Nearest Supermarket is ", data$dist_to_mart, " m away")
+      html <- HTML(paste0(html,
+                     "<div><strong>Nearest Supermarket: </strong> ", data$dist_to_mart[1], " m away", "</div>"))
     }
     # Calculate dynamic weights based on user-selected facilities
     calculate_weights <- function(facil) {
@@ -165,12 +165,21 @@ output$property_details <- renderUI({
       f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
              facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
       names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+      
       # Rearranges the vector of distances by user-selected priority
       f <- f[match(facil,names(f))]
       norm_dist <- sapply(f,normal)
       score <- (1600-norm_dist)/1500
       return(sum(weights*score))
-      
+    }
+    data <- data %>% mutate(proximity_score=round(calculate_weights(ranked_selection()),1))
+    html <- HTML(paste0(html, 
+                   "<div><strong>Total Proximity Score:</strong> ", data$proximity_score[1], "%", "</div>",
+                   "<div style='margin-top: 15px;'>",
+                   # Ensure the button ID matches the observer in overlay_logic.R
+                   "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
+                   "</div>",
+                   "</div>"))
     }
   html
 })

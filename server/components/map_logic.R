@@ -7,8 +7,6 @@
 # - Marker display: Dynamically updates markers based on zoom level and filters.
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
-source("./server/components/facility.R")
-
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
   leaflet() %>%
@@ -308,7 +306,7 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    }
+    
     # Use a different marker rendering approach based on the number of points
     if(nrow(data) > 500) {
       # For large datasets, use more aggressive clustering and simpler markers
@@ -387,6 +385,8 @@ observeEvent(input$property_map_marker_click, {
   # Reset selection when no click or no id
   if (is.null(click) || is.null(click$id)) {
     selected_building(NULL)
+    # Hide the right overlay when clicking outside of markers
+    session$sendCustomMessage("hideRightOverlay", list())
     return()
   }
   
@@ -398,6 +398,8 @@ observeEvent(input$property_map_marker_click, {
   } else {
     filtered_ura_data()
   }
+  
+  building_found <- FALSE  # Flag to track if we found a matching building
   
   # Parse the building_id to identify which building was clicked
   if(property_type == "HDB") {
@@ -428,6 +430,7 @@ observeEvent(input$property_map_marker_click, {
     
     if(nrow(matches) > 0) {
       selected_building(matches)
+      building_found <- TRUE
     } else {
       # Last resort - try to match by coordinates
       if(!is.null(click$lat) && !is.null(click$lng)) {
@@ -439,6 +442,7 @@ observeEvent(input$property_map_marker_click, {
         
         if(nrow(closest_match) > 0) {
           selected_building(closest_match)
+          building_found <- TRUE
         }
       }
     }
@@ -486,7 +490,15 @@ observeEvent(input$property_map_marker_click, {
     
     if(!is.null(matches) && nrow(matches) > 0) {
       selected_building(matches)
+      building_found <- TRUE
     }
+  }
+  
+  # Show right overlay only if a building was found
+  if(building_found) {
+    session$sendCustomMessage("showRightOverlay", list())
+  } else {
+    session$sendCustomMessage("hideRightOverlay", list())
   }
 })
 
