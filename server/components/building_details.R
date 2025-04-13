@@ -61,7 +61,17 @@ output$property_details <- renderUI({
   }
 
   property_type <- selected_property_type()
-
+  facility_data <- reactive({
+    facilities()
+  })
+  data <- building_data %>% 
+    mutate(dist_to_childcare = facility_data()$childcare,
+           dist_to_gym = facility_data()$gym,
+           dist_to_mrt = facility_data()$mrt,
+           dist_to_park = facility_data()$park,
+           dist_to_sch = facility_data()$sch,
+           dist_to_mart = facility_data()$mart,
+           total = facility_data()$total_score)
   if (property_type == "HDB") {
     # Calculate stats
     median_price <- median(building_data$resale_price)
@@ -70,7 +80,7 @@ output$property_details <- renderUI({
     year_built <- building_data$lease_commence_date[1]
 
     # Include the Past Transactions button only when a building is selected
-    HTML(paste0(
+    html <- HTML(paste0(
       "<div style='font-size: 18px; font-weight: bold;'>", building$block, " ", building$street_name, "</div>",
       "<div style='margin-top: 10px;'>",
       "<div><strong>Latest Price:</strong> $", format(recent_price, big.mark = ","), " (", format(building_data$month[1], "%b %Y"), ")</div>",
@@ -79,9 +89,6 @@ output$property_details <- renderUI({
       "<div><strong>Built:</strong> ", year_built, "</div>",
       "<div><strong>Flat Type:</strong> ", building_data$flat_type[1], "</div>",
       "<div><strong>Area Range:</strong> ", min(building_data$floor_area_sqm), " - ", max(building_data$floor_area_sqm), " sqm</div>",
-      "<div style='margin-top: 15px;'>",
-      # Ensure the button ID matches the observer in overlay_logic.R
-      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
       "</div>",
       "</div>"
     ))
@@ -92,7 +99,7 @@ output$property_details <- renderUI({
     total_transactions <- nrow(building_data)
 
     # Include the Past Transactions button only when a building is selected
-    HTML(paste0(
+    html <- HTML(paste0(
       "<div style='font-size: 18px; font-weight: bold;'>", building$project, "</div>",
       "<div style='margin-top: 10px;'>",
       "<div><strong>Address:</strong> ", building$street, "</div>",
@@ -102,35 +109,70 @@ output$property_details <- renderUI({
       "<div><strong>Property Type:</strong> ", building_data$propertyType[1], "</div>",
       "<div><strong>Area Range:</strong> ", min(building_data$area), " - ", max(building_data$area), " sqm</div>",
       "<div><strong>Tenure:</strong> ", building_data$tenure[1], "</div>",
-      "<div style='margin-top: 15px;'>",
-      # Ensure the button ID matches the observer in overlay_logic.R
-      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
       "</div>",
       "</div>"
     ))
   }
-  facility_data <- reactive({
-    facilities()
-  })
-  data <- building_data %>% 
-    mutate(dist_to_childcare = facility_data()$childcare[1],
-           dist_to_gym = facility_data()$gym[1],
-           dist_to_mrt = facility_data()$mrt[1],
-           dist_to_park = facility_data()$park[1],
-           dist_to_sch = facility_data()$sch[1],
-           dist_to_mart = facility_data()$mart[1],
-           total = facility_data()$total_score[1])
-  HTML(paste0(
-    "<div style='font-size: 18px; font-weight: bold;'>", building$project, "</div>",
-    "<div style='margin-top: 10px;'>",
-    "Nearest Childcare Centre is </strong> ", data$dist_to_childcare, " m away", "</div>",
-    "Nearest Gym is ", data$dist_to_gym, " m away", "</div>",
-    "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "</div>",
-    "Nearest Park is ", data$dist_to_park, " m away", "</div>",
-    "Nearest School is ", data$dist_to_sch, " m away", "</div>",
-    "Nearest Supermarket is ", data$dist_to_mart, " m away", "</div>",
-    "Total Proximity Score is ", data$total, "%"
+  if(is.null(user_selection())){
+    html <- HTML(paste0(html,
+    "<div><strong>Nearest Childcare Centre: </strong> ", data$dist_to_childcare[1], " m away", "</div>",
+    "<div><strong>Nearest Gym: </strong> ", data$dist_to_gym[1], " m away", "</div>",
+    "<div><strong>Nearest LRT/MRT: </strong> ", data$dist_to_mrt[1], " m away", "</div>",
+    "<div><strong>Nearest Park: </strong> ", data$dist_to_park[1], " m away", "</div>",
+    "<div><strong>Nearest School: </strong> ", data$dist_to_sch[1], " m away", "</div>",
+    "<div><strong>Nearest Supermarket: </strong> ", data$dist_to_mart[1], " m away", "</div>",
+    "<div><strong>Total Proximity Score: </strong> ", data$total[1], "%",
+    "<div style='margin-top: 15px;'>",
+    # Ensure the button ID matches the observer in overlay_logic.R
+    "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
+    "</div>",
+    "</div>"
   ))
+  }
+  else{
+    selected_facilities <- reactive({
+      facility_ranking()
+    })
+    if("Childcare Centre" %in% ranked_selection()){
+      popup_content <- paste0(popup_content,"<br>",
+                              "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")
+    }
+    if("Gym" %in% ranked_selection()){
+      popup_content <- paste0(popup_content,"<br>",
+                              "Nearest Gym is ", data$dist_to_gym, " m away")
+    }
+    if("LRT/MRT" %in% ranked_selection()){
+      popup_content <- paste0(popup_content,"<br>",
+                              "Nearest LRT/MRT is ", data$dist_to_mrt, " m away")
+    }
+    if("Park" %in% ranked_selection()){
+      popup_content <- paste0(popup_content,"<br>",
+                              "Nearest Park is ", data$dist_to_park, " m away")
+    }
+    if("School" %in% ranked_selection()){
+      popup_content <- paste0(popup_content,"<br>",
+                              "Nearest School is ", data$dist_to_sch, " m away")
+    }
+    if("Supermarket" %in% ranked_selection()){
+      popup_content <- paste0(popup_content,"<br>",
+                              "Nearest Supermarket is ", data$dist_to_mart, " m away")
+    }
+    # Calculate dynamic weights based on user-selected facilities
+    calculate_weights <- function(facil) {
+      n <- length(facil)
+      total_weight <- n * (n + 1)/2  # Total weight sum
+      weights <- rev(seq_len(n)) / total_weight*100 # Descending weights
+      f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
+             facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
+      names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+      # Rearranges the vector of distances by user-selected priority
+      f <- f[match(facil,names(f))]
+      norm_dist <- sapply(f,normal)
+      score <- (1600-norm_dist)/1500
+      return(sum(weights*score))
+      
+    }
+  html
 })
 
 # Building-specific price density plot

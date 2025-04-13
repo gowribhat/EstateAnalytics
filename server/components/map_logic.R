@@ -292,17 +292,6 @@ observe({
       radius = 15
     )
   } else if (vis_mode == "markers") {
-    facility_data <- reactive({
-      facilities()
-    })
-    data <- data %>% 
-      mutate(dist_to_childcare = facility_data()$childcare[1],
-             dist_to_gym = facility_data()$gym[1],
-             dist_to_mrt = facility_data()$mrt[1],
-             dist_to_park = facility_data()$park[1],
-             dist_to_sch = facility_data()$sch[1],
-             dist_to_mart = facility_data()$mart[1],
-             total = facility_data()$total_score[1])
     # Create popup content and building IDs based on property type
     if(property_type == "HDB") {
       popup_content <- paste0(
@@ -319,69 +308,7 @@ observe({
       )
       data$building_id <- paste0(data$project, " - ", data$street)
     }
-    if(is.null(user_selection())){
-      popup_content <- paste0(popup_content,"<br>",
-                              "Nearest Childcare Centre is ", data$dist_to_childcare, " m away", "<br>",
-                              "Nearest Gym is ", data$dist_to_gym, " m away", "<br>",
-                              "Nearest LRT/MRT is ", data$dist_to_mrt, " m away", "<br>",
-                              "Nearest Park is ", data$dist_to_park, " m away", "<br>",
-                              "Nearest School is ", data$dist_to_sch, " m away", "<br>",
-                              "Nearest Supermarket is ", data$dist_to_mart, " m away", "<br>",
-                              "Total Proximity Score is ", data$total, "%")
     }
-    else{
-      selected_facilities <- reactive({
-        facility_ranking()
-      })
-      if("Childcare Centre" %in% ranked_selection()){
-        popup_content <- paste0(popup_content,"<br>",
-                                "Nearest Childcare Centre is ", data$dist_to_childcare, " m away")
-      }
-      if("Gym" %in% ranked_selection()){
-        popup_content <- paste0(popup_content,"<br>",
-                                "Nearest Gym is ", data$dist_to_gym, " m away")
-      }
-      if("LRT/MRT" %in% ranked_selection()){
-        popup_content <- paste0(popup_content,"<br>",
-                                "Nearest LRT/MRT is ", data$dist_to_mrt, " m away")
-      }
-      if("Park" %in% ranked_selection()){
-        popup_content <- paste0(popup_content,"<br>",
-                                "Nearest Park is ", data$dist_to_park, " m away")
-      }
-      if("School" %in% ranked_selection()){
-        popup_content <- paste0(popup_content,"<br>",
-                                "Nearest School is ", data$dist_to_sch, " m away")
-      }
-      if("Supermarket" %in% ranked_selection()){
-        popup_content <- paste0(popup_content,"<br>",
-                                "Nearest Supermarket is ", data$dist_to_mart, " m away")
-      }
-      # Calculate dynamic weights based on user-selected facilities
-      calculate_weights <- function(facil) {
-        n <- length(facil)
-        if (n == 0){
-          return(0)
-        } 
-        else{
-          total_weight <- n * (n + 1)/2  # Total weight sum
-          weights <- rev(seq_len(n)) / total_weight*100 # Descending weights
-          f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
-                 facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
-          names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
-          # Rearranges the vector of distances by user-selected priority
-          f <- f[match(facil,names(f))]
-          norm_dist <- sapply(f,normal)
-          score <- (1600-norm_dist)/1500
-          return(sum(weights*score))
-        }
-      }
-      data <- data %>% mutate(proximity_score=round(calculate_weights(ranked_selection()),1))
-      popup_content <- paste0(popup_content, "<br>",
-                              "Total Proximity Score is ", data$proximity_score, "%")
-    }
-    
-    
     # Use a different marker rendering approach based on the number of points
     if(nrow(data) > 500) {
       # For large datasets, use more aggressive clustering and simpler markers
