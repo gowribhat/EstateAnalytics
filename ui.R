@@ -25,23 +25,33 @@ ui <- fluidPage(
     tags$script(HTML("
       function checkWindowSize() {
         var windowWidth = window.innerWidth;
-        var overlays = document.querySelectorAll('.left-overlay, .right-overlay');
-        
-        // If window width is less than 1000px, hide the overlays
+        // Select only the left overlay for automatic hiding/showing based on width
+        var leftOverlay = document.querySelector('.left-overlay');
+        var rightOverlay = document.getElementById('right_overlay'); // Keep track of right overlay state
+
+        // If window width is less than 1000px, hide the left overlay
         if (windowWidth < 1000) {
-          overlays.forEach(function(overlay) {
-            overlay.style.display = 'none';
-          });
-          Shiny.setInputValue('overlays_visible', false);
+          if (leftOverlay) {
+            leftOverlay.style.display = 'none';
+          }
+          // Update visibility state only if right overlay is also hidden
+          if (rightOverlay && rightOverlay.style.display === 'none') {
+            Shiny.setInputValue('overlays_visible', false);
+          } else {
+            Shiny.setInputValue('overlays_visible', true); // Right overlay might still be visible
+          }
         } else {
-          overlays.forEach(function(overlay) {
-            // Reset CSS properties to fix the foggy appearance
-            overlay.style.display = 'block';
-            overlay.style.opacity = '1';
-            overlay.style.background = 'rgba(255, 255, 255, 0.9)';
-            // Force a repaint by triggering a layout calculation
-            overlay.offsetHeight;
-          });
+          // If window width is >= 1000px, show the left overlay
+          if (leftOverlay) {
+            // Reset CSS properties for the left overlay
+            leftOverlay.style.display = 'block';
+            leftOverlay.style.opacity = '1';
+            leftOverlay.style.background = 'rgba(255, 255, 255, 0.9)';
+            // Force a repaint
+            leftOverlay.offsetHeight;
+          }
+          // Always set overlays_visible to true if window is wide enough,
+          // as either left or right (or both) could be visible.
           Shiny.setInputValue('overlays_visible', true);
         }
       }
@@ -118,10 +128,24 @@ ui <- fluidPage(
     div(
       style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
       h4("Building Details"),
-      uiOutput("property_details"),
-      plotOutput("building_plot", height = "180px"),
-      plotOutput("facility_plot", height = "180px")
-      # Building Analytics button removed - will be added dynamically by server
+      
+      # Loading UI - shown while content is being prepared
+      conditionalPanel(
+        condition = "typeof input.right_overlay_ready === 'undefined' || !input.right_overlay_ready",
+        div(
+          style = "display: flex; align-items: center; justify-content: center; height: 200px; flex-direction: column;",
+          tags$i(class = "fa fa-spinner fa-spin", style = "font-size: 24px; color: #4676a9; margin-bottom: 10px;"),
+          p("Loading property details...", style = "color: #4676a9;")
+        )
+      ),
+      
+      # Property content - hidden initially, shown when ready
+      conditionalPanel(
+        condition = "typeof input.right_overlay_ready !== 'undefined' && input.right_overlay_ready",
+        uiOutput("property_details"),
+        plotOutput("building_plot", height = "180px"),
+        plotOutput("facility_plot", height = "180px")
+      )
     )
   ),
   

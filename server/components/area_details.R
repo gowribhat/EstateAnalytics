@@ -192,16 +192,24 @@ output$summary_plot <- renderPlot({
   property_type <- selected_property_type()
   price_col_name <- if(property_type == "HDB") "resale_price" else "price"
 
-  # Create a density plot
+  # Create a count-based histogram with properly aligned density curve
+  # Calculate bin width based on data range and bin count
+  bin_count <- 15
+  bin_width <- (max(data[[price_col_name]]) - min(data[[price_col_name]])) / bin_count
+  
   ggplot(data, aes_string(x = price_col_name)) +
-    geom_density(fill = "#4676a9", alpha = 0.7) +
+    geom_histogram(fill = "#4676a9", alpha = 0.5, bins = bin_count) +
+    # Scale density to histogram counts properly
+    stat_density(geom = "line", 
+                aes_string(y = paste0("after_stat(density) * ", nrow(data), " * ", bin_width)), 
+                color = "#003366", size = 1.2) +
     geom_vline(aes(xintercept = median(data[[price_col_name]])),
               color = "#ff5555", linetype = "dashed", size = 1) +
     labs(
       title = plot_title, # Use the conditional title
       subtitle = paste0("Median: $", format(median(data[[price_col_name]]), big.mark = ",")),
       x = "Price (SGD)",
-      y = "Density"
+      y = "Count"
     ) +
     scale_x_continuous(labels = scales::dollar_format(prefix = "$", suffix = "", big.mark = ",")) +
     theme_minimal() +
