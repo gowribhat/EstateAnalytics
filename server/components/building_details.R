@@ -267,33 +267,66 @@ output$building_plot <- renderPlot({
 output$facility_plot <- renderPlot({
   # Add tryCatch to gracefully handle errors
   tryCatch({
-    facility_data <- reactive({
-      facilities()
-    })
-    f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
-           facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
-    names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
-    
-    # Only proceed if we have a selected building
+    # Check if a building is selected
     building <- selected_building()
-    req(!is.null(building))
-    par(mar = c(0.5, 0.5, 0.5, 0.5))
-    p <-
-      barplot(
-        f,
-        names.arg = names(f),
-        horiz = TRUE, 
-        las = 1,
-        col = "skyblue",
-        main = "Distance from Different Facilities",
-        ylab = "Facilities",
-        xlab = "Distance (m)",
-        xlim = c(0, max(f,600))
-                 
+    if (is.null(building)) {
+      # Return a placeholder plot when no building is selected
+      return(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "Click on a marker to view facility distances", size = 5) +
+          theme_void() +
+          theme(
+            plot.background = element_rect(fill = "#f8f9fa", color = NA)
+          )
+      )
+    }
+
+    # Get facility data
+    facility_data <- facilities()
+    req(facility_data)  # Ensure facility data is available
+
+    # Extract distances
+    f <- c(
+      facility_data$childcare[1],
+      facility_data$gym[1],
+      facility_data$mrt[1],
+      facility_data$park[1],
+      facility_data$sch[1],
+      facility_data$mart[1]
     )
-    return(p)
+    names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+
+    # Create a data frame for ggplot
+    facility_df <- data.frame(
+      Facility = names(f),
+      Distance = f
+    )
+
+    # Generate the bar plot using ggplot2
+    ggplot(facility_df, aes(x = Distance, y = Facility)) +
+      geom_bar(stat = "identity", fill = "skyblue") +
+      labs(
+        title = "Distance from Different Facilities",
+        x = "Distance (m)",
+        y = "Facilities"
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12)
+      )
+  }, error = function(e) {
+    # Return a placeholder plot on error
+    ggplot() +
+      annotate("text", x = 0.5, y = 0.5, label = "Error rendering facility plot", size = 5) +
+      theme_void() +
+      theme(
+        plot.background = element_rect(fill = "#f8f9fa", color = NA)
+      )
   })
 })
+
 # Building-specific transaction list for right overlay (transactions overlay)
 output$building_transactions <- renderUI({
   # Add tryCatch to gracefully handle errors
@@ -307,7 +340,7 @@ output$building_transactions <- renderUI({
     # Simple success message
     div(
       class = "alert alert-info",
-      style = "text-align: center; padding: 20px;",
+      style = "text-align: center; padding = 20px;",
       h4("Building Data Found", style = "margin-top: 0"),
       p(paste("Found", nrow(building_data), "transactions for this building"))
     )
