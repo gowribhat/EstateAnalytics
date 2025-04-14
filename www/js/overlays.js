@@ -7,14 +7,26 @@ $(document).ready(function() {
     console.log("JS: Showing right overlay with building details");
     var overlay = $('#right_overlay');
     
+    // Set overlay as not ready initially (shows loading state)
+    Shiny.setInputValue('right_overlay_ready', false, {priority: 'event'});
+    
     // Make the overlay visible
-    overlay.css('display', 'flex');
+    overlay.css('display', 'block');
     
     // Update hidden input to track general overlay state
     Shiny.setInputValue('overlays_visible', true);
     
     // Trigger window resize to ensure proper layout
     $(window).trigger('resize');
+
+    // After a longer delay (matching the transactions overlay delay), mark overlay as ready
+    setTimeout(function() {
+      console.log("JS: Setting right overlay ready");
+      // Signal readiness to show content
+      Shiny.setInputValue('right_overlay_ready', true, {priority: 'event'});
+      // Trigger visual change to help ensure plots render correctly
+      $(document).trigger('shiny:visualchange');
+    }, 800); // Longer delay to ensure DOM is ready
   });
 
   // Handler for hiding the right overlay

@@ -22,5 +22,6 @@ required_packages <- c(
   "stringr", 
   "lubridate", 
   "jsonlite", 
-  "dotenv"
+  "dotenv",
+  "gtools"
 )
