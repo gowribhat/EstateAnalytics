@@ -158,8 +158,6 @@ output$property_details <- renderUI({
                    "<div><strong>Total Proximity Score: </strong> ", "</div>",
                    "<div style='font-size: 20px'>", data$proximity_score[1], "%", "</div>",
                    "<div style='margin-top: 15px;'>",
-                   # Ensure the button ID matches the observer in overlay_logic.R
-                   "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
                    "</div>",
                    "</div>"))
     }
