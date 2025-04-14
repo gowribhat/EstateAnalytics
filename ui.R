@@ -27,8 +27,8 @@ ui <- fluidPage(
         var windowWidth = window.innerWidth;
         var overlays = document.querySelectorAll('.left-overlay, .right-overlay');
         
-        // If window width is less than 1200px, hide the overlays
-        if (windowWidth < 1200) {
+        // If window width is less than 1000px, hide the overlays
+        if (windowWidth < 1000) {
           overlays.forEach(function(overlay) {
             overlay.style.display = 'none';
           });
@@ -119,8 +119,9 @@ ui <- fluidPage(
       style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
       h4("Building Details"),
       uiOutput("property_details"),
-      plotOutput("building_plot", height = "180px")
-      # Past Transactions button removed - will be added dynamically by server
+      plotOutput("building_plot", height = "180px"),
+      plotOutput("facility_plot", height = "180px")
+      # Building Analytics button removed - will be added dynamically by server
     )
   ),
   

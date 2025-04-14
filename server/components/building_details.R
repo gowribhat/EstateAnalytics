@@ -8,6 +8,8 @@
 
 # Right overlay: Building-specific data and visualization
 # Get transactions for specific building when selected
+source("./server/components/facility.R")
+
 building_transactions <- reactive({
   building <- selected_building()
   property_type <- selected_property_type()
@@ -41,8 +43,7 @@ building_transactions <- reactive({
         project == building$project,
         street == building$street
       ) %>%
-      arrange(desc(contractDate)
-    )
+      arrange(desc(contractDate)) # Fixed missing closing parenthesis
   }
 
   return(building_data)
@@ -59,7 +60,17 @@ output$property_details <- renderUI({
   }
 
   property_type <- selected_property_type()
-
+  facility_data <- reactive({
+    facilities()
+  })
+  data <- building_data %>% 
+    mutate(dist_to_childcare = facility_data()$childcare,
+           dist_to_gym = facility_data()$gym,
+           dist_to_mrt = facility_data()$mrt,
+           dist_to_park = facility_data()$park,
+           dist_to_sch = facility_data()$sch,
+           dist_to_mart = facility_data()$mart,
+           total = facility_data()$total_score)
   if (property_type == "HDB") {
     # Calculate stats
     median_price <- median(building_data$resale_price)
@@ -68,7 +79,7 @@ output$property_details <- renderUI({
     year_built <- building_data$lease_commence_date[1]
 
     # Include the Building Analytics button only when a building is selected
-    HTML(paste0(
+    html <- HTML(paste0(
       "<div style='font-size: 18px; font-weight: bold;'>", building$block, " ", building$street_name, "</div>",
       "<div style='margin-top: 10px;'>",
       "<div><strong>Latest Price:</strong> $", format(recent_price, big.mark = ","), " (", format(building_data$month[1], "%b %Y"), ")</div>",
@@ -89,8 +100,8 @@ output$property_details <- renderUI({
     recent_price <- building_data$price[1]
     total_transactions <- nrow(building_data)
 
-    # Include the Building Analytics button only when a building is selected
-    HTML(paste0(
+    # Include the Past Transactions button only when a building is selected
+    html <- HTML(paste0(
       "<div style='font-size: 18px; font-weight: bold;'>", building$project, "</div>",
       "<div style='margin-top: 10px;'>",
       "<div><strong>Address:</strong> ", building$street, "</div>",
@@ -100,13 +111,57 @@ output$property_details <- renderUI({
       "<div><strong>Property Type:</strong> ", building_data$propertyType[1], "</div>",
       "<div><strong>Area Range:</strong> ", min(building_data$area), " - ", max(building_data$area), " sqm</div>",
       "<div><strong>Tenure:</strong> ", building_data$tenure[1], "</div>",
-      "<div style='margin-top: 15px;'>",
-      # Ensure the button ID matches the observer in overlay_logic.R
-      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Building Analytics</button>",
       "</div>",
       "</div>"
     ))
   }
+  if(is.null(user_selection())){
+    html <- HTML(paste0(html,
+      "<div><strong>Nearest Childcare Centre: </strong> ", data$dist_to_childcare[1], " m away", "</div>",
+      "<div><strong>Nearest Gym: </strong> ", data$dist_to_gym[1], " m away", "</div>",
+      "<div><strong>Nearest LRT/MRT: </strong> ", data$dist_to_mrt[1], " m away", "</div>",
+      "<div><strong>Nearest Park: </strong> ", data$dist_to_park[1], " m away", "</div>",
+      "<div><strong>Nearest School: </strong> ", data$dist_to_sch[1], " m away", "</div>",
+      "<div><strong>Nearest Supermarket: </strong> ", data$dist_to_mart[1], " m away", "</div>",
+      "<div><strong>Total Proximity Score: </strong> ", "</div>",
+      "<div style='font-size: 20px'>", data$total[1], "%","</div>",
+      "<div style='margin-top: 15px;'>",
+      "</div>",
+      "</div>"
+    ))
+  } else {
+    selected_facilities <- reactive({
+      facility_ranking()
+    })
+    f <- c(facility_data()$childcare[1],facility_data()$gym[1],facility_data()$mrt[1],
+           facility_data()$park[1],facility_data()$sch[1],facility_data()$mart[1])
+    names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+    
+    # Rearranges the vector of distances by user-selected priority
+    f <- f[match(ranked_selection(),names(f))]
+    n <- length(f)
+    # Lists the distances to facilities in order specified by user
+    for(i in 1:n){
+      html <- HTML(paste0(html,
+                          "<div><strong>","Nearest ", names(f)[i], ":</strong> ", f[i], " m away", "</div>"))
+    }
+    # Calculate dynamic weights based on user-selected facilities
+    calculate_weights <- function(f) {
+      total_weight <- n * (n + 1)/2  # Total weight sum
+      weights <- (n:1) / total_weight*100 # Descending weights
+      norm_dist <- sapply(f,normal)
+      score <- (1600-norm_dist)/1500
+      return(sum(weights*score))
+    }
+    data <- data %>% mutate(proximity_score=round(calculate_weights(f),1))
+    html <- HTML(paste0(html, 
+                   "<div><strong>Total Proximity Score: </strong> ", "</div>",
+                   "<div style='font-size: 20px'>", data$proximity_score[1], "%", "</div>",
+                   "<div style='margin-top: 15px;'>",
+                   "</div>",
+                   "</div>"))
+    }
+  html
 })
 
 # Building-specific price density plot
@@ -206,6 +261,69 @@ output$building_plot <- renderPlot({
   })
 })
 
+output$facility_plot <- renderPlot({
+  # Add tryCatch to gracefully handle errors
+  tryCatch({
+    # Check if a building is selected
+    building <- selected_building()
+    if (is.null(building)) {
+      # Return a placeholder plot when no building is selected
+      return(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "Click on a marker to view facility distances", size = 5) +
+          theme_void() +
+          theme(
+            plot.background = element_rect(fill = "#f8f9fa", color = NA)
+          )
+      )
+    }
+
+    # Get facility data
+    facility_data <- facilities()
+    req(facility_data)  # Ensure facility data is available
+
+    # Extract distances
+    f <- c(
+      facility_data$childcare[1],
+      facility_data$gym[1],
+      facility_data$mrt[1],
+      facility_data$park[1],
+      facility_data$sch[1],
+      facility_data$mart[1]
+    )
+    names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
+
+    # Create a data frame for ggplot
+    facility_df <- data.frame(
+      Facility = names(f),
+      Distance = f
+    )
+
+    # Generate the bar plot using ggplot2
+    ggplot(facility_df, aes(x = Distance, y = Facility)) +
+      geom_bar(stat = "identity", fill = "skyblue") +
+      labs(
+        title = "Distance from Different Facilities",
+        x = "Distance (m)",
+        y = "Facilities"
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12)
+      )
+  }, error = function(e) {
+    # Return a placeholder plot on error
+    ggplot() +
+      annotate("text", x = 0.5, y = 0.5, label = "Error rendering facility plot", size = 5) +
+      theme_void() +
+      theme(
+        plot.background = element_rect(fill = "#f8f9fa", color = NA)
+      )
+  })
+})
+
 # Building-specific transaction list for right overlay (transactions overlay)
 output$building_transactions <- renderUI({
   # Add tryCatch to gracefully handle errors
@@ -219,7 +337,7 @@ output$building_transactions <- renderUI({
     # Simple success message
     div(
       class = "alert alert-info",
-      style = "text-align: center; padding: 20px;",
+      style = "text-align: center; padding = 20px;",
       h4("Building Data Found", style = "margin-top: 0"),
       p(paste("Found", nrow(building_data), "transactions for this building"))
     )
@@ -231,3 +349,4 @@ output$building_transactions <- renderUI({
     )
   })
 })
+# Building-specific proximity plot

@@ -27,32 +27,32 @@ map_center_debounced <- reactive({
 current_planning_area <- reactive({
   center <- map_center_debounced()
   pa_sf <- planning_areas_data()
-
+  
   # Ensure data is loaded and center coordinates are available
   req(center, pa_sf)
-
+  
   # Create an sf point for the map center (Leaflet uses WGS84 - EPSG:4326)
   center_point <- st_sfc(st_point(c(center$lng, center$lat)), crs = 4326)
-
+  
   # Transform point CRS to match planning area CRS if necessary
   pa_crs <- st_crs(pa_sf)
   if (st_crs(center_point) != pa_crs) {
     center_point <- st_transform(center_point, crs = pa_crs)
   }
-
+  
   # Check and repair geometry validity
   if (any(!st_is_valid(pa_sf))) {
     pa_sf <- st_make_valid(pa_sf)
   }
-
+  
   # Disable S2 temporarily for spatial intersection
   sf_use_s2(FALSE)
   intersection <- st_intersects(center_point, pa_sf, sparse = FALSE)
   sf_use_s2(TRUE)
-
+  
   # Find the index of the intersecting polygon
   intersecting_index <- which(intersection, arr.ind = TRUE)[, "col"]
-
+  
   if (length(intersecting_index) > 0) {
     # Dynamically identify the planning area column
     pa_col_name <- NULL
@@ -64,7 +64,7 @@ current_planning_area <- reactive({
         pa_col_name <- names(pa_sf)[match_idx]
       }
     }
-
+    
     if (!is.null(pa_col_name)) {
       area_name <- pa_sf[[pa_col_name]][intersecting_index[1]]
       return(toupper(area_name))
@@ -116,22 +116,22 @@ markers_to_show <- reactive({
 visible_filtered_data <- reactive({
   # Check selected property type
   property_type <- selected_property_type()
-
+  
   # Get appropriate dataset based on property type
   data <- if(property_type == "HDB") {
     filtered_hdb_data()
   } else {
     filtered_ura_data()
   }
-
+  
   req(data)
   show_markers <- should_show_markers()
-
+  
   # Exit early if zoom level is too low or no data
   if (!show_markers || nrow(data) == 0) {
     return(NULL)
   }
-
+  
   # Get current map bounds if available for spatial filtering
   bounds <- input$property_map_bounds
   
@@ -153,16 +153,16 @@ visible_filtered_data <- reactive({
         latitude <= bounds_expanded$north
       )
   }
-
+  
   # Optional early exit if no data in view
   if (nrow(data) == 0) {
     return(NULL)
   }
-
+  
   # Filter for recent transactions (within 5 years from current date)
   current_date <- as.Date("2025-04-03")  # Current date from context
   five_years_ago <- current_date - (5 * 365)
-
+  
   # Date column has different names in HDB vs URA
   if(property_type == "HDB") {
     data <- data %>%
@@ -173,7 +173,7 @@ visible_filtered_data <- reactive({
       filter(as.Date(contractDate) >= five_years_ago) %>%
       arrange(desc(contractDate))
   }
-
+  
   # Implement spatial pre-clustering to reduce markers
   zoom <- current_zoom()
   grid_size <- if(zoom >= 16) 0.0005 else if(zoom >= 14) 0.001 else if(zoom >= 13) 0.002 else 0.004
@@ -199,7 +199,7 @@ visible_filtered_data <- reactive({
   if (nrow(data) > limit) {
     data <- head(data, limit)
   }
-
+  
   return(data)
 })
 
@@ -215,7 +215,7 @@ observe({
     clearMarkerClusters() %>%
     clearHeatmap() %>%
     clearControls() # Clear all legends and other controls
-    
+  
   # Exit early if we should show nothing (very zoomed out)
   if (vis_mode == "none") {
     output$price_legend <- renderUI({ NULL })
@@ -257,7 +257,7 @@ observe({
     output$price_legend <- renderUI({ NULL })
     return()
   }
-
+  
   # Create price palette based on property type
   if(property_type == "HDB") {
     price_palette <- colorNumeric(
@@ -348,13 +348,13 @@ observe({
       )
     }
   }
-
+  
   # Show price legend for any visualization type
   if(nrow(data) > 0) {
     output$price_legend <- renderUI({
       min_price <- if(property_type == "HDB") min(data$resale_price) else min(data$price)
       max_price <- if(property_type == "HDB") max(data$resale_price) else max(data$price)
-
+      
       tags$div(
         style = "width: 100%; padding: 8px 0;",
         tags$h5("Property Price Legend", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px;"),
@@ -381,43 +381,45 @@ observe({
 # Marker click observer to update the selected building
 observeEvent(input$property_map_marker_click, {
   click <- input$property_map_marker_click
-
+  
   # Reset selection when no click or no id
   if (is.null(click) || is.null(click$id)) {
     selected_building(NULL)
+    # Hide the right overlay when clicking outside of markers
+    session$sendCustomMessage("hideRightOverlay", list())
     # Hide the right overlay when clicking outside of markers
     session$sendCustomMessage("hideRightOverlay", list())
     return()
   }
   
   property_type <- selected_property_type()
-
+  
   # Get appropriate dataset
   data <- if(property_type == "HDB") {
     filtered_hdb_data()
   } else {
     filtered_ura_data()
   }
-
+  
   building_found <- FALSE  # Flag to track if we found a matching building
   
   # Parse the building_id to identify which building was clicked
   if(property_type == "HDB") {
     # For HDB, the ID is in format "block street_name"
     clicked_id <- click$id
-
+    
     # First try exact match on the full ID
     matches <- data %>%
       filter(paste(block, street_name) == clicked_id) %>%
       head(1)
-
+    
     if(nrow(matches) == 0) {
       # If no direct match, try parsing the ID
       parts <- strsplit(clicked_id, " ")[[1]]
       if(length(parts) >= 2) {
         block <- parts[1]
         street_name <- paste(parts[-1], collapse = " ")
-
+        
         # Find the first matching transaction
         matches <- data %>%
           filter(
@@ -427,9 +429,10 @@ observeEvent(input$property_map_marker_click, {
           head(1)
       }
     }
-
+    
     if(nrow(matches) > 0) {
       selected_building(matches)
+      building_found <- TRUE
       building_found <- TRUE
     } else {
       # Last resort - try to match by coordinates
@@ -439,9 +442,10 @@ observeEvent(input$property_map_marker_click, {
         closest_match <- data %>%
           arrange(dist) %>%
           head(1)
-
+        
         if(nrow(closest_match) > 0) {
           selected_building(closest_match)
+          building_found <- TRUE
           building_found <- TRUE
         }
       }
@@ -449,16 +453,16 @@ observeEvent(input$property_map_marker_click, {
   } else {
     # For private properties, the ID is more complex
     clicked_id <- click$id
-
+    
     # Try direct match on project and street first
     matches <- NULL
-
+    
     # Extract project and street from the clicked ID
     parts <- strsplit(clicked_id, " - ")[[1]]
     if(length(parts) >= 2) {
       project_name <- parts[1]
       street_name <- parts[2]
-
+      
       # Try to find by exact project and street match
       matches <- data %>%
         filter(
@@ -473,7 +477,7 @@ observeEvent(input$property_map_marker_click, {
         filter(grepl(clicked_id, project, fixed = TRUE) |
                  grepl(project, clicked_id, fixed = TRUE)) %>%
         head(1)
-
+      
       if(nrow(similar_projects) > 0) {
         matches <- similar_projects
       } else {
@@ -487,11 +491,19 @@ observeEvent(input$property_map_marker_click, {
         }
       }
     }
-
+    
     if(!is.null(matches) && nrow(matches) > 0) {
       selected_building(matches)
       building_found <- TRUE
+      building_found <- TRUE
     }
+  }
+  
+  # Show right overlay only if a building was found
+  if(building_found) {
+    session$sendCustomMessage("showRightOverlay", list())
+  } else {
+    session$sendCustomMessage("hideRightOverlay", list())
   }
   
   # Show right overlay only if a building was found
