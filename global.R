@@ -3,6 +3,7 @@
 # DBA3702 Team 3
 
 # Load packages from centralized package management
+source("scripts/install_packages.R")
 source("scripts/load_packages.R")
 
 # Explicitly load DT for DataTable functionality
