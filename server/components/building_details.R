@@ -303,12 +303,13 @@ output$facility_plot <- renderPlot({
 
     # Generate the bar plot using ggplot2
     ggplot(facility_df, aes(x = Distance, y = Facility)) +
-      geom_bar(stat = "identity", fill = "skyblue") +
+      geom_bar(stat = "identity", fill = "pink") +
       labs(
-        title = "Distance from Different Facilities",
+        title = "Distance from Facilities",
         x = "Distance (m)",
         y = "Facilities"
       ) +
+      scale_y_discrete(limits=rev)+
       theme_minimal() +
       theme(
         plot.title = element_text(face = "bold", size = 14),
