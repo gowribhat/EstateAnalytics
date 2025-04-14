@@ -10,7 +10,7 @@ source("scripts/load_packages.R")
 library(DT)
 
 # Define paths
-resources_path <- "data/"
+resources_path <- "data/clean/"
 
 # Create a data registry to centralize all data specifications
 data_registry <- list(
