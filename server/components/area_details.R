@@ -95,7 +95,7 @@ output$income_donut <- renderPlotly({
   plot_data <- data.frame(
     y = "Income Distribution",
     x = values,
-    income_type = legend_labels,
+    income_type = factor(legend_labels, levels = legend_labels), # Ensure factor levels are ordered
     hover_label = hover_labels,
     stringsAsFactors = FALSE
   )
