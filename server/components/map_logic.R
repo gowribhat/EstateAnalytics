@@ -527,3 +527,82 @@ output$visualization_mode_text <- renderText({
     paste("Overview Mode (Zoom:", zoom, ") - Zoom in to see properties")
   }
 })
+
+# Facility icons using updated URLs
+facility_icons <- iconList(
+  gym = makeIcon(
+    iconUrl = "https://cdn-icons-png.flaticon.com/512/7984/7984880.png", 
+    iconWidth = 25, iconHeight = 25
+  ),
+  childcare = makeIcon(
+    iconUrl = "https://cdn-icons-png.flaticon.com/512/17012/17012962.png", 
+    iconWidth = 25, iconHeight = 25
+  ),
+  park = makeIcon(
+    iconUrl = "https://cdn-icons-png.flaticon.com/512/7057/7057859.png", 
+    iconWidth = 25, iconHeight = 25
+  ),
+  supermarket = makeIcon(
+    iconUrl = "https://cdn-icons-png.flaticon.com/512/2331/2331970.png", 
+    iconWidth = 25, iconHeight = 25
+  ),
+  school = makeIcon(
+    iconUrl = "https://cdn-icons-png.flaticon.com/512/2602/2602414.png", 
+    iconWidth = 25, iconHeight = 25
+  ),
+  mrt = makeIcon(
+    iconUrl = "https://cdn-icons-png.flaticon.com/512/821/821354.png", 
+    iconWidth = 25, iconHeight = 25
+  )
+)
+
+# Reactive to filter facilities based on user selection
+filtered_facilities <- reactive({
+  selected <- input$selected_facilities
+  req(selected)
+  
+  facilities <- list()
+  if ("Gym" %in% selected) facilities$gym <- gym()
+  if ("Childcare Centre" %in% selected) facilities$childcare <- childcare()
+  if ("Park" %in% selected) facilities$park <- park()
+  if ("Supermarket" %in% selected) facilities$supermarket <- mart()
+  if ("School" %in% selected) facilities$school <- sch()
+  if ("LRT/MRT" %in% selected) facilities$mrt <- mrt()
+  
+  facilities
+})
+
+# Observe and update facility markers on the map
+observe({
+  facilities <- filtered_facilities()
+  map_proxy <- leafletProxy("property_map") %>% clearGroup("facilities")
+  
+  for (facility_type in names(facilities)) {
+    data <- facilities[[facility_type]]
+    
+    # Filter out rows without a 'name' column or with missing 'name' values
+    if (!"name" %in% colnames(data)) next
+    data <- data[!is.na(data$name) & data$name != "", ]
+    
+    # Skip if no valid rows remain
+    if (nrow(data) == 0) next
+    
+    map_proxy <- map_proxy %>%
+      addMarkers(
+        data = data,
+        lng = ~longitude,
+        lat = ~latitude,
+        icon = facility_icons[[facility_type]],
+        group = "facilities",
+        popup = ~paste(
+          "<strong>", tools::toTitleCase(name), "</strong><br>",
+          if (facility_type == "mrt" && "exit" %in% colnames(data)) {
+            paste0("<span style='font-size: smaller;'>Exit: <strong>", exit, "</strong></span><br>")
+          } else {
+            ""
+          },
+          "<span style='font-size: x-small;'>", tools::toTitleCase(facility_type), "</span>"
+        )
+      )
+  }
+})
