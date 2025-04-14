@@ -121,7 +121,7 @@ ui <- fluidPage(
       uiOutput("property_details"),
       plotOutput("building_plot", height = "180px"),
       plotOutput("facility_plot", height = "180px")
-      # Past Transactions button removed - will be added dynamically by server
+      # Building Analytics button removed - will be added dynamically by server
     )
   ),
   

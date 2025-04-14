@@ -43,8 +43,7 @@ building_transactions <- reactive({
         project == building$project,
         street == building$street
       ) %>%
-      arrange(desc(contractDate)
-    )
+      arrange(desc(contractDate)) # Fixed missing closing parenthesis
   }
 
   return(building_data)
@@ -118,28 +117,19 @@ output$property_details <- renderUI({
   }
   if(is.null(user_selection())){
     html <- HTML(paste0(html,
-    "<div><strong>Nearest Childcare Centre: </strong> ", data$dist_to_childcare[1], " m away", "</div>",
-    "<div><strong>Nearest Gym: </strong> ", data$dist_to_gym[1], " m away", "</div>",
-    "<div><strong>Nearest LRT/MRT: </strong> ", data$dist_to_mrt[1], " m away", "</div>",
-    "<div><strong>Nearest Park: </strong> ", data$dist_to_park[1], " m away", "</div>",
-    "<div><strong>Nearest School: </strong> ", data$dist_to_sch[1], " m away", "</div>",
-    "<div><strong>Nearest Supermarket: </strong> ", data$dist_to_mart[1], " m away", "</div>",
-    "<div><strong>Total Proximity Score: </strong> ", "</div>",
-    "<div style='font-size: 20px'>", data$total[1], "%","</div>",
-    "<div style='margin-top: 15px;'>",
-    # Ensure the button ID matches the observer in overlay_logic.R
-    "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Past Transactions</button>",
-    "</div>",
-    "</div>"
-  ))
+      "<div><strong>Nearest Childcare Centre: </strong> ", data$dist_to_childcare[1], " m away", "</div>",
+      "<div><strong>Nearest Gym: </strong> ", data$dist_to_gym[1], " m away", "</div>",
+      "<div><strong>Nearest LRT/MRT: </strong> ", data$dist_to_mrt[1], " m away", "</div>",
+      "<div><strong>Nearest Park: </strong> ", data$dist_to_park[1], " m away", "</div>",
+      "<div><strong>Nearest School: </strong> ", data$dist_to_sch[1], " m away", "</div>",
+      "<div><strong>Nearest Supermarket: </strong> ", data$dist_to_mart[1], " m away", "</div>",
+      "<div><strong>Total Proximity Score: </strong> ", "</div>",
+      "<div style='font-size: 20px'>", data$total[1], "%","</div>",
       "<div style='margin-top: 15px;'>",
-      # Ensure the button ID matches the observer in overlay_logic.R
-      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Building Analytics</button>",
       "</div>",
       "</div>"
     ))
-  }
-  else{
+  } else {
     selected_facilities <- reactive({
       facility_ranking()
     })
