@@ -8,6 +8,12 @@ server <- function(input, output, session) {
   transactions_overlay_visible <- reactiveVal(FALSE)
   planning_areas_data <- reactiveVal(NULL)
   hdb_data <- reactiveVal(NULL)
+  childcare <- reactiveVal(NULL)
+  gym <- reactiveVal(NULL)
+  mrt <- reactiveVal(NULL)
+  park <- reactiveVal(NULL)
+  sch <- reactiveVal(NULL)
+  mart <- reactiveVal(NULL)
   household_income_data <- reactiveVal(NULL)
   ura_data <- reactiveVal(NULL)
   selected_property_type <- reactiveVal("HDB")
@@ -27,12 +33,15 @@ server <- function(input, output, session) {
   # Then load data
   source("server/components/data_loading.R", local = TRUE)
   
+  # Then load facilities
+  source("server/components/facility.R", local = TRUE)
+  
   # Then load filters which depend on the data
   source("server/components/filters.R", local = TRUE)
   
   # Then load the remaining components in alphabetical order
   remaining_components <- list.files("server/components", pattern = "\\.R$", full.names = TRUE)
-  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R|utils\\.R)$", remaining_components)]
+  remaining_components <- remaining_components[!grepl("(map_logic\\.R|data_loading\\.R|filters\\.R|utils\\.R|facility\\.R)$", remaining_components)]
   lapply(remaining_components, function(file) source(file, local = TRUE))
   
   # Make sure the overlay is not shown at startup

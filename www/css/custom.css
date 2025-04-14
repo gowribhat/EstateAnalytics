@@ -95,6 +95,17 @@ body {
   height: 100% !important;
 }
 
+/* Ensure the transaction overlay is unscrollable as a whole */
+.transactions-overlay {
+  overflow: hidden; /* Prevent scrolling for the entire overlay */
+}
+
+/* Allow inner regions to remain scrollable */
+.transactions-overlay .scrollable-content {
+  overflow-y: auto; /* Enable vertical scrolling for inner content */
+  max-height: 100%; /* Ensure it doesn't exceed the overlay's height */
+}
+
 /* Action buttons */
 .btn-primary {
   background-color: #2196F3;
