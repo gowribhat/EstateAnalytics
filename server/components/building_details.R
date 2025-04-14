@@ -100,7 +100,7 @@ output$property_details <- renderUI({
     recent_price <- building_data$price[1]
     total_transactions <- nrow(building_data)
 
-    # Include the Past Transactions button only when a building is selected
+    # Include the Building Analytics button for private properties too
     html <- HTML(paste0(
       "<div style='font-size: 18px; font-weight: bold;'>", building$project, "</div>",
       "<div style='margin-top: 10px;'>",
@@ -111,6 +111,9 @@ output$property_details <- renderUI({
       "<div><strong>Property Type:</strong> ", building_data$propertyType[1], "</div>",
       "<div><strong>Area Range:</strong> ", min(building_data$area), " - ", max(building_data$area), " sqm</div>",
       "<div><strong>Tenure:</strong> ", building_data$tenure[1], "</div>",
+      "<div style='margin-top: 15px;'>",
+      "<button id='toggle_transactions_overlay' type='button' class='btn btn-primary btn-block action-button'>Building Analytics</button>",
+      "</div>",
       "</div>",
       "</div>"
     ))
@@ -208,17 +211,27 @@ output$building_plot <- renderPlot({
     }
     price_col <- building_data[[price_col_name]]
 
-    # Only show density plot if we have enough data points
+    # Show count-based histogram with density curve overlay
     if (nrow(building_data) >= 3) {
+      # For buildings with very few transactions, use fewer bins
+      bin_count <- min(max(3, nrow(building_data) %/% 2), 10)
+      
+      # Calculate bin width first to ensure histogram and density curve use same scale
+      bin_width <- (max(price_col) - min(price_col)) / bin_count
+      count_data <- nrow(building_data)
+      
       p <- ggplot(building_data, aes(x = price_col)) +
-        geom_density(fill = "#4676a9", alpha = 0.7) +
+        geom_histogram(fill = "#4676a9", alpha = 0.5, bins = bin_count) +
+        # Scale density to histogram counts properly using a simpler approach
+        geom_density(aes(y = ..density.. * count_data * bin_width), 
+                     color = "#003366", size = 1.2, alpha = 0.2) +
         geom_vline(aes(xintercept = median(price_col)),
                   color = "#ff5555", linetype = "dashed", size = 1) +
         labs(
           title = paste0("Price Distribution for ", plot_title),
           subtitle = paste0("Median: $", format(median(price_col), big.mark = ",")),
           x = "Price (SGD)",
-          y = "Density"
+          y = "Count"
         ) +
         scale_x_continuous(labels = scales::dollar_format(prefix = "$", suffix = "", big.mark = ",")) +
         theme_minimal() +
