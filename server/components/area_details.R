@@ -13,35 +13,7 @@ output$current_region_name <- renderText({
 })
 
 # Income statistics for the current region
-output$income_stats <- renderUI({
-  # Get the current planning area
-  area_name <- current_planning_area()
-
-  # Get income data
-  income_data <- household_income_data()
-
-  # If we don't have income data or a planning area, display a message
-  if (is.null(income_data) || is.null(area_name) || area_name == "Outside Planning Area") {
-    return(HTML("<p><em>Income data not available for this area.</em></p>"))
-  }
-
-  # Find income data for current region
-  region_data <- income_data %>%
-    filter(toupper(Number) == toupper(area_name))
-
-  if (nrow(region_data) == 0) {
-    return(HTML("<p><em>Income data not available for this area.</em></p>"))
-  }
-
-  # Calculate income metrics
-  total_households <- region_data$Total
-
-  # Return a div containing the plotly chart with appropriate sizing - reduced height for compression
-  div(
-    style = "height:220px; background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;",
-    plotlyOutput(session$ns("income_donut"), height = "100%")
-  )
-})
+output$income_stats <- NULL
 
 # Render the plotly income visualization - changed from donut chart to horizontal stacked bar
 output$income_donut <- renderPlotly({
@@ -219,4 +191,183 @@ output$summary_plot <- renderPlot({
       axis.text.x = element_text(angle = 45, hjust = 1),
       panel.grid.minor = element_blank()
     )
+})
+
+# Move planning_areas_sf load to a reactive value at the top level
+planning_areas_data <- reactive({
+  tryCatch({
+    pa_data <- st_read("data/clean/district_and_planning_area.geojson", quiet = TRUE)
+    print("Planning areas columns:")
+    print(names(pa_data))
+    return(pa_data)
+  }, error = function(e) {
+    warning("Error loading planning areas: ", e$message)
+    NULL
+  })
+})
+
+# Function to get planning area for facilities using reverse geocoding
+get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) {
+  # Debug prints
+  print(paste("Processing facilities for area:", area_name))
+  print(paste("Number of facilities:", nrow(facility_data)))
+  print(paste("Planning areas columns:", paste(names(planning_areas_sf), collapse=", ")))
+  
+  req(facility_data, planning_areas_sf, area_name)
+  
+  # Create spatial points for facilities
+  facilities_sf <- st_as_sf(facility_data, coords = c("longitude", "latitude"), crs = 4326)
+  
+  # Ensure CRS matches
+  if (st_crs(facilities_sf) != st_crs(planning_areas_sf)) {
+    facilities_sf <- st_transform(facilities_sf, crs = st_crs(planning_areas_sf))
+  }
+  
+  # Find planning area column dynamically
+  pa_col <- names(planning_areas_sf)[grep("planning.*area|pln.*area", names(planning_areas_sf), ignore.case = TRUE)]
+  if (length(pa_col) == 0) pa_col <- "planning_area"
+  print(paste("Using planning area column:", pa_col))
+  
+  # Find facilities in the current planning area (case insensitive)
+  current_area <- planning_areas_sf[toupper(planning_areas_sf[[pa_col]]) == toupper(area_name), ]
+  if (nrow(current_area) == 0) {
+    print(paste("No matching area found for:", area_name))
+    print(paste("Available areas:", paste(unique(planning_areas_sf[[pa_col]]), collapse=", ")))
+    return(0)
+  }
+  
+  # Temporary disable S2 for consistent results
+  sf_use_s2(FALSE)
+  facilities_in_area <- st_intersects(facilities_sf, current_area, sparse = FALSE)
+  sf_use_s2(TRUE)
+  
+  count <- sum(facilities_in_area)
+  print(paste("Found facilities in area:", count))
+  return(count)
+}
+
+# Add facility summary count to the UI
+output$facility_summary <- renderUI({
+  # Get current planning area
+  area_name <- current_planning_area()
+  
+  # Get planning areas data
+  planning_areas_sf <- planning_areas_data()
+  
+  # Enhanced debugging - print more detailed information
+  print(paste("Current area:", area_name))
+  print(paste("Planning areas loaded:", !is.null(planning_areas_sf)))
+  if (!is.null(planning_areas_sf)) {
+    print(paste("Number of planning areas:", nrow(planning_areas_sf)))
+    print(paste("Planning area column names:", paste(names(planning_areas_sf), collapse=", ")))
+  }
+  
+  # Exit if no area selected or no planning areas data
+  if (is.null(area_name) || area_name == "Outside Planning Area" || is.null(planning_areas_sf)) {
+    return(div(
+      style = "margin: 15px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;",
+      "No facility data available for this area"
+    ))
+  }
+  
+  # Validate planning areas data
+  if (!inherits(planning_areas_sf, "sf")) {
+    print("Warning: planning_areas_sf is not an sf object")
+    return(div(
+      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px;",
+      "Error loading planning areas data"
+    ))
+  }
+  
+  # Ensure geometry is valid
+  if (any(!st_is_valid(planning_areas_sf))) {
+    print("Fixing invalid geometries in planning areas...")
+    planning_areas_sf <- st_make_valid(planning_areas_sf)
+  }
+  
+  # Get facility counts with error handling
+  tryCatch({
+    # Load facility data first to ensure it's available
+    childcare_data <- childcare()
+    gym_data <- gym()
+    mrt_data <- mrt()
+    park_data <- park()
+    school_data <- sch()
+    mart_data <- mart()
+    
+    # Verify facility data is loaded
+    req(childcare_data, gym_data, mrt_data, park_data, school_data, mart_data)
+    
+    # Get counts
+    childcare_count <- get_facilities_in_area(childcare_data, planning_areas_sf, area_name)
+    gym_count <- get_facilities_in_area(gym_data, planning_areas_sf, area_name)
+    mrt_count <- get_facilities_in_area(mrt_data, planning_areas_sf, area_name)
+    park_count <- get_facilities_in_area(park_data, planning_areas_sf, area_name)
+    school_count <- get_facilities_in_area(school_data, planning_areas_sf, area_name)
+    supermarket_count <- get_facilities_in_area(mart_data, planning_areas_sf, area_name)
+    
+    div(
+      style = "margin: 8px 0; padding: 8px; background-color: #f8f9fa; border-radius: 5px;",
+      h4("Facilities in Area", style = "margin-top: 0; margin-bottom: 5px; font-size: 14px; color: #2c3e50;"),
+      div(
+        style = "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;",
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🏫 <strong>Schools:</strong> %d", school_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("👶 <strong>Childcare:</strong> %d", childcare_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🚉 <strong>MRT/LRT:</strong> %d", mrt_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🏋️ <strong>Gyms:</strong> %d", gym_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🌳 <strong>Parks:</strong> %d", park_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🛒 <strong>Markets:</strong> %d", supermarket_count)))
+      )
+    )
+  }, error = function(e) {
+    print(paste("Error counting facilities:", e$message))
+    # Return error message if something goes wrong
+    div(
+      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; color: #856404;",
+      "Unable to load facility data"
+    )
+  })
+})
+
+# Update the left overlay UI with optimized graph sizes
+output$left_overlay <- renderUI({
+  div(
+    style = "padding: 10px;",
+    # Area Summary Header
+    h4("Area Summary"),
+    h5(textOutput("current_region_name", inline = TRUE)),
+    
+    # Main scrollable content
+    div(
+      style = "height: calc(100% - 70px); overflow-y: auto; padding-right: 5px;",
+      
+      # Price Distribution Plot - full size
+      div(
+        style = "margin-bottom: 25px;",
+        plotOutput("summary_plot", height = "400px")
+      ),
+      # Spacer between plots
+      div(style = "height: 18px;"),
+      # Income Distribution Plot - full size
+      div(
+        style = "margin-bottom: 25px;",
+        plotlyOutput("income_donut", height = "350px")
+      ),
+      
+      # Facility Summary - now more compact
+      uiOutput("facility_summary")
+    ),
+    
+    # Price legend at bottom
+    div(
+      style = "position: absolute; bottom: 10px; left: 15px; right: 15px; height: 60px;",
+      htmlOutput("price_legend")
+    )
+  )
 })
