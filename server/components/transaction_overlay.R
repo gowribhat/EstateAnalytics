@@ -133,7 +133,7 @@ output$analytics_dashboard <- renderUI({
     column(
       width = 4,
       div(
-        style = "height: 100%; overflow-y: auto; overflow-x: hidden; max-height: 400px;", # Only vertical scrolling with fixed height
+        style = "height: 100%; overflow-y: auto; overflow-x: hidden; max-height: 500px;", # Only vertical scrolling with fixed height
         wellPanel(
           style = "background-color: #f8f9fa;",
           h4("Analytics Controls"),
