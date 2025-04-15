@@ -4,7 +4,7 @@ source("./scripts/packages.R")
 load_package <- function(pkg) {
   if (!require(pkg, character.only = TRUE)) {
     message(paste("Package", pkg, "not found. Attempting to install..."))
-    install.packages(pkg, dependencies = TRUE)
+    install.packages(pkg, dependencies = TRUE, repos = "https://cran.rstudio.com/")
     if (!require(pkg, character.only = TRUE)) {
       stop(paste("Package", pkg, "could not be loaded"))
     }

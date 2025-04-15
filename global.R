@@ -9,8 +9,13 @@ source("scripts/load_packages.R")
 # Explicitly load DT for DataTable functionality
 library(DT)
 
+# Global options to disable scientific notation
+options(scipen = 999)           # Disable scientific notation
+options(digits = 10)            # Set high precision for numeric display
+options(format.decimal.mark=".") # Ensure decimal point is a period
+
 # Define paths
-resources_path <- "data/"
+resources_path <- "data/clean/"
 
 # Create a data registry to centralize all data specifications
 data_registry <- list(

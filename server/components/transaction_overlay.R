@@ -113,6 +113,21 @@ output$analytics_dashboard <- renderUI({
     type_col <- "propertyType"
   }
   
+  # --- Start: Added Sorting for Room Types ---
+  # Get unique room types
+  unique_types <- unique(building_data[[type_col]])
+
+  # Sort room types using mixedsort (requires gtools package)
+  # Ensure gtools is listed in packages.R and loaded in global.R
+  if (requireNamespace("gtools", quietly = TRUE)) {
+    sorted_types <- gtools::mixedsort(as.character(unique_types))
+  } else {
+    # Fallback to basic sort if gtools is not available
+    warning("gtools package not found. Room types may not be sorted naturally.")
+    sorted_types <- sort(as.character(unique_types))
+  }
+  # --- End: Added Sorting for Room Types ---
+
   # Create UI elements for the dashboard
   fluidRow(
     column(
@@ -133,8 +148,9 @@ output$analytics_dashboard <- renderUI({
           conditionalPanel(
             condition = "input.viz_type == 'price_trend' || input.viz_type == 'price_per_sqm'",
             selectInput("room_type_filter", "Filter by Room Type:",
-                      choices = c("All Types" = "all", 
-                                  as.character(unique(building_data[[type_col]]))),
+                      # --- Start: Use sorted list for choices ---
+                      choices = c("All Types" = "all", setNames(sorted_types, sorted_types)),
+                      # --- End: Use sorted list for choices ---
                       selected = "all")
           ),
           
@@ -339,15 +355,12 @@ output$transaction_volume_plot <- renderPlot({
     price_col <- "price"
   }
   
-  # Check if we have data
-  if(nrow(building_data) == 0) {
-    return(ggplot() + 
-             annotate("text", x = 0.5, y = 0.5, label = "No data available", size = 5) +
-             theme_void())
-  }
-  
+  # Check if we have data initially
+  req(nrow(building_data) > 0) # Use req for cleaner flow
+
+  # --- Start: Modified Data Preparation for Volume Plot ---
   # Process data for transaction volume analysis
-  volume_data <- building_data %>%
+  volume_data_raw <- building_data %>%
     mutate(
       transaction_date = as.Date(!!sym(date_col)),
       transaction_year = year(transaction_date)
@@ -355,61 +368,146 @@ output$transaction_volume_plot <- renderPlot({
     group_by(transaction_year) %>%
     summarize(
       volume = n(),
-      avg_price = mean(!!sym(price_col)),
+      avg_price = mean(!!sym(price_col), na.rm = TRUE), # Handle potential NAs in price
       .groups = "drop"
     ) %>%
-    arrange(transaction_year) %>%
-    # Calculate year-to-year price changes
+    arrange(transaction_year)
+
+  # Check if volume_data_raw is empty after summarization
+  if(nrow(volume_data_raw) == 0) {
+    return(ggplot() +
+             annotate("text", x = 0.5, y = 0.5, label = "No data available", size = 5) +
+             theme_void())
+  }
+
+  # Create a complete sequence of years
+  min_year <- min(volume_data_raw$transaction_year)
+  max_year <- max(volume_data_raw$transaction_year)
+  all_years_df <- data.frame(transaction_year = seq(min_year, max_year, by = 1))
+
+  # Join with summarized data and fill missing values
+  volume_data <- all_years_df %>%
+    left_join(volume_data_raw, by = "transaction_year") %>%
     mutate(
-      price_change = c(0, diff(avg_price)),
-      price_change_pct = c(0, diff(avg_price) / avg_price[-n()] * 100),
+      volume = ifelse(is.na(volume), 0, volume),
+      # Keep avg_price as NA for years with no data, handle downstream
+      avg_price = ifelse(volume == 0, NA, avg_price)
+    ) %>%
+    arrange(transaction_year) %>%
+    # Calculate year-to-year price changes, handling NAs
+    mutate(
+      # Calculate lagged price only where previous year exists and has price
+      lagged_avg_price = lag(avg_price),
+      price_change = ifelse(!is.na(avg_price) & !is.na(lagged_avg_price), avg_price - lagged_avg_price, NA),
+      price_change_pct = ifelse(!is.na(price_change) & !is.na(lagged_avg_price) & lagged_avg_price != 0, price_change / lagged_avg_price * 100, NA),
       market_direction = case_when(
+        is.na(price_change_pct) ~ "No Trend", # Assign for NA changes
         price_change_pct > 2 ~ "Rising",
         price_change_pct < -2 ~ "Falling",
         TRUE ~ "Stable"
       )
     )
-  
+
+  # Ensure market_direction has levels for consistent coloring
+  volume_data$market_direction <- factor(volume_data$market_direction, levels = c("Rising", "Stable", "Falling", "No Trend"))
+  # --- End: Modified Data Preparation for Volume Plot ---
+
+
+  # --- Start: Modified Plotting Logic ---
   # Create a dual-axis plot for volume and price trends
-  ggplot(volume_data, aes(x = factor(transaction_year))) +
+  # Need to handle potential NAs in avg_price for the geom_line/geom_point
+  # Filter out NA avg_price before plotting the line/points
+  price_trend_data <- volume_data %>% filter(!is.na(avg_price))
+
+  # Check if there's any price trend data left to plot
+  has_price_trend <- nrow(price_trend_data) > 0
+
+  # Base plot
+  p <- ggplot(volume_data, aes(x = factor(transaction_year))) +
     # Volume bars
     geom_col(aes(y = volume, fill = market_direction), alpha = 0.8) +
-    # Price trend line (on secondary y-axis)
-    geom_line(aes(y = avg_price / max(avg_price) * max(volume) * 0.8, 
-                 group = 1), 
-             color = "#2C3E50", size = 1, linetype = "dashed") +
-    geom_point(aes(y = avg_price / max(avg_price) * max(volume) * 0.8), 
-              color = "#2C3E50", size = 3) +
-    # Market direction color scale
+    # Market direction color scale (add "No Trend")
     scale_fill_manual(values = c(
-      "Rising" = "#1a9850", 
-      "Stable" = "#4575b4", 
-      "Falling" = "#d73027"
-    )) +
-    # Labels
+      "Rising" = "#1a9850",
+      "Stable" = "#4575b4",
+      "Falling" = "#d73027",
+      "No Trend" = "#bdbdbd" # Grey for no trend/data
+    ), drop = FALSE) # drop = FALSE keeps all levels in legend
+
+  # Add price trend line only if data exists and is plottable
+  if (has_price_trend && nrow(price_trend_data) >= 2) { # Need at least 2 points for a line
+    # Calculate scaling factor based only on non-NA avg_price
+    max_avg_price_non_na <- max(price_trend_data$avg_price, na.rm = TRUE)
+    max_volume <- max(volume_data$volume, na.rm = TRUE)
+    # Avoid division by zero or issues with zero max volume/price
+    scaling_factor <- if (!is.na(max_avg_price_non_na) && max_avg_price_non_na > 0 && max_volume > 0) {
+        max_volume * 0.8 / max_avg_price_non_na
+    } else {
+        1 # Default scaling factor if calculation is not possible
+    }
+
+    # --- Start: Dynamic Annotation Positioning ---
+    # Get data for the last year to position annotation dynamically
+    last_year_data <- volume_data %>% filter(transaction_year == max(transaction_year))
+    last_year_volume <- last_year_data$volume
+    # Get the scaled price for the last year (handle potential NA)
+    last_year_scaled_price <- last_year_data$avg_price * scaling_factor
+    last_year_scaled_price <- ifelse(is.na(last_year_scaled_price), 0, last_year_scaled_price)
+
+    # Determine the y position for the annotation
+    # Place it slightly above the max of the volume bar and the price point for the last year
+    y_annotation_pos <- max(last_year_volume, last_year_scaled_price, na.rm = TRUE) + (max(volume_data$volume, na.rm = TRUE) * 0.05) # 5% buffer based on max overall volume
+    # --- End: Dynamic Annotation Positioning ---
+
+    p <- p +
+      geom_line(data = price_trend_data, aes(y = avg_price * scaling_factor, group = 1),
+                color = "#2C3E50", size = 1, linetype = "dashed", na.rm = TRUE) + # na.rm = TRUE for line
+      geom_point(data = price_trend_data, aes(y = avg_price * scaling_factor),
+                 color = "#2C3E50", size = 3, na.rm = TRUE) + # na.rm = TRUE for points
+      # Add secondary axis only if price trend is plotted
+      scale_y_continuous(
+        name = "Number of Transactions",
+        sec.axis = sec_axis(~ . / scaling_factor, name = "Average Price (SGD)", labels = scales::dollar_format(prefix = "$", suffix = "", big.mark = ","))
+      ) +
+      # Add annotation only if price trend is plotted
+      annotate("text",
+               x = length(volume_data$transaction_year), # Position at the last year
+               # --- Start: Use calculated y position and vjust --- 
+               y = y_annotation_pos, 
+               label = "Avg Price Trend →",
+               color = "#2C3E50",
+               hjust = 1, # Right-align horizontally
+               vjust = 0, # Align bottom of text to y_annotation_pos (places text above)
+               # --- End: Use calculated y position and vjust ---
+               fontface = "italic")
+
+  } else {
+    # If no price trend, just use the primary y-axis for volume
+    p <- p + scale_y_continuous(name = "Number of Transactions")
+  }
+
+  # Add remaining plot elements
+  p <- p +
     labs(
       title = "Transaction Volume & Market Trends",
-      subtitle = "Volume bars with price trend overlay (dashed line)",
+      subtitle = if(has_price_trend && nrow(price_trend_data) >= 2) "Volume bars with avg price trend overlay (dashed line)" else "Volume bars",
       x = "Year",
-      y = "Number of Transactions",
+      # y axis label is set by scale_y_continuous
       fill = "Market Direction"
     ) +
-    # Custom theme
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14),
-      axis.text.x = element_text(angle = 0, hjust = 0.5),
+      axis.text.x = element_text(angle = 0, hjust = 0.5), # Keep angle 0
       panel.grid.minor = element_blank(),
-      legend.position = "right"
-    ) +
-    # Add annotations
-    annotate("text", 
-             x = length(volume_data$transaction_quarter), 
-             y = max(volume_data$volume) * 0.95,
-             label = "Price Trend →",
-             color = "#2C3E50",
-             hjust = 1,
-             fontface = "italic")
+      legend.position = "right",
+      axis.title.y.right = element_text(color = "#2C3E50"), # Style secondary axis title
+      axis.text.y.right = element_text(color = "#2C3E50")  # Style secondary axis text
+    )
+  # --- End: Modified Plotting Logic ---
+
+  # Return the plot
+  return(p)
 })
 
 # --- Dashboard Overlay Close Button ---

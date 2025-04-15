@@ -20,28 +20,38 @@ ui <- fluidPage(
     tags$link(rel = "stylesheet", type = "text/css", href = "shared/datatables/css/dataTables.bootstrap.css"),
     # Load our custom overlays.js file
     tags$script(src = "js/overlays.js"),
-    tags$style(HTML("\n      body, html {\n        height: 100%;\n        margin: 0;\n        overflow: hidden;\n        font-family: 'Roboto', sans-serif;\n      }\n      .map-container {\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 1;\n      }\n      .top-filters {\n        position: absolute;\n        top: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        z-index: 1000;\n        display: flex;\n        gap: 10px;\n      }\n      .top-filters .btn {\n        border-radius: 20px;\n        transition: all 0.3s ease;\n      }\n      .top-filters .btn:hover {\n        background-color: #007bff;\n        color: white;\n        transform: scale(1.1);\n      }\n      .left-overlay, .right-overlay {\n        position: absolute;\n        top: 50px;\n        bottom: 10px;\n        width: 300px;\n        background: rgba(255, 255, 255, 0.9);\n        border-radius: 15px;\n        padding: 15px;\n        overflow-y: auto;\n        z-index: 1000;\n        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);\n        transition: all 0.3s ease;\n      }\n      .left-overlay:hover, .right-overlay:hover {\n        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);\n      }\n      .left-overlay {\n        left: 10px;\n      }\n      .right-overlay {\n        right: 10px;\n      }\n      /* Transactions overlay styling */\n      #transactions_overlay {\n        position: absolute;\n        bottom: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        width: calc(100% - 640px); /* Adjusted width */\n        max-width: 900px;\n        height: 60%; /* Increased height for analytics dashboard */\n        background: rgba(255, 255, 255, 0.95);\n        border-radius: 15px;\n        padding: 15px;\n        z-index: 1001;\n        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);\n        display: none; /* Use display: none initially */\n        flex-direction: column;\n        overflow: hidden; /* Prevent the main overlay from scrolling */\n      }\n\n      /* Style the container holding the conditional panels */\n      #analytics_dashboard_container {\n        flex-grow: 1; /* Allow container to fill space */\n        overflow: hidden; /* Prevent this container itself from scrolling */\n        /* Background, padding, border-radius are applied via inline style */\n      }\n\n      /* Style the inner div that should scroll (inside the conditionalPanel) */\n      #analytics_dashboard_container .conditionalPanel > div {\n         /* Height and overflow are set via inline style */\n         /* Ensure no conflicting styles here */\n      }\n\n      /* Ensure DataTable takes full width */\n      #building_transactions .dataTables_wrapper {\n          width: 100%;\n      }\n      @keyframes fadeIn {\n        from { opacity: 0; }\n        to { opacity: 1; }\n      }\n    ")),
+    tags$style(HTML("\n      body, html {\n        height: 100%;\n        margin: 0;\n        overflow: hidden;\n        font-family: 'Roboto', sans-serif;\n      }\n      .map-container {\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 1;\n      }\n      .top-filters {\n        position: absolute;\n        top: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        z-index: 1000;\n        display: flex;\n        gap: 10px;\n      }\n      .top-filters .btn {\n        border-radius: 20px;\n        transition: all 0.3s ease;\n      }\n      .top-filters .btn:hover {\n        background-color: #007bff;\n        color: white;\n        transform: scale(1.1);\n      }\n      .left-overlay, .right-overlay {\n        position: absolute;\n        top: 50px;\n        bottom: 10px;\n        width: 300px;\n        background: rgba(255, 255, 255, 0.9);\n        border-radius: 15px;\n        padding: 15px;\n        /* REMOVED overflow-y: auto; */\n        overflow: hidden; /* Prevent outer scrolling */\n        z-index: 1000;\n        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);\n        transition: all 0.3s ease;\n      }\n      .left-overlay:hover, .right-overlay:hover {\n        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);\n      }\n      .left-overlay {\n        left: 10px;\n      }\n      .right-overlay {\n        right: 10px;\n      }\n      /* Transactions overlay styling */\n      #transactions_overlay {\n        position: absolute;\n        bottom: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        width: calc(100% - 640px); /* Adjusted width */\n        max-width: 900px;\n        height: 60%; /* Increased height for analytics dashboard */\n        background: rgba(255, 255, 255, 0.95);\n        border-radius: 15px;\n        padding: 15px;\n        z-index: 1001;\n        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);\n        display: none; /* Use display: none initially */\n        flex-direction: column;\n        overflow: hidden; /* Prevent the main overlay from scrolling */\n      }\n\n      /* Style the container holding the conditional panels */\n      #analytics_dashboard_container {\n        flex-grow: 1; /* Allow container to fill space */\n        overflow: hidden; /* Prevent this container itself from scrolling */\n        /* Background, padding, border-radius are applied via inline style */\n      }\n\n      /* Style the inner div that should scroll (inside the conditionalPanel) */\n      #analytics_dashboard_container .conditionalPanel > div {\n         /* Height and overflow are set via inline style */\n         /* Ensure no conflicting styles here */\n      }\n\n      /* Ensure DataTable takes full width */\n      #building_transactions .dataTables_wrapper {\n          width: 100%;\n      }\n      @keyframes fadeIn {\n        from { opacity: 0; }\n        to { opacity: 1; }\n      }\n    ")),
     # Add JavaScript for responsive overlay behavior
     tags$script(HTML("
       function checkWindowSize() {
         var windowWidth = window.innerWidth;
-        var overlays = document.querySelectorAll('.left-overlay, .right-overlay');
-        
-        // If window width is less than 1000px, hide the overlays
+        // Select only the left overlay for automatic hiding/showing based on width
+        var leftOverlay = document.querySelector('.left-overlay');
+        var rightOverlay = document.getElementById('right_overlay'); // Keep track of right overlay state
+
+        // If window width is less than 1000px, hide the left overlay
         if (windowWidth < 1000) {
-          overlays.forEach(function(overlay) {
-            overlay.style.display = 'none';
-          });
-          Shiny.setInputValue('overlays_visible', false);
+          if (leftOverlay) {
+            leftOverlay.style.display = 'none';
+          }
+          // Update visibility state only if right overlay is also hidden
+          if (rightOverlay && rightOverlay.style.display === 'none') {
+            Shiny.setInputValue('overlays_visible', false);
+          } else {
+            Shiny.setInputValue('overlays_visible', true); // Right overlay might still be visible
+          }
         } else {
-          overlays.forEach(function(overlay) {
-            // Reset CSS properties to fix the foggy appearance
-            overlay.style.display = 'block';
-            overlay.style.opacity = '1';
-            overlay.style.background = 'rgba(255, 255, 255, 0.9)';
-            // Force a repaint by triggering a layout calculation
-            overlay.offsetHeight;
-          });
+          // If window width is >= 1000px, show the left overlay
+          if (leftOverlay) {
+            // Reset CSS properties for the left overlay
+            leftOverlay.style.display = 'block';
+            leftOverlay.style.opacity = '1';
+            leftOverlay.style.background = 'rgba(255, 255, 255, 0.9)';
+            // Force a repaint
+            leftOverlay.offsetHeight;
+          }
+          // Always set overlays_visible to true if window is wide enough,
+          // as either left or right (or both) could be visible.
           Shiny.setInputValue('overlays_visible', true);
         }
       }
@@ -94,18 +104,19 @@ ui <- fluidPage(
   # Left overlay: Summary
   div(
     class = "left-overlay",
+    # Main content area (scrollable)
     div(
-      style = "height: calc(100% - 80px); display: flex; flex-direction: column;",
+      style = "height: calc(100% - 70px); display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 10px;",
       h4("Area Summary"),
       h5(textOutput("current_region_name", inline = TRUE)),
       plotOutput("summary_plot", height = "150px"),
-      
-      # Add household income statistics
-      htmlOutput("income_stats")
+      uiOutput("income_stats"),
+      plotlyOutput("income_donut"),
+      uiOutput("facility_summary") # Added facility summary here
     ),
-    # Price legend at the absolute bottom
+    # Price legend at the absolute bottom (fixed position)
     div(
-      style = "position: absolute; bottom: 10px; left: 15px; right: 15px;",
+      style = "position: absolute; bottom: 10px; left: 15px; right: 15px; height: 60px;",
       htmlOutput("price_legend")
     )
   ),
@@ -118,10 +129,24 @@ ui <- fluidPage(
     div(
       style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
       h4("Building Details"),
-      uiOutput("property_details"),
-      plotOutput("building_plot", height = "180px"),
-      plotOutput("facility_plot", height = "180px")
-      # Building Analytics button removed - will be added dynamically by server
+      
+      # Loading UI - shown while content is being prepared
+      conditionalPanel(
+        condition = "typeof input.right_overlay_ready === 'undefined' || !input.right_overlay_ready",
+        div(
+          style = "display: flex; align-items: center; justify-content: center; height: 200px; flex-direction: column;",
+          tags$i(class = "fa fa-spinner fa-spin", style = "font-size: 24px; color: #4676a9; margin-bottom: 10px;"),
+          p("Loading property details...", style = "color: #4676a9;")
+        )
+      ),
+      
+      # Property content - hidden initially, shown when ready
+      conditionalPanel(
+        condition = "typeof input.right_overlay_ready !== 'undefined' && input.right_overlay_ready",
+        uiOutput("property_details"),
+        plotOutput("building_plot", height = "180px"),
+        plotOutput("facility_plot", height = "180px")
+      )
     )
   ),
   
