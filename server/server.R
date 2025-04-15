@@ -27,6 +27,14 @@ server <- function(input, output, session) {
   # Make sure utils is loaded first
   source("server/components/utils.R", local = TRUE)
   
+  # Set initial button label for the house type filter to match the default value
+  observe({
+    # Run this once when the session starts
+    isolate({
+      updateActionButton(session, "filter_house_type", label = paste("Type:", selected_property_type()))
+    })
+  }, priority = 1000) # High priority to ensure it runs early
+  
   # Then load map logic
   source("server/components/map_logic.R", local = TRUE)
   
