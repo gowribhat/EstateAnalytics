@@ -127,7 +127,7 @@ ui <- fluidPage(
     class = "right-overlay",
     style = "display: none;", # Initially hidden
     div(
-      style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
+      style = "height: calc(100% - 10px); overflow-y: auto; display: flex; flex-direction: column;",
       h4("Building Details"),
       
       # Loading UI - shown while content is being prepared

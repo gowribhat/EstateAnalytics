@@ -305,19 +305,21 @@ output$facility_plot <- renderPlot({
       facility_data$mart[1]
     )
     names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
-
-    if(!is.null(user_selection())){
-      selected_facilities <- reactive({
-        facility_ranking()
-      })
-      # Rearranges the vector of distances by user-selected priority
-      f <- f[match(ranked_selection(),names(f))]
-    }
+    
     # Create a data frame for ggplot
     facility_df <- data.frame(
       Facility = names(f),
       Distance = f
     )
+    if(!is.null(ranked_selection())){
+      selected_facilities <- reactive({
+        facility_ranking()
+      })
+      facility_df <- facility_df %>% filter(Facility %in% ranked_selection())
+      # Rearranges the vector of distances by user-selected priority
+      facility_df$Facility <- factor(facility_df$Facility, levels = ranked_selection())
+    }
+    
     # Generate the bar plot using ggplot2
     ggplot(facility_df, aes(x = Distance, y = Facility)) +
       geom_bar(stat = "identity", fill = "pink") +
