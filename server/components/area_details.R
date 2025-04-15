@@ -307,22 +307,22 @@ output$facility_summary <- renderUI({
     supermarket_count <- get_facilities_in_area(mart_data, planning_areas_sf, area_name)
     
     div(
-      style = "margin: 15px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;",
-      h4("Facilities in Area", style = "margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #2c3e50;"),
+      style = "margin: 8px 0; padding: 8px; background-color: #f8f9fa; border-radius: 5px;",
+      h4("Facilities in Area", style = "margin-top: 0; margin-bottom: 5px; font-size: 14px; color: #2c3e50;"),
       div(
-        style = "display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;",
-        div(style = "padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
-            HTML(sprintf("<strong>🏫 Schools:</strong> %d", school_count))),
-        div(style = "padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
-            HTML(sprintf("<strong>👶 Childcare:</strong> %d", childcare_count))),
-        div(style = "padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
-            HTML(sprintf("<strong>🚉 MRT/LRT:</strong> %d", mrt_count))),
-        div(style = "padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
-            HTML(sprintf("<strong>🏋️ Gyms:</strong> %d", gym_count))),
-        div(style = "padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
-            HTML(sprintf("<strong>🌳 Parks:</strong> %d", park_count))),
-        div(style = "padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
-            HTML(sprintf("<strong>🛒 Supermarkets:</strong> %d", supermarket_count)))
+        style = "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;",
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🏫 <strong>Schools:</strong> %d", school_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("👶 <strong>Childcare:</strong> %d", childcare_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🚉 <strong>MRT/LRT:</strong> %d", mrt_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🏋️ <strong>Gyms:</strong> %d", gym_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🌳 <strong>Parks:</strong> %d", park_count))),
+        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
+            HTML(sprintf("🛒 <strong>Markets:</strong> %d", supermarket_count)))
       )
     )
   }, error = function(e) {
@@ -335,7 +335,7 @@ output$facility_summary <- renderUI({
   })
 })
 
-# Update the left overlay UI to restore original graph sizes
+# Update the left overlay UI with optimized graph sizes
 output$left_overlay <- renderUI({
   div(
     style = "padding: 10px;",
@@ -352,14 +352,15 @@ output$left_overlay <- renderUI({
         style = "margin-bottom: 25px;",
         plotOutput("summary_plot", height = "400px")
       ),
-      
+      # Spacer between plots
+      div(style = "height: 18px;"),
       # Income Distribution Plot - full size
       div(
         style = "margin-bottom: 25px;",
         plotlyOutput("income_donut", height = "350px")
       ),
       
-      # Facility Summary
+      # Facility Summary - now more compact
       uiOutput("facility_summary")
     ),
     
