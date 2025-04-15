@@ -106,19 +106,17 @@ ui <- fluidPage(
     class = "left-overlay",
     # Main content area (scrollable)
     div(
-      # Adjust height to account for the fixed legend below, add overflow for scrolling
-      style = "height: calc(100% - 70px); display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 10px;", # Adjusted height, added overflow-y and padding-bottom
+      style = "height: calc(100% - 70px); display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 10px;",
       h4("Area Summary"),
       h5(textOutput("current_region_name", inline = TRUE)),
       plotOutput("summary_plot", height = "150px"),
-
-      # Add household income statistics
-      htmlOutput("income_stats")
+      uiOutput("income_stats"),
+      plotlyOutput("income_donut"),
+      uiOutput("facility_summary") # Added facility summary here
     ),
     # Price legend at the absolute bottom (fixed position)
     div(
-      # Give the legend container a fixed height
-      style = "position: absolute; bottom: 10px; left: 15px; right: 15px; height: 60px;", # Added fixed height
+      style = "position: absolute; bottom: 10px; left: 15px; right: 15px; height: 60px;",
       htmlOutput("price_legend")
     )
   ),
