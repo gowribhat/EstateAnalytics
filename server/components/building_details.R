@@ -306,12 +306,18 @@ output$facility_plot <- renderPlot({
     )
     names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
 
+    if(!is.null(user_selection())){
+      selected_facilities <- reactive({
+        facility_ranking()
+      })
+      # Rearranges the vector of distances by user-selected priority
+      f <- f[match(ranked_selection(),names(f))]
+    }
     # Create a data frame for ggplot
     facility_df <- data.frame(
       Facility = names(f),
       Distance = f
     )
-
     # Generate the bar plot using ggplot2
     ggplot(facility_df, aes(x = Distance, y = Facility)) +
       geom_bar(stat = "identity", fill = "pink") +
@@ -327,6 +333,7 @@ output$facility_plot <- renderPlot({
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12)
       )
+    
   }, error = function(e) {
     # Return a placeholder plot on error
     ggplot() +
