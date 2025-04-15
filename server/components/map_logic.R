@@ -376,6 +376,31 @@ observe({
     # Clear the legend if no data
     output$price_legend <- renderUI({ NULL })
   }
+  
+  facilities <- filtered_facilities()
+  for (facility_type in names(facilities)) {
+    data <- facilities[[facility_type]]
+    if (!"name" %in% colnames(data)) next
+    data <- data[!is.na(data$name) & data$name != "", ]
+    if (nrow(data) == 0) next
+    map_proxy <- map_proxy %>%
+      addMarkers(
+        data = data,
+        lng = ~longitude,
+        lat = ~latitude,
+        icon = facility_icons[[facility_type]],
+        group = "facilities",
+        popup = ~paste(
+          "<strong>", tools::toTitleCase(name), "</strong><br>",
+          if (facility_type == "mrt" && "exit" %in% colnames(data)) {
+            paste0("<span style='font-size: smaller;'>Exit: <strong>", exit, "</strong></span><br>")
+          } else {
+            ""
+          },
+          "<span style='font-size: x-small;'>", tools::toTitleCase(facility_type), "</span>"
+        )
+      )
+  }
 })
 
 # Marker click observer to update the selected building
@@ -558,7 +583,7 @@ facility_icons <- iconList(
 
 # Reactive to filter facilities based on user selection
 filtered_facilities <- reactive({
-  selected <- input$selected_facilities
+  selected <- user_selection()
   req(selected)
   
   facilities <- list()
@@ -570,39 +595,4 @@ filtered_facilities <- reactive({
   if ("LRT/MRT" %in% selected) facilities$mrt <- mrt()
   
   facilities
-})
-
-# Observe and update facility markers on the map
-observe({
-  facilities <- filtered_facilities()
-  map_proxy <- leafletProxy("property_map") %>% clearGroup("facilities")
-  
-  for (facility_type in names(facilities)) {
-    data <- facilities[[facility_type]]
-    
-    # Filter out rows without a 'name' column or with missing 'name' values
-    if (!"name" %in% colnames(data)) next
-    data <- data[!is.na(data$name) & data$name != "", ]
-    
-    # Skip if no valid rows remain
-    if (nrow(data) == 0) next
-    
-    map_proxy <- map_proxy %>%
-      addMarkers(
-        data = data,
-        lng = ~longitude,
-        lat = ~latitude,
-        icon = facility_icons[[facility_type]],
-        group = "facilities",
-        popup = ~paste(
-          "<strong>", tools::toTitleCase(name), "</strong><br>",
-          if (facility_type == "mrt" && "exit" %in% colnames(data)) {
-            paste0("<span style='font-size: smaller;'>Exit: <strong>", exit, "</strong></span><br>")
-          } else {
-            ""
-          },
-          "<span style='font-size: x-small;'>", tools::toTitleCase(facility_type), "</span>"
-        )
-      )
-  }
 })
