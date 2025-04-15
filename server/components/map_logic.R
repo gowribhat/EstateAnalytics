@@ -351,10 +351,10 @@ observe({
   
   # Show price legend for any visualization type
   if(nrow(data) > 0) {
+    # Only use property data for min/max price calculation
+    min_price <- if(property_type == "HDB") min(data$resale_price, na.rm = TRUE) else min(data$price, na.rm = TRUE)
+    max_price <- if(property_type == "HDB") max(data$resale_price, na.rm = TRUE) else max(data$price, na.rm = TRUE)
     output$price_legend <- renderUI({
-      min_price <- if(property_type == "HDB") min(data$resale_price) else min(data$price)
-      max_price <- if(property_type == "HDB") max(data$resale_price) else max(data$price)
-      
       tags$div(
         style = "width: 100%; padding: 8px 0;",
         tags$h5("Property Price Legend", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px;"),
