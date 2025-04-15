@@ -377,29 +377,34 @@ observe({
     output$price_legend <- renderUI({ NULL })
   }
   
-  facilities <- filtered_facilities()
-  for (facility_type in names(facilities)) {
-    data <- facilities[[facility_type]]
-    if (!"name" %in% colnames(data)) next
-    data <- data[!is.na(data$name) & data$name != "", ]
-    if (nrow(data) == 0) next
-    map_proxy <- map_proxy %>%
-      addMarkers(
-        data = data,
-        lng = ~longitude,
-        lat = ~latitude,
-        icon = facility_icons[[facility_type]],
-        group = "facilities",
-        popup = ~paste(
-          "<strong>", tools::toTitleCase(name), "</strong><br>",
-          if (facility_type == "mrt" && "exit" %in% colnames(data)) {
-            paste0("<span style='font-size: smaller;'>Exit: <strong>", exit, "</strong></span><br>")
-          } else {
-            ""
-          },
-          "<span style='font-size: x-small;'>", tools::toTitleCase(facility_type), "</span>"
+  # Only show facility markers when we're zoomed in enough to see individual points
+  # (vis_mode == "markers" AND zoom is high enough to disable clustering)
+  zoom <- current_zoom()
+  if (vis_mode == "markers" && zoom >= 15) {
+    facilities <- filtered_facilities()
+    for (facility_type in names(facilities)) {
+      data <- facilities[[facility_type]]
+      if (!"name" %in% colnames(data)) next
+      data <- data[!is.na(data$name) & data$name != "", ]
+      if (nrow(data) == 0) next
+      map_proxy <- map_proxy %>%
+        addMarkers(
+          data = data,
+          lng = ~longitude,
+          lat = ~latitude,
+          icon = facility_icons[[facility_type]],
+          group = "facilities",
+          popup = ~paste(
+            "<strong>", tools::toTitleCase(name), "</strong><br>",
+            if (facility_type == "mrt" && "exit" %in% colnames(data)) {
+              paste0("<span style='font-size: smaller;'>Exit: <strong>", exit, "</strong></span><br>")
+            } else {
+              ""
+            },
+            "<span style='font-size: x-small;'>", tools::toTitleCase(facility_type), "</span>"
+          )
         )
-      )
+    }
   }
 })
 
