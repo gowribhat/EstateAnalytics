@@ -62,7 +62,8 @@ observeEvent(input$filter_facility, {
     title = "Select Nearby Facilities",
     # Checkbox input for selecting facilities
     checkboxGroupInput("selected_facilities", "Choose facilities:",
-                       choices = c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")),
+      choices = c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket"),
+      selected = user_selection()),
     # Placeholder for dynamic priority UI
     uiOutput("priority_rank_ui"),
     footer = tagList(
@@ -76,10 +77,17 @@ observeEvent(input$filter_facility, {
 output$priority_rank_ui <- renderUI({
   req(input$selected_facilities)  # Ensure facilities have been selected
   if (length(input$selected_facilities) == 0) return(NULL)
-  # Render a draggable rank list
+  # Use previous ranking if available and matches selected facilities
+  current_rank <- ranked_selection()
+  # Only use previous ranking if it matches the current selection
+  if (!is.null(current_rank) && setequal(current_rank, input$selected_facilities)) {
+    labels_to_use <- current_rank
+  } else {
+    labels_to_use <- input$selected_facilities
+  }
   sortable::rank_list(
     text = "Prioritise selected facilities (drag to reorder):",
-    labels = input$selected_facilities,
+    labels = labels_to_use,
     input_id = "facility_priority"
   )
 })
