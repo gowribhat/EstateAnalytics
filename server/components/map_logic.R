@@ -286,7 +286,7 @@ observe({
       lat = ~latitude,
       intensity = intensity_col,
       blur = 20,
-      max = 1,
+      max = 0.5, 
       radius = 15
     )
   } else if (vis_mode == "markers") {

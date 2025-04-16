@@ -250,52 +250,119 @@ output$summary_plot <- renderPlot({
 planning_areas_data <- reactive({
   tryCatch({
     pa_data <- st_read("data/clean/district_and_planning_area.geojson", quiet = TRUE)
+    
+    # Ensure geometry is valid upon loading
+    if (!inherits(pa_data, "sf")) {
+        stop("Loaded planning area data is not an sf object.")
+    }
+    if (any(!st_is_valid(pa_data))) {
+      print("Fixing invalid geometries in planning areas upon load...")
+      pa_data <- st_make_valid(pa_data)
+    }
+    
     print("Planning areas columns:")
     print(names(pa_data))
     return(pa_data)
   }, error = function(e) {
-    warning("Error loading planning areas: ", e$message)
+    warning("Error loading or validating planning areas: ", e$message)
     NULL
   })
 })
 
 # Function to get planning area for facilities using reverse geocoding
 get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) {
-  # Debug prints
+  # Debug prints (keep for now)
   print(paste("Processing facilities for area:", area_name))
-  print(paste("Number of facilities:", nrow(facility_data)))
-  print(paste("Planning areas columns:", paste(names(planning_areas_sf), collapse=", ")))
   
-  req(facility_data, planning_areas_sf, area_name)
+  # Ensure required inputs are valid sf objects and area_name is not NULL/empty
+  req(facility_data, inherits(planning_areas_sf, "sf"), !is.null(area_name), nzchar(area_name), area_name != "Outside Planning Area")
   
-  # Create spatial points for facilities
-  facilities_sf <- st_as_sf(facility_data, coords = c("longitude", "latitude"), crs = 4326)
-  
-  # Ensure CRS matches
-  if (st_crs(facilities_sf) != st_crs(planning_areas_sf)) {
-    facilities_sf <- st_transform(facilities_sf, crs = st_crs(planning_areas_sf))
+  # Ensure facility data has coordinates and remove rows with missing ones
+  if (!all(c("longitude", "latitude") %in% names(facility_data))) {
+      stop("Facility data must contain 'longitude' and 'latitude' columns.")
   }
+  facility_data <- facility_data %>% filter(!is.na(longitude) & !is.na(latitude))
+  print(paste("Number of facilities with valid coordinates:", nrow(facility_data)))
+  if (nrow(facility_data) == 0) {
+      print("No facilities with valid coordinates.")
+      return(0)
+  }
+
+  # Create spatial points for facilities (use WGS84 - EPSG:4326)
+  # Use remove=FALSE to keep original coordinate columns if needed later
+  facilities_sf <- st_as_sf(facility_data, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE) 
   
-  # Find planning area column dynamically
-  pa_col <- names(planning_areas_sf)[grep("planning.*area|pln.*area", names(planning_areas_sf), ignore.case = TRUE)]
-  if (length(pa_col) == 0) pa_col <- "planning_area"
+  # Find planning area column dynamically (case-insensitive search)
+  pa_col_candidates <- grep("planning.*area|pln.*area", names(planning_areas_sf), ignore.case = TRUE, value = TRUE)
+  if (length(pa_col_candidates) > 0) {
+      pa_col <- pa_col_candidates[1] # Take the first match
+  } else if ("planning_area" %in% names(planning_areas_sf)) {
+      pa_col <- "planning_area" # Default fallback
+  } else {
+      warning("Could not automatically determine the planning area column name in the planning areas dataset.")
+      # Attempt to find a likely candidate or stop
+      potential_cols <- names(planning_areas_sf)[!sapply(planning_areas_sf, inherits, "sf")] # Exclude geometry
+      if (length(potential_cols) > 0) {
+          pa_col <- potential_cols[1] # Guess the first non-geometry column
+          warning(paste("Assuming planning area column is:", pa_col))
+      } else {
+          stop("No suitable planning area column found.")
+      }
+  }
   print(paste("Using planning area column:", pa_col))
   
-  # Find facilities in the current planning area (case insensitive)
-  current_area <- planning_areas_sf[toupper(planning_areas_sf[[pa_col]]) == toupper(area_name), ]
+  # Ensure the planning area column exists in the sf object
+  if (!pa_col %in% names(planning_areas_sf)) {
+      stop(paste("Planning area column '", pa_col, "' not found in planning_areas_sf."))
+  }
+
+  # Filter the target planning area polygon using case insensitive comparison
+  # Use .data pronoun for non-standard evaluation safety
+  current_area <- planning_areas_sf %>% 
+      filter(toupper(.data[[pa_col]]) == toupper(area_name))
+      
   if (nrow(current_area) == 0) {
-    print(paste("No matching area found for:", area_name))
-    print(paste("Available areas:", paste(unique(planning_areas_sf[[pa_col]]), collapse=", ")))
+    print(paste("No matching planning area polygon found for:", area_name))
+    # Optional: Print available areas for debugging
+    # print(paste("Available areas:", paste(unique(planning_areas_sf[[pa_col]]), collapse=", ")))
     return(0)
   }
+  # Ensure we only have one polygon for the target area
+  if (nrow(current_area) > 1) {
+      warning(paste("Multiple polygons found for planning area:", area_name, ". Using the first one."))
+      current_area <- head(current_area, 1)
+  }
   
-  # Temporary disable S2 for consistent results
+  # Ensure CRS matches between facilities and the target area polygon
+  target_crs <- st_crs(current_area)
+  if (st_crs(facilities_sf) != target_crs) {
+    print(paste("Transforming facilities CRS from", st_crs(facilities_sf)$input, "to", target_crs$input))
+    facilities_sf <- st_transform(facilities_sf, crs = target_crs)
+  }
+  
+  # Perform spatial intersection (points in polygon)
+  # Disable S2 temporarily for consistency with map_logic.R's reverse geocoding
   sf_use_s2(FALSE)
-  facilities_in_area <- st_intersects(facilities_sf, current_area, sparse = FALSE)
-  sf_use_s2(TRUE)
-  
-  count <- sum(facilities_in_area)
-  print(paste("Found facilities in area:", count))
+  count <- 0 # Initialize count
+  tryCatch({
+      # Use the filtered 'current_area' polygon for intersection
+      # st_intersects returns a list. Each element corresponds to a facility.
+      # The content of each element is the index(es) of the planning area polygon(s) it intersects.
+      # Since current_area has only one polygon, we expect intersecting facilities to have list elements like c(1L).
+      # Non-intersecting facilities will have list elements like integer(0).
+      intersection_list <- st_intersects(facilities_sf, current_area)
+
+      # Correctly count how many elements in the list have length > 0 (meaning they intersected the polygon)
+      count <- sum(sapply(intersection_list, length) > 0)
+
+  }, error = function(e) {
+      warning(paste("Error during spatial intersection for", area_name, ":", e$message))
+      count <- 0 # Return 0 on error
+  }, finally = {
+      sf_use_s2(TRUE) # Ensure S2 is re-enabled
+  })
+
+  print(paste("Found", count, "facilities intersecting with area:", area_name))
   return(count)
 }
 
@@ -304,54 +371,43 @@ output$facility_summary <- renderUI({
   # Get current planning area
   area_name <- current_planning_area()
   
-  # Get planning areas data
+  # Get planning areas data (already validated in the reactive)
   planning_areas_sf <- planning_areas_data()
   
   # Enhanced debugging - print more detailed information
-  print(paste("Current area:", area_name))
-  print(paste("Planning areas loaded:", !is.null(planning_areas_sf)))
-  if (!is.null(planning_areas_sf)) {
-    print(paste("Number of planning areas:", nrow(planning_areas_sf)))
-    print(paste("Planning area column names:", paste(names(planning_areas_sf), collapse=", ")))
-  }
+  print(paste("Facility Summary UI - Current area:", area_name))
+  print(paste("Facility Summary UI - Planning areas loaded:", !is.null(planning_areas_sf)))
   
   # Exit if no area selected or no planning areas data
-  if (is.null(area_name) || area_name == "Outside Planning Area" || is.null(planning_areas_sf)) {
+  if (is.null(area_name) || !nzchar(area_name) || area_name == "Outside Planning Area" || is.null(planning_areas_sf)) {
     return(div(
       style = "margin: 15px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; text-align: center; color: #6c757d;",
-      "Select a planning area to see facility data." # Updated message
+      "Select a planning area on the map to see facility counts." # Updated message
     ))
   }
   
-  # Validate planning areas data
+  # Validate planning areas data type (redundant check, but safe)
   if (!inherits(planning_areas_sf, "sf")) {
-    print("Warning: planning_areas_sf is not an sf object")
+    warning("Facility Summary UI: Planning areas data is not an sf object.")
     return(div(
-      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px;",
-      "Error loading planning areas data"
+      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; color: #856404;",
+      "Error: Invalid planning areas data format."
     ))
   }
   
-  # Ensure geometry is valid
-  if (any(!st_is_valid(planning_areas_sf))) {
-    print("Fixing invalid geometries in planning areas...")
-    planning_areas_sf <- st_make_valid(planning_areas_sf)
-  }
+  # Load all required facility data reactives
+  # Use req() to ensure they are loaded before proceeding
+  childcare_data <- childcare()
+  gym_data <- gym()
+  mrt_data <- mrt()
+  park_data <- park()
+  school_data <- sch()
+  mart_data <- mart()
+  req(childcare_data, gym_data, mrt_data, park_data, school_data, mart_data)
   
-  # Get facility counts with error handling
+  # Get facility counts with error handling for the overall process
   tryCatch({
-    # Load facility data first to ensure it's available
-    childcare_data <- childcare()
-    gym_data <- gym()
-    mrt_data <- mrt()
-    park_data <- park()
-    school_data <- sch()
-    mart_data <- mart()
-    
-    # Verify facility data is loaded
-    req(childcare_data, gym_data, mrt_data, park_data, school_data, mart_data)
-    
-    # Get counts
+    # Get counts using the refined function
     childcare_count <- get_facilities_in_area(childcare_data, planning_areas_sf, area_name)
     gym_count <- get_facilities_in_area(gym_data, planning_areas_sf, area_name)
     mrt_count <- get_facilities_in_area(mrt_data, planning_areas_sf, area_name)
@@ -359,9 +415,8 @@ output$facility_summary <- renderUI({
     school_count <- get_facilities_in_area(school_data, planning_areas_sf, area_name)
     supermarket_count <- get_facilities_in_area(mart_data, planning_areas_sf, area_name)
 
-    # Helper function to create styled facility item
+    # Helper function to create styled facility item (unchanged)
     create_facility_item <- function(icon, label, count) {
-      # Changed to horizontal layout, adjusted padding and spacing
       div(
         style = "display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 6px; padding: 5px 8px; text-align: center;", # Adjusted padding
         span(style = "font-size: 1.3em; margin-right: 5px;", icon), # Slightly smaller icon, added right margin
@@ -370,6 +425,7 @@ output$facility_summary <- renderUI({
       )
     }
 
+    # Render the UI block (unchanged)
     div(
       style = "margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-radius: 8px;",
       h5("Facilities in Area", style = "margin-top: 0; margin-bottom: 10px; font-size: 1.0em; font-weight: 600; color: #343a40; text-align: center;"),
@@ -386,11 +442,12 @@ output$facility_summary <- renderUI({
       )
     )
   }, error = function(e) {
-    print(paste("Error counting facilities:", e$message))
+    # Catch errors specifically from the counting process within the UI render
+    print(paste("Error counting facilities within UI render:", e$message))
     # Return error message if something goes wrong
     div(
       style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; color: #856404;",
-      "Unable to load facility data"
+      "Unable to load facility counts for the selected area."
     )
   })
 })
