@@ -15,27 +15,76 @@ output$current_region_name <- renderText({
 # Income statistics for the current region
 output$income_stats <- NULL
 
-# Render the plotly income visualization - changed from donut chart to horizontal stacked bar
-output$income_donut <- renderPlotly({
-  # Get the current planning area
+# Reactive to check income data availability and retrieve necessary data
+income_data_status <- reactive({
   area_name <- current_planning_area()
-
-  # Get income data
   income_data <- household_income_data()
 
-  # Exit early if we don't have proper data
-  req(income_data, area_name, area_name != "Outside Planning Area")
+  # Default status
+  status <- list(available = FALSE, area_name = area_name, total_households = NA, region_data = NULL)
 
-  # Find income data for current region
-  region_data <- income_data %>%
+  # Check prerequisites
+  if (is.null(income_data) || is.null(area_name) || area_name == "Outside Planning Area") {
+    # If no area selected or outside, explicitly set area_name for message
+    if(is.null(area_name)) status$area_name <- "Selected Area"
+    return(status)
+  }
+
+  # Find data for the region
+  region_data_filtered <- income_data %>%
     filter(toupper(Number) == toupper(area_name))
 
-  req(nrow(region_data) > 0)
+  if (nrow(region_data_filtered) > 0) {
+    total_households_val <- region_data_filtered$Total
+    if (!is.na(total_households_val) && total_households_val > 0) {
+      status$available <- TRUE
+      status$total_households <- total_households_val
+      status$region_data <- region_data_filtered # Pass data along
+    }
+  }
+  # Ensure area_name is always populated in the status for the message
+  status$area_name <- area_name
+  return(status)
+})
 
-  # Calculate income metrics
-  total_households <- region_data$Total
+# UI Output for Income section (conditional rendering)
+output$income_display_ui <- renderUI({
+  status <- income_data_status()
+  req(status) # Ensure status is calculated
 
-  # Calculate households in different income brackets
+  if (status$available) {
+    # If data is available, render the plotly output container WITH an overlay
+    div(
+      style = "position: relative; margin-bottom: 15px;", # Container needs relative positioning
+      plotlyOutput("income_plot_output", height = "200px"), # Adjust height as needed
+      # Add a transparent overlay div to block interactions
+      div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);")
+    )
+  } else {
+    # If data is not available, render the message
+    div(
+      style = "padding: 15px; margin-bottom: 15px; text-align: center; background-color: #f8f9fa; border-radius: 5px; color: #555;",
+      h5(paste0('Household Income'), style="margin-bottom: 5px; font-size: 13px; font-weight: bold;"),
+      # Use the area_name from the status, which handles NULL/Outside cases
+      p(paste("Income data not available for", status$area_name))
+    )
+  }
+})
+
+
+# Render the plotly income visualization - ONLY if data is available
+output$income_plot_output <- renderPlotly({
+  # This plot only renders if income_display_ui decided to show its container
+  status <- income_data_status()
+  # Use req() to ensure all necessary reactive values derived *within* this reactive context are valid
+  req(status$available, status$region_data, status$total_households, status$area_name)
+
+  # Retrieve data from status
+  region_data <- status$region_data
+  total_households <- status$total_households
+  area_name <- status$area_name # Use area_name from status for consistency
+
+  # Proceed with calculations and plotting (existing logic)
   no_income <- region_data$NoEmployedPerson
   no_income_percent <- round(no_income / total_households * 100, 1)
 
@@ -56,18 +105,24 @@ output$income_donut <- renderPlotly({
 
   # Create data for plotly horizontal stacked bar chart
   legend_labels <- c("No Income", "<$3K", "$3-9K", "$9-20K", ">$20K")
-  # Keep full labels for hover text
   hover_labels <- c("No Income", "Low Income (<$3K)", "Mid Income ($3-9K)",
                     "High Income ($9-20K)", "Affluent (>$20K)")
   values <- c(no_income_percent, low_income_percent, mid_income_percent,
              high_income_percent, affluent_percent)
+
+  # Ensure sum is close to 100, adjust largest category if needed due to rounding
+  # Check if sum is significantly off (e.g., more than 0.1 difference)
+  if (abs(sum(values) - 100) > 0.1 && sum(values) > 0) {
+      values <- values / sum(values) * 100
+  }
+  values <- round(values, 1) # Re-round after potential normalization
+
   colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00")
 
-  # Create a data frame for plot_ly with a single row
   plot_data <- data.frame(
     y = "Income Distribution",
     x = values,
-    income_type = factor(legend_labels, levels = legend_labels), # Ensure factor levels are ordered
+    income_type = factor(legend_labels, levels = legend_labels),
     hover_label = hover_labels,
     stringsAsFactors = FALSE
   )
@@ -85,7 +140,8 @@ output$income_donut <- renderPlotly({
       orientation = 'h',
       text = ~paste0(x, "%"),
       textposition = 'inside',
-      insidetextanchor = 'middle'
+      insidetextanchor = 'middle',
+      textfont = list(color = 'white', size=10) # Make inside text white and smaller
     ) %>%
     layout(
       title = list(
@@ -97,19 +153,16 @@ output$income_donut <- renderPlotly({
       barmode = 'stack',
       showlegend = TRUE,
       legend = list(
-        orientation = "h", 
-        y = -0.1,           # Moved closer to the bar
+        orientation = "h",
+        y = -0.2, # Adjust legend position further down if needed
         x = 0.5,
         xanchor = 'center',
         yanchor = 'top',
-        font = list(size = 9),  # Smaller font for legend
-        itemsizing = 'constant', # Makes legend items consistent size
-        itemwidth = 30,         # Narrower legend items
-        traceorder = "normal"
+        font = list(size = 10)
       ),
-      yaxis = list(showticklabels = FALSE, title = "", showgrid = FALSE),
-      xaxis = list(showticklabels = FALSE, title = "", showgrid = FALSE, range = c(0, 100)),
-      margin = list(t = 50, b = 30, l = 10, r = 10) # Reduced margins
+      xaxis = list(title = "", zeroline = FALSE, showticklabels = FALSE, showgrid = FALSE, range = c(0, 100)), # Ensure x-axis goes 0-100
+      yaxis = list(title = "", zeroline = FALSE, showticklabels = FALSE, showgrid = FALSE),
+      margin = list(l = 10, r = 10, t = 50, b = 40) # Increase bottom margin for legend
     )
 })
 
@@ -155,7 +208,7 @@ output$summary_plot <- renderPlot({
 
   # Determine plot title based on zoom level
   plot_title <- if (zoom_level >= zoom_threshold && area_name != "Outside Planning Area") {
-    paste0("Price Distribution in ", area_name)
+    paste0("Price Distribution in \n", area_name)
   } else {
     "Price Distribution of Area"
   }
@@ -265,8 +318,8 @@ output$facility_summary <- renderUI({
   # Exit if no area selected or no planning areas data
   if (is.null(area_name) || area_name == "Outside Planning Area" || is.null(planning_areas_sf)) {
     return(div(
-      style = "margin: 15px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;",
-      "No facility data available for this area"
+      style = "margin: 15px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; text-align: center; color: #6c757d;",
+      "Select a planning area to see facility data." # Updated message
     ))
   }
   
@@ -305,24 +358,31 @@ output$facility_summary <- renderUI({
     park_count <- get_facilities_in_area(park_data, planning_areas_sf, area_name)
     school_count <- get_facilities_in_area(school_data, planning_areas_sf, area_name)
     supermarket_count <- get_facilities_in_area(mart_data, planning_areas_sf, area_name)
-    
-    div(
-      style = "margin: 8px 0; padding: 8px; background-color: #f8f9fa; border-radius: 5px;",
-      h4("Facilities in Area", style = "margin-top: 0; margin-bottom: 5px; font-size: 14px; color: #2c3e50;"),
+
+    # Helper function to create styled facility item
+    create_facility_item <- function(icon, label, count) {
+      # Changed to horizontal layout, adjusted padding and spacing
       div(
-        style = "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;",
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🏫 <strong>Schools:</strong> %d", school_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("👶 <strong>Childcare:</strong> %d", childcare_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🚉 <strong>MRT/LRT:</strong> %d", mrt_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🏋️ <strong>Gyms:</strong> %d", gym_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🌳 <strong>Parks:</strong> %d", park_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🛒 <strong>Markets:</strong> %d", supermarket_count)))
+        style = "display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 6px; padding: 5px 8px; text-align: center;", # Adjusted padding
+        span(style = "font-size: 1.3em; margin-right: 5px;", icon), # Slightly smaller icon, added right margin
+        # Removed the label span
+        span(style = "font-weight: bold; font-size: 0.9em; color: #007bff;", count) # Slightly smaller count size
+      )
+    }
+
+    div(
+      style = "margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-radius: 8px;",
+      h5("Facilities in Area", style = "margin-top: 0; margin-bottom: 10px; font-size: 1.0em; font-weight: 600; color: #343a40; text-align: center;"),
+      # Use CSS Grid for layout
+      div(
+        style = "display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;", # Use CSS Grid with 3 columns
+        # Create items using the helper function (label is now ignored)
+        create_facility_item("🏫", "Schools", school_count),
+        create_facility_item("👶", "Childcare", childcare_count),
+        create_facility_item("🚉", "MRT/LRT", mrt_count),
+        create_facility_item("🏋️", "Gyms", gym_count),
+        create_facility_item("🌳", "Parks", park_count),
+        create_facility_item("🛒", "Markets", supermarket_count)
       )
     )
   }, error = function(e) {
@@ -357,7 +417,7 @@ output$left_overlay <- renderUI({
       # Income Distribution Plot - full size
       div(
         style = "margin-bottom: 25px;",
-        plotlyOutput("income_donut", height = "350px")
+        plotlyOutput("income_plot_output", height = "350px")
       ),
       
       # Facility Summary - now more compact

@@ -228,7 +228,7 @@ output$building_plot <- renderPlot({
         geom_vline(aes(xintercept = median(price_col)),
                   color = "#ff5555", linetype = "dashed", size = 1) +
         labs(
-          title = paste0("Price Distribution for ", plot_title),
+          title = paste0("Price Distribution for \n", plot_title),
           subtitle = paste0("Median: $", format(median(price_col), big.mark = ",")),
           x = "Price (SGD)",
           y = "Count"
@@ -246,7 +246,7 @@ output$building_plot <- renderPlot({
       p <- ggplot(building_data, aes(y = price_col)) +
         geom_boxplot(fill = "#4676a9", alpha = 0.7) +
         labs(
-          title = paste0("Price Distribution for ", plot_title),
+          title = paste0("Price Distribution for \n", plot_title),
           subtitle = paste0("Median: $", format(median(price_col), big.mark = ",")),
           x = "",
           y = "Price (SGD)"
