@@ -9,7 +9,7 @@
 
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
-  leaflet() %>%
+  leaflet(options = leafletOptions(zoomControl = FALSE, minZoom = 12)) %>% # Disable default zoom controls and limit min zoom
     addTiles() %>% # Add default OpenStreetMap map tiles
     setView(lng = sg_lng, lat = sg_lat, zoom = sg_zoom) %>% # Use coordinates/zoom from global.R
     setMaxBounds(
@@ -22,7 +22,7 @@ output$property_map <- renderLeaflet({
 # Debounce the map center input to avoid rapid updates during panning
 map_center_debounced <- reactive({
   input$property_map_center
-}) %>% debounce(500) # Update 500ms after user stops moving map
+}) %>% debounce(400) # Update 400ms after user stops moving map
 
 current_planning_area <- reactive({
   center <- map_center_debounced()
@@ -286,7 +286,7 @@ observe({
       lat = ~latitude,
       intensity = intensity_col,
       blur = 20,
-      max = 1,
+      max = 0.5, 
       radius = 15
     )
   } else if (vis_mode == "markers") {

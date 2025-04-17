@@ -110,8 +110,9 @@ ui <- fluidPage(
       h4("Area Summary"),
       h5(textOutput("current_region_name", inline = TRUE)),
       plotOutput("summary_plot", height = "150px"),
-      uiOutput("income_stats"),
-      plotlyOutput("income_donut"),
+      # uiOutput("income_stats"), # Keep commented or remove
+      # Replace plotlyOutput("income_donut") with the new uiOutput
+      uiOutput("income_display_ui"), # Conditionally renders plot or text message
       uiOutput("facility_summary") # Added facility summary here
     ),
     # Price legend at the absolute bottom (fixed position)
