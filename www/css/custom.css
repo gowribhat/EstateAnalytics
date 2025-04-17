@@ -98,7 +98,7 @@ body {
 /* Ensure the transaction overlay is unscrollable as a whole */
 .transactions-overlay {
   overflow: hidden; /* Prevent scrolling for the entire overlay */
-  height: 90% !important; /* Reduced height to 90% as requested */
+  height: 60% !important; /* Reduced height to 50% as requested */
 }
 
 /* Allow inner regions to remain scrollable */
