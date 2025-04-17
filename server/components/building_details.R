@@ -206,7 +206,7 @@ output$building_plot <- renderPlot({
       plot_title <- paste0(building$block, " ", building$street_name)
       price_col_name <- "resale_price"
     } else {
-      plot_title <- paste0(building$project, " - ", building$street)
+      plot_title <- paste0(building$project)
       price_col_name <- "price"
     }
     price_col <- building_data[[price_col_name]]

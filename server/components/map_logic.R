@@ -9,7 +9,7 @@
 
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
-  leaflet(options = leafletOptions(zoomControl = FALSE)) %>% # Disable default zoom controls
+  leaflet(options = leafletOptions(zoomControl = FALSE, minZoom = 12)) %>% # Disable default zoom controls and limit min zoom
     addTiles() %>% # Add default OpenStreetMap map tiles
     setView(lng = sg_lng, lat = sg_lat, zoom = sg_zoom) %>% # Use coordinates/zoom from global.R
     setMaxBounds(
