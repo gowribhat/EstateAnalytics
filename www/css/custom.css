@@ -98,6 +98,7 @@ body {
 /* Ensure the transaction overlay is unscrollable as a whole */
 .transactions-overlay {
   overflow: hidden; /* Prevent scrolling for the entire overlay */
+  height: 90% !important; /* Reduced height to 90% as requested */
 }
 
 /* Allow inner regions to remain scrollable */
@@ -105,6 +106,144 @@ body {
   overflow-y: auto; /* Enable vertical scrolling for inner content */
   max-height: 100%; /* Ensure it doesn't exceed the overlay's height */
 }
+
+/* Right Overlay Enhancements */
+.right-overlay {
+  /* Existing styles */
+  display: flex; /* Use flexbox for vertical layout */
+  flex-direction: column;
+}
+
+.right-overlay > div[style*="flex-direction: column"] {
+  flex-grow: 1; /* Allow inner container to grow */
+  overflow-y: auto; /* Enable scrolling ONLY for the content area */
+  padding-right: 5px; /* Add padding for scrollbar */
+}
+
+.right-overlay h4 {
+  margin-bottom: 15px; /* Space below title */
+  flex-shrink: 0; /* Prevent title from shrinking */
+  color: #333;
+}
+
+.detail-placeholder {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.detail-placeholder .fa {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.building-header h5 {
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #0056b3; /* Darker blue */
+}
+
+.building-header .text-muted {
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.key-stats {
+  margin-bottom: 15px;
+}
+
+.key-stats .stat-item {
+  margin-bottom: 8px;
+  font-size: 0.95em;
+}
+
+.key-stats .stat-item strong {
+  display: inline-block;
+  width: 110px; /* Align labels */
+  color: #555;
+}
+
+.key-stats .stat-item span {
+  font-weight: 500;
+  color: #333;
+}
+
+.building-attributes {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: #444;
+}
+
+.building-attributes p {
+  margin-bottom: 5px;
+}
+
+.facility-section {
+  /* Ensure standard block layout, remove any specific positioning */
+  position: static; 
+  margin-top: 15px; /* Add some space above the section */
+}
+
+.facility-section h6 {
+  margin-bottom: 8px; 
+  color: #555;
+  font-weight: 600;
+}
+
+/* Keep score-specific styles */
+.proximity-score {
+  margin-top: 5px; 
+  margin-bottom: 15px; /* Increased bottom margin for space before plot */
+  padding: 8px 12px;
+  border-radius: 5px;
+  background-color: #e9ecef; 
+  text-align: center;
+  font-size: 0.95em;
+  position: static; /* Ensure no relative/absolute positioning */
+}
+
+.proximity-score strong {
+  color: #343a40; /* Darker text for label */
+  margin-right: 5px;
+}
+
+.proximity-score span {
+  font-weight: bold;
+  color: #007bff; /* Blue for the score value */
+}
+
+.proximity-score.default-score span {
+  color: #28a745; /* Green for default score */
+}
+
+.proximity-score em { /* Style for 'not available' text */
+  color: #6c757d; 
+  font-style: normal;
+}
+
+
+/* Ensure the plot output behaves like a block element */
+.facility-section .shiny-plot-output {
+  display: block; /* Explicitly set display */
+  position: static; /* Override any potential relative/absolute positioning */
+  margin-top: 0; /* Reset margin, spacing handled by score's margin-bottom */
+  width: 100%; /* Ensure it takes available width */
+}
+
+.right-overlay .btn-block {
+  margin-top: auto; /* Push button towards the bottom if space allows */
+  flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+/* Ensure hr has margin */
+.right-overlay hr {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  border-top: 1px solid #ddd;
+}
+
 
 /* Action buttons */
 .btn-primary {
