@@ -1,5 +1,5 @@
 # HDB Resale Prices retrieved from HDB data.gov on Mar 29, 2025. We cannot guarantee data accuracy for data added beyodn this retrieval date.
-hdb_resale_prices <- read.csv("Resources/HDB Resale.csv")
+hdb_resale_prices <- read.csv("./data/raw/HDB Resale.csv")
 
 # Load required libraries
 library(httr)
@@ -103,7 +103,7 @@ hdb_resale_prices <- hdb_resale_prices %>% rename(postal_code = postal)
 
 # Save the final dataframe
 # Consider saving to a new file to avoid overwriting potentially useful intermediate files
-output_filename <- "Resources/HDB_Resale_Coordinates.csv"
+output_filename <- "./data/clean/HDB_Resale_Coordinates.csv"
 write.csv(hdb_resale_prices, output_filename, row.names = FALSE, quote = FALSE)
 
 # Optional: Clean up parallel workers

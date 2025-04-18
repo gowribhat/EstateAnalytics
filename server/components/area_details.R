@@ -61,12 +61,12 @@ output$income_display_ui <- renderUI({
       div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);")
     )
   } else {
-    # If data is not available, render the message
+    # If data is not available, render the message using standardized classes
     div(
-      style = "padding: 15px; margin-bottom: 15px; text-align: center; background-color: #f8f9fa; border-radius: 5px; color: #555;",
-      h5(paste0('Household Income'), style="margin-bottom: 5px; font-size: 13px; font-weight: bold;"),
+      class = "data-placeholder info",
+      h5("Household Income", class = "data-placeholder-title"),
       # Use the area_name from the status, which handles NULL/Outside cases
-      p(paste("Income data not available for", status$area_name))
+      p(paste("Income data not available for", status$area_name), class = "data-placeholder-message")
     )
   }
 })
@@ -381,8 +381,8 @@ output$facility_summary <- renderUI({
   # Exit if no area selected or no planning areas data
   if (is.null(area_name) || !nzchar(area_name) || area_name == "Outside Planning Area" || is.null(planning_areas_sf)) {
     return(div(
-      style = "margin: 15px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; text-align: center; color: #6c757d;",
-      "Select a planning area on the map to see facility counts." # Updated message
+      class = "data-placeholder",
+      p("Select a planning area on the map to see facility counts.", class = "data-placeholder-message")
     ))
   }
   
@@ -390,8 +390,9 @@ output$facility_summary <- renderUI({
   if (!inherits(planning_areas_sf, "sf")) {
     warning("Facility Summary UI: Planning areas data is not an sf object.")
     return(div(
-      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; color: #856404;",
-      "Error: Invalid planning areas data format."
+      class = "data-placeholder error",
+      h5("Data Error", class = "data-placeholder-title"),
+      p("Invalid planning areas data format.", class = "data-placeholder-message")
     ))
   }
   
@@ -444,10 +445,11 @@ output$facility_summary <- renderUI({
   }, error = function(e) {
     # Catch errors specifically from the counting process within the UI render
     print(paste("Error counting facilities within UI render:", e$message))
-    # Return error message if something goes wrong
+    # Return error message if something goes wrong using standardized style
     div(
-      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; color: #856404;",
-      "Unable to load facility counts for the selected area."
+      class = "data-placeholder warning",
+      h5("Facility Data Issue", class = "data-placeholder-title"),
+      p("Unable to load facility counts for the selected area.", class = "data-placeholder-message")
     )
   })
 })

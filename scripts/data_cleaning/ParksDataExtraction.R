@@ -4,7 +4,7 @@ library(rvest)
 library(stringr)
 
 # Read the GeoJSON file
-parks_data <- st_read("~/Documents/1. Academics/1. NUS/1. BBA/1. Y2S2/DBA3702/Assignments /Project/Parks.geojson")
+parks_data <- st_read("./data/raw/Parks.geojson")
 
 # View the structure of the data
 str(parks_data)
@@ -23,12 +23,12 @@ parks_data <- parks_data %>%
     longitude = st_coordinates(geometry)[,1],
     latitude = st_coordinates(geometry)[,2])
 
-parks_data<- parks_data %>%
+parks_data <- parks_data %>%
   select(-geometry)
 View(parks_data)
 
 # Read the Gyms GeoJSON file
-gyms_data <- st_read("~/Documents/1. Academics/1. NUS/1. BBA/1. Y2S2/DBA3702/Assignments /Project/GymsSGGEOJSON.geojson")
+gyms_data <- st_read("./data/raw/GymsSGGEOJSON.geojson")
 gyms_data <- gyms_data[-1]
 gyms_data <- gyms_data %>%
   mutate(
@@ -84,5 +84,5 @@ names(gyms_name)[1] <- "Name"
 gyms_data <- gyms_data[-1]
 gyms_data <- cbind(gyms_name, gyms_data)
 View(gyms_data)
-saveRDS(gyms_data, file = "/Users/tanwinnie/Documents/GitHub/Project/data/gyms_data.rds")
-saveRDS(parks_data, file = "/Users/tanwinnie/Documents/GitHub/Project/data/parks_data.rds")
+saveRDS(gyms_data, file = "./data/clean/gyms_data.rds")
+saveRDS(parks_data, file = "./data/clean/parks_data.rds")
