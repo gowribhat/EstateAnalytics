@@ -1,6 +1,8 @@
 // DBA3702 Team 3 - Find Your New Home
 // JavaScript functions for handling overlay visibility
 
+const SAFETY_MARGIN = 40; // Define a constant for the safety margin
+
 $(document).ready(function() {
   // Handler for showing the right overlay with building details
   Shiny.addCustomMessageHandler('showRightOverlay', function(message) {
@@ -83,7 +85,7 @@ $(document).ready(function() {
         var overlayHeight = $('#transactions_overlay').height();
         var headerHeight = $('#transactions_overlay > div:first-child').outerHeight(true);
         var containerPadding = 20; // Account for container padding
-        var safeHeight = overlayHeight - headerHeight - containerPadding - 40; // Extra 40px safety margin
+        var safeHeight = overlayHeight - headerHeight - containerPadding - SAFETY_MARGIN; // Use the constant for safety margin
         
         // Apply calculated height to controls
         $('.transactions-overlay .col-sm-4 > div').css({
@@ -104,7 +106,7 @@ $(document).ready(function() {
       var overlayHeight = $('#transactions_overlay').height();
       var headerHeight = $('#transactions_overlay > div:first-child').outerHeight(true);
       var containerPadding = 20; // Account for container padding
-      var safeHeight = overlayHeight - headerHeight - containerPadding - 10; // Safety margin
+      var safeHeight = overlayHeight - headerHeight - containerPadding - SAFETY_MARGIN; // Use the constant for safety margin
       
       // Apply calculated height to controls
       $('.transactions-overlay .col-sm-4 > div').css({
