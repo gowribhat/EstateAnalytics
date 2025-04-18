@@ -20,8 +20,6 @@ output$property_map <- renderLeaflet({
   leaflet(options = leafletOptions(
     zoomControl = FALSE,
     minZoom = initialZoom,  # Setting minimum zoom equal to initial zoom
-    zoomSnap = 0.5,         # Allow finer zoom levels (0.5 increments)
-    zoomDelta = 0.5,        # Zoom changes in 0.5 increments
     attributionControl = FALSE
   )) %>%
     addTiles() %>%
