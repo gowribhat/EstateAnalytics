@@ -133,9 +133,9 @@ output$analytics_dashboard <- renderUI({
     column(
       width = 4,
       div(
-        style = "height: 100%; overflow-y: auto; overflow-x: hidden; max-height: 400px;", # Only vertical scrolling with fixed height
+        style = "height: calc(100% - 30px); overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;",
         wellPanel(
-          style = "background-color: #f8f9fa;",
+          style = "background-color: #f8f9fa; max-height: none; height: auto; margin-bottom: 20px;",
           h4("Analytics Controls"),
           # Visualization type selector
           radioButtons("viz_type", "Visualization Type:", 

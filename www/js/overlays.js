@@ -76,7 +76,54 @@ $(document).ready(function() {
       
       // If there are any plots, manually trigger their update
       $(document).trigger('shiny:visualchange');
+      
+      // Fix scrolling with an additional small delay to allow content to load
+      setTimeout(function() {
+        // Calculate proper height for controls container
+        var overlayHeight = $('#transactions_overlay').height();
+        var headerHeight = $('#transactions_overlay > div:first-child').outerHeight(true);
+        var containerPadding = 20; // Account for container padding
+        var safeHeight = overlayHeight - headerHeight - containerPadding - 40; // Extra 40px safety margin
+        
+        // Apply calculated height to controls
+        $('.transactions-overlay .col-sm-4 > div').css({
+          'height': safeHeight + 'px',
+          'max-height': safeHeight + 'px',
+          'overflow-y': 'auto',
+          'overflow-x': 'hidden',
+          'padding-bottom': '20px'
+        });
+        
+        // Ensure the dashboard content can scroll properly
+        $('.dashboard-content-scroll').css('height', 'calc(100% - 10px)');
+      }, 200);
     }, 800); // Longer delay to ensure dashboard is fully rendered
+
+    // Initial sizing for the analytics controls
+    function adjustAnalyticsControlsHeight() {
+      var overlayHeight = $('#transactions_overlay').height();
+      var headerHeight = $('#transactions_overlay > div:first-child').outerHeight(true);
+      var containerPadding = 20; // Account for container padding
+      var safeHeight = overlayHeight - headerHeight - containerPadding - 10; // Safety margin
+      
+      // Apply calculated height to controls
+      $('.transactions-overlay .col-sm-4 > div').css({
+        'height': safeHeight + 'px',
+        'max-height': safeHeight + 'px',
+        'overflow-y': 'auto',
+        'overflow-x': 'hidden'
+      });
+    }
+    
+    // Initial adjustment
+    setTimeout(adjustAnalyticsControlsHeight, 300);
+    
+    // Attach resize handler for the analytics controls
+    $(window).off('resize.analyticsControls').on('resize.analyticsControls', function() {
+      if ($('#transactions_overlay').is(':visible')) {
+        adjustAnalyticsControlsHeight();
+      }
+    });
   });
 
   // Handler for hiding the transactions overlay
@@ -93,8 +140,11 @@ $(document).ready(function() {
     } else {
       Shiny.setInputValue('overlays_visible', true);
     }
-  });
 
+    // Remove the resize handler when hiding the overlay
+    $(window).off('resize.analyticsControls');
+  });
+  
   // Close overlay when clicking the X button
   $(document).on('click', '.close-overlay', function() {
     console.log("JS: Close button clicked");
