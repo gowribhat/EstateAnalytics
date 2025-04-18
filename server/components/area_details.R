@@ -208,7 +208,7 @@ output$summary_plot <- renderPlot({
 
   # Determine plot title based on zoom level
   plot_title <- if (zoom_level >= zoom_threshold && area_name != "Outside Planning Area") {
-    paste0("Price Distribution in \n", area_name)
+    paste0("Price Distribution in\n", area_name)
   } else {
     "Price Distribution of Area"
   }
