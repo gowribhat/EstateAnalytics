@@ -7,176 +7,251 @@
 # library(shinydashboard)
 # library(shinythemes)
 # library(leaflet)
-library(shinyjs) # Add this line
+library(shinyjs)
 
 ui <- fluidPage(
-  useShinyjs(), # Add this line to enable shinyjs functions
+  useShinyjs(),
+
   # Custom CSS for modern design
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "css/custom.css"),
-    # Explicitly load DT dependencies
-    tags$script(src = "shared/datatables/js/jquery.dataTables.min.js"),
-    tags$script(src = "shared/datatables/js/dataTables.bootstrap.min.js"),
-    tags$link(rel = "stylesheet", type = "text/css", href = "shared/datatables/css/dataTables.bootstrap.css"),
-    # Load our custom overlays.js file
-    tags$script(src = "js/overlays.js"),
-    
-    # Add screen dimension detection code
-    tags$script(HTML("
-      // Function to send screen dimensions to Shiny server
-      function sendScreenDimensions() {
-        var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-        var height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-        
-        Shiny.setInputValue('screenDimensions', {
-          width: width,
-          height: height,
-          pixelRatio: window.devicePixelRatio || 1
-        });
-      }
-      
-      // Set up event handler for custom message from server
-      Shiny.addCustomMessageHandler('getScreenDimensions', function(message) {
-        sendScreenDimensions();
-      });
-      
-      // Set up handler to enforce minimum zoom level
-      Shiny.addCustomMessageHandler('setMinZoom', function(message) {
-        // Get zoom level from message
-        var minZoom = message.zoom;
-        
-        setTimeout(function() {
-          // Find the Leaflet map instance - more robust method
-          var mapElement = document.querySelector('.leaflet-container');
-          if (!mapElement) return;
-          
-          // Find the map instance in the Leaflet registry
-          for (var id in L.map._instances) {
-            var map = L.map._instances[id];
-            if (map && map._container === mapElement) {
-              console.log('Setting min zoom to: ' + minZoom);
-              
-              // Set options directly
-              map.options.minZoom = minZoom;
-              
-              // Force current zoom to match min zoom (prevents zooming out)
-              if (map.getZoom() < minZoom) {
-                map.setZoom(minZoom);
-              }
-              
-              // Override the setZoom method to enforce minimum zoom
-              var originalSetZoom = map.setZoom;
-              map.setZoom = function(zoom, options) {
-                if (zoom < this.options.minZoom) {
-                  zoom = this.options.minZoom;
-                }
-                return originalSetZoom.call(this, zoom, options);
-              };
-              
-              // Also intercept zoom events
-              map.off('zoom');
-              map.on('zoom', function() {
-                if (map.getZoom() < map.options.minZoom) {
-                  map.setZoom(map.options.minZoom);
-                }
-              });
-              
-              break;
-            }
-          }
-        }, 500); // Small delay to ensure map is fully initialized
-      });
-      
-      // Send dimensions on page load and window resize
-      document.addEventListener('DOMContentLoaded', function() {
-        sendScreenDimensions();
-        
-        // Also send when window is resized
-        window.addEventListener('resize', function() {
-          sendScreenDimensions();
-        });
-      });
-    ")),
-    
-    tags$style(HTML("\n      body, html {\n        height: 100%;\n        margin: 0;\n        overflow: hidden;\n        font-family: 'Roboto', sans-serif;\n      }\n      .map-container {\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 1;\n      }\n      .top-filters {\n        position: absolute;\n        top: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        z-index: 1000;\n        display: flex;\n        gap: 10px;\n      }\n      .top-filters .btn {\n        border-radius: 20px;\n        transition: all 0.3s ease;\n      }\n      .top-filters .btn:hover {\n        background-color: #007bff;\n        color: white;\n        transform: scale(1.1);\n      }\n      .left-overlay, .right-overlay {\n        position: absolute;\n        top: 50px;\n        bottom: 10px;\n        width: 300px;\n        background: rgba(255, 255, 255, 0.9);\n        border-radius: 15px;\n        padding: 15px;\n        /* REMOVED overflow-y: auto; */\n        overflow: hidden; /* Prevent outer scrolling */\n        z-index: 1000;\n        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);\n        transition: all 0.3s ease;\n      }\n      .left-overlay:hover, .right-overlay:hover {\n        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);\n      }\n      .left-overlay {\n        left: 10px;\n      }\n      .right-overlay {\n        right: 10px;\n      }\n      /* Transactions overlay styling */\n      #transactions_overlay {\n        position: absolute;\n        bottom: 10px;\n        left: 50%;\n        transform: translateX(-50%);\n        width: calc(100% - 640px); /* Adjusted width */\n        max-width: 900px;\n        height: 60%; /* Increased height for analytics dashboard */\n        background: rgba(255, 255, 255, 0.95);\n        border-radius: 15px;\n        padding: 15px;\n        z-index: 1001;\n        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);\n        display: none; /* Use display: none initially */\n        flex-direction: column;\n        overflow: hidden; /* Prevent the main overlay from scrolling */\n      }\n\n      /* Style the container holding the conditional panels */\n      #analytics_dashboard_container {\n        flex-grow: 1; /* Allow container to fill space */\n        overflow: hidden; /* Prevent this container itself from scrolling */\n        /* Background, padding, border-radius are applied via inline style */\n      }\n\n      /* Style the inner div that should scroll (inside the conditionalPanel) */\n      #analytics_dashboard_container .conditionalPanel > div {\n         /* Height and overflow are set via inline style */\n         /* Ensure no conflicting styles here */\n      }\n\n      /* Ensure DataTable takes full width */\n      #building_transactions .dataTables_wrapper {\n          width: 100%;\n      }\n      @keyframes fadeIn {\n        from { opacity: 0; }\n        to { opacity: 1; }\n      }\n    ")),
-    # Add JavaScript for responsive overlay behavior
-    tags$script(HTML("
-      function checkWindowSize() {
-        var windowWidth = window.innerWidth;
-        // Select only the left overlay for automatic hiding/showing based on width
-        var leftOverlay = document.querySelector('.left-overlay');
-        var rightOverlay = document.getElementById('right_overlay'); // Keep track of right overlay state
+    tags$link(
+      rel  = "stylesheet",
+      type = "text/css",
+      href = "css/custom.css"
+    ),
+    tags$script(
+      src = "shared/datatables/js/jquery.dataTables.min.js"
+    ),
+    tags$script(
+      src = "shared/datatables/js/dataTables.bootstrap.min.js"
+    ),
+    tags$link(
+      rel  = "stylesheet",
+      type = "text/css",
+      href = "shared/datatables/css/dataTables.bootstrap.css"
+    ),
+    tags$script(
+      src = "js/overlays.js"
+    ),
 
-        // If window width is less than 1000px, hide the left overlay
-        if (windowWidth < 1000) {
-          if (leftOverlay) {
-            leftOverlay.style.display = 'none';
-          }
-          // Update visibility state only if right overlay is also hidden
-          if (rightOverlay && rightOverlay.style.display === 'none') {
-            Shiny.setInputValue('overlays_visible', false);
-          } else {
-            Shiny.setInputValue('overlays_visible', true); // Right overlay might still be visible
-          }
-        } else {
-          // If window width is >= 1000px, show the left overlay
-          if (leftOverlay) {
-            // Reset CSS properties for the left overlay
-            leftOverlay.style.display = 'block';
-            leftOverlay.style.opacity = '1';
-            leftOverlay.style.background = 'rgba(255, 255, 255, 0.9)';
-            // Force a repaint
-            leftOverlay.offsetHeight;
-          }
-          // Always set overlays_visible to true if window is wide enough,
-          // as either left or right (or both) could be visible.
-          Shiny.setInputValue('overlays_visible', true);
+    # Screen dimension detection
+    tags$script(HTML(
+      "
+// Function to send screen dimensions to Shiny server
+function sendScreenDimensions() {
+  var width  = window.innerWidth  || document.documentElement.clientWidth;
+  var height = window.innerHeight || document.documentElement.clientHeight;
+  Shiny.setInputValue('screenDimensions', {
+    width: width,
+    height: height,
+    pixelRatio: window.devicePixelRatio || 1
+  });
+}
+
+// Handle server requests for dimensions
+Shiny.addCustomMessageHandler('getScreenDimensions', function(msg) {
+  sendScreenDimensions();
+});
+
+// Enforce minimum zoom logic
+Shiny.addCustomMessageHandler('setMinZoom', function(message) {
+  // Get zoom level from message
+  var minZoom = message.zoom;
+
+  setTimeout(function() {
+    // Find the Leaflet map instance - more robust method
+    var mapElement = document.querySelector('.leaflet-container');
+    if (!mapElement) return;
+
+    // Find the map instance in the Leaflet registry
+    for (var id in L.map._instances) {
+      var map = L.map._instances[id];
+      if (map && map._container === mapElement) {
+        console.log('Setting min zoom to: ' + minZoom);
+
+        // Set options directly
+        map.options.minZoom = minZoom;
+
+        // Force current zoom to match min zoom (prevents zooming out)
+        if (map.getZoom() < minZoom) {
+          map.setZoom(minZoom);
         }
-      }
-      
-      // Run on page load
-      window.addEventListener('load', checkWindowSize);
-      
-      // Run whenever the window is resized
-      window.addEventListener('resize', checkWindowSize);
-      
-      // Run when map is panned or zoomed to ensure correct overlay appearance
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-          var leafletMap = document.querySelector('.leaflet-map-pane');
-          if (leafletMap) {
-            var observer = new MutationObserver(function() {
-              var overlays = document.querySelectorAll('.left-overlay, .right-overlay');
-              if (window.innerWidth >= 1200) {
-                overlays.forEach(function(overlay) {
-                  // Refresh overlay appearance when map changes
-                  overlay.style.background = 'rgba(255, 255, 255, 0.9)';
-                });
-              }
-            });
-            
-            observer.observe(leafletMap, {
-              attributes: true,
-              childList: true,
-              subtree: true
-            });
+
+        // Override the setZoom method to enforce minimum zoom
+        var originalSetZoom = map.setZoom;
+        map.setZoom = function(zoom, options) {
+          if (zoom < this.options.minZoom) {
+            zoom = this.options.minZoom;
           }
-        }, 1000); // Small delay to ensure map is loaded
-      });
-    "))
+          return originalSetZoom.call(this, zoom, options);
+        };
+
+        // Also intercept zoom events
+        map.off('zoom');
+        map.on('zoom', function() {
+          if (map.getZoom() < map.options.minZoom) {
+            map.setZoom(map.options.minZoom);
+          }
+        });
+
+        break;
+      }
+    }
+  }, 500); // Small delay to ensure map is fully initialized
+});
+
+// Send dimensions on page load and window resize
+document.addEventListener('DOMContentLoaded', function() {
+  sendScreenDimensions();
+
+  // Also send when window is resized
+  window.addEventListener('resize', function() {
+    sendScreenDimensions();
+  });
+});
+      "
+    )),
+
+    # Custom inline CSS
+    tags$style(HTML(
+      "
+body, html {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+}
+.map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+.top-filters {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 10px;
+}
+.top-filters .btn {
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+.top-filters .btn:hover {
+  background-color: #007bff;
+  color: white;
+  transform: scale(1.1);
+}
+.left-overlay, .right-overlay {
+  position: absolute;
+  top: 50px;
+  bottom: 10px;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 15px;
+  overflow: hidden; /* Prevent outer scrolling */
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+.left-overlay:hover, .right-overlay:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+.left-overlay {
+  left: 10px;
+}
+.right-overlay {
+  right: 10px;
+}
+/* Transactions overlay styling */
+#transactions_overlay {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 640px); /* Adjusted width */
+  max-width: 900px;
+  height: 60%;      /* Fixed dashboard height */
+  max-height: 60%;  /* Prevent growing beyond */
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 15px;
+  z-index: 1001;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+  display: none; /* Use display: none initially */
+  flex-direction: column;
+  overflow: hidden; /* Prevent the main overlay from scrolling */
+}
+
+/* Style the container holding the conditional panels */
+#analytics_dashboard_container {
+  flex-grow: 1; /* Allow container to fill space */
+  overflow: hidden; /* Prevent this container itself from scrolling */
+  /* Background, padding, border-radius are applied via inline style */
+}
+
+/* Style the inner div that should scroll (inside the conditionalPanel) */
+#analytics_dashboard_container .conditionalPanel > div {
+   /* Height and overflow are set via inline style */
+   /* Ensure no conflicting styles here */
+}
+
+/* Ensure DataTable takes full width */
+#building_transactions .dataTables_wrapper {
+    width: 100%;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+      "
+    ))
   ),
 
   # Full-screen map
-  div(class = "map-container", leafletOutput("property_map", width = "100%", height = "100%")),
+  div(
+    class = "map-container",
+    leafletOutput(
+      outputId = "property_map",
+      width    = "100%",
+      height   = "100%"
+    )
+  ),
 
   # Top filters
   div(
     class = "top-filters",
-    actionButton("filter_house_type", "House Type", class = "btn btn-primary"),
-    actionButton("filter_budget", "Budget", class = "btn btn-primary"),
-    actionButton("filter_area", "Area", class = "btn btn-primary"),
-    actionButton("filter_floor_height", "Floor Height", class = "btn btn-primary"),
-    actionButton("filter_facility", "Facility", class = "btn btn-primary")
+    actionButton(
+      inputId = "filter_house_type",
+      label   = "House Type",
+      class   = "btn btn-primary"
+    ),
+    actionButton(
+      inputId = "filter_budget",
+      label   = "Budget",
+      class   = "btn btn-primary"
+    ),
+    actionButton(
+      inputId = "filter_area",
+      label   = "Area",
+      class   = "btn btn-primary"
+    ),
+    actionButton(
+      inputId = "filter_floor_height",
+      label   = "Floor Height",
+      class   = "btn btn-primary"
+    ),
+    actionButton(
+      inputId = "filter_facility",
+      label   = "Facility",
+      class   = "btn btn-primary"
+    )
   ),
 
   # Left overlay: Summary
@@ -213,7 +288,7 @@ ui <- fluidPage(
     div(
       style = "height: calc(100% - 10px); display: flex; flex-direction: column;",
       h4("Building Details"),
-      
+
       # Loading UI - shown while content is being prepared
       conditionalPanel(
         condition = "typeof input.right_overlay_ready === 'undefined' || !input.right_overlay_ready",
@@ -223,7 +298,7 @@ ui <- fluidPage(
           p("Loading property details...", style = "color: #4676a9;")
         )
       ),
-      
+
       # Property content - hidden initially, shown when ready
       conditionalPanel(
         condition = "typeof input.right_overlay_ready !== 'undefined' && input.right_overlay_ready",
@@ -231,7 +306,7 @@ ui <- fluidPage(
       )
     )
   ),
-  
+
   # Building Analytics Dashboard overlay
   div(
     id = "transactions_overlay",
@@ -270,7 +345,7 @@ ui <- fluidPage(
       )
     )
   ),
-  
+
   # Hidden input to track overlay visibility
   tags$input(id = "overlays_visible", type = "hidden", value = "false")
 )

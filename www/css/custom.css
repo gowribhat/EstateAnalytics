@@ -97,8 +97,43 @@ body {
 
 /* Ensure the transaction overlay is unscrollable as a whole */
 .transactions-overlay {
-  overflow: hidden; /* Prevent scrolling for the entire overlay */
-  height: 60% !important; /* Reduced height to 50% as requested */
+  overflow: hidden; /* Prevent main overlay scrolling */
+  height: 60% !important;  /* Fixed dashboard height */
+  max-height: 60% !important;
+}
+
+/* Fix for analytics controls scrolling */
+.transactions-overlay .scrollable-content .col-sm-4 > div {
+  /* Remove fixed height, will be set dynamically by JS */
+  height: 100% !important;
+  overflow-y: auto !important; /* Force scrolling */
+  overflow-x: hidden !important;
+  position: relative; /* Establish positioning context */
+}
+
+/* Style the well panel inside the scrollable area to ensure it doesn't break overflow */
+.transactions-overlay .scrollable-content .col-sm-4 .well {
+  border-radius: 4px;
+  box-shadow: none;
+  margin-bottom: 20px;
+  height: auto; /* Let the well grow naturally */
+  overflow: visible; /* Ensure content inside well isn't clipped */
+  padding-bottom: 25px; /* Add extra padding at bottom of well */
+}
+
+/* Ensure the plot area maintains its height */
+.transactions-overlay .col-sm-8 > div {
+  height: auto;
+  min-height: 350px; /* Minimum height for plots */
+  max-height: calc(100% - 20px); /* Stay within available height */
+}
+
+/* Make sure main dashboard content container is properly sized */
+.dashboard-content-scroll {
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: relative; /* Ensure proper stacking context */
 }
 
 /* Allow inner regions to remain scrollable */
