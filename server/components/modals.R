@@ -25,7 +25,7 @@ observeEvent(input$filter_house_type, {
 observeEvent(input$filter_budget, {
   showModal(modalDialog(
     title = "Select Budget Range",
-    sliderInput("modal_budget", "Budget (SGD):", min = 100000, max = 10000000, value = budget_range(), step = 50000, pre = "$", sep = ","), # Max adjusted based on reactiveVal default
+    sliderInput("modal_budget", "Budget (SGD):", min = 100000, max = 10000000, value = budget_range(), step = 50000, pre = "$", sep = ",", width = "100%"), # Max adjusted based on reactiveVal default
     footer = tagList(
       modalButton("Cancel"),
       actionButton("ok_budget", "OK")
@@ -37,7 +37,7 @@ observeEvent(input$filter_budget, {
 observeEvent(input$filter_area, {
   showModal(modalDialog(
     title = "Select Area Range",
-    sliderInput("modal_area", "Area (sqm):", min = 0, max = 1000, value = area_range(), step = 10),
+    sliderInput("modal_area", "Area (sqm):", min = 0, max = 1000, value = area_range(), step = 10, width = "100%"),
     footer = tagList(
       modalButton("Cancel"),
       actionButton("ok_area", "OK")
@@ -49,7 +49,7 @@ observeEvent(input$filter_area, {
 observeEvent(input$filter_floor_height, {
   showModal(modalDialog(
     title = "Select Floor Height Range",
-    sliderInput("modal_floor_height", "Floor Level:", min = 1, max = 50, value = floor_range(), step = 1), # Min adjusted based on reactiveVal default
+    sliderInput("modal_floor_height", "Floor Level:", min = 1, max = 50, value = floor_range(), step = 1, width = "100%"), # Min adjusted based on reactiveVal default
     footer = tagList(
       modalButton("Cancel"),
       actionButton("ok_floor_height", "OK")
