@@ -9,3 +9,4 @@ data/cleaned/*.rds
 .DS_Store
 .github
 .RDataTmp
+.DS_Store

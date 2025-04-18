@@ -15,27 +15,76 @@ output$current_region_name <- renderText({
 # Income statistics for the current region
 output$income_stats <- NULL
 
-# Render the plotly income visualization - changed from donut chart to horizontal stacked bar
-output$income_donut <- renderPlotly({
-  # Get the current planning area
+# Reactive to check income data availability and retrieve necessary data
+income_data_status <- reactive({
   area_name <- current_planning_area()
-
-  # Get income data
   income_data <- household_income_data()
 
-  # Exit early if we don't have proper data
-  req(income_data, area_name, area_name != "Outside Planning Area")
+  # Default status
+  status <- list(available = FALSE, area_name = area_name, total_households = NA, region_data = NULL)
 
-  # Find income data for current region
-  region_data <- income_data %>%
+  # Check prerequisites
+  if (is.null(income_data) || is.null(area_name) || area_name == "Outside Planning Area") {
+    # If no area selected or outside, explicitly set area_name for message
+    if(is.null(area_name)) status$area_name <- "Selected Area"
+    return(status)
+  }
+
+  # Find data for the region
+  region_data_filtered <- income_data %>%
     filter(toupper(Number) == toupper(area_name))
 
-  req(nrow(region_data) > 0)
+  if (nrow(region_data_filtered) > 0) {
+    total_households_val <- region_data_filtered$Total
+    if (!is.na(total_households_val) && total_households_val > 0) {
+      status$available <- TRUE
+      status$total_households <- total_households_val
+      status$region_data <- region_data_filtered # Pass data along
+    }
+  }
+  # Ensure area_name is always populated in the status for the message
+  status$area_name <- area_name
+  return(status)
+})
 
-  # Calculate income metrics
-  total_households <- region_data$Total
+# UI Output for Income section (conditional rendering)
+output$income_display_ui <- renderUI({
+  status <- income_data_status()
+  req(status) # Ensure status is calculated
 
-  # Calculate households in different income brackets
+  if (status$available) {
+    # If data is available, render the plotly output container WITH an overlay
+    div(
+      style = "position: relative; margin-bottom: 15px;", # Container needs relative positioning
+      plotlyOutput("income_plot_output", height = "200px"), # Adjust height as needed
+      # Add a transparent overlay div to block interactions
+      div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);")
+    )
+  } else {
+    # If data is not available, render the message using standardized classes
+    div(
+      class = "data-placeholder info",
+      h5("Household Income", class = "data-placeholder-title"),
+      # Use the area_name from the status, which handles NULL/Outside cases
+      p(paste("Income data not available for", status$area_name), class = "data-placeholder-message")
+    )
+  }
+})
+
+
+# Render the plotly income visualization - ONLY if data is available
+output$income_plot_output <- renderPlotly({
+  # This plot only renders if income_display_ui decided to show its container
+  status <- income_data_status()
+  # Use req() to ensure all necessary reactive values derived *within* this reactive context are valid
+  req(status$available, status$region_data, status$total_households, status$area_name)
+
+  # Retrieve data from status
+  region_data <- status$region_data
+  total_households <- status$total_households
+  area_name <- status$area_name # Use area_name from status for consistency
+
+  # Proceed with calculations and plotting (existing logic)
   no_income <- region_data$NoEmployedPerson
   no_income_percent <- round(no_income / total_households * 100, 1)
 
@@ -56,18 +105,24 @@ output$income_donut <- renderPlotly({
 
   # Create data for plotly horizontal stacked bar chart
   legend_labels <- c("No Income", "<$3K", "$3-9K", "$9-20K", ">$20K")
-  # Keep full labels for hover text
   hover_labels <- c("No Income", "Low Income (<$3K)", "Mid Income ($3-9K)",
                     "High Income ($9-20K)", "Affluent (>$20K)")
   values <- c(no_income_percent, low_income_percent, mid_income_percent,
              high_income_percent, affluent_percent)
+
+  # Ensure sum is close to 100, adjust largest category if needed due to rounding
+  # Check if sum is significantly off (e.g., more than 0.1 difference)
+  if (abs(sum(values) - 100) > 0.1 && sum(values) > 0) {
+      values <- values / sum(values) * 100
+  }
+  values <- round(values, 1) # Re-round after potential normalization
+
   colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00")
 
-  # Create a data frame for plot_ly with a single row
   plot_data <- data.frame(
     y = "Income Distribution",
     x = values,
-    income_type = factor(legend_labels, levels = legend_labels), # Ensure factor levels are ordered
+    income_type = factor(legend_labels, levels = legend_labels),
     hover_label = hover_labels,
     stringsAsFactors = FALSE
   )
@@ -85,7 +140,8 @@ output$income_donut <- renderPlotly({
       orientation = 'h',
       text = ~paste0(x, "%"),
       textposition = 'inside',
-      insidetextanchor = 'middle'
+      insidetextanchor = 'middle',
+      textfont = list(color = 'white', size=10) # Make inside text white and smaller
     ) %>%
     layout(
       title = list(
@@ -97,19 +153,16 @@ output$income_donut <- renderPlotly({
       barmode = 'stack',
       showlegend = TRUE,
       legend = list(
-        orientation = "h", 
-        y = -0.1,           # Moved closer to the bar
+        orientation = "h",
+        y = -0.2, # Adjust legend position further down if needed
         x = 0.5,
         xanchor = 'center',
         yanchor = 'top',
-        font = list(size = 9),  # Smaller font for legend
-        itemsizing = 'constant', # Makes legend items consistent size
-        itemwidth = 30,         # Narrower legend items
-        traceorder = "normal"
+        font = list(size = 10)
       ),
-      yaxis = list(showticklabels = FALSE, title = "", showgrid = FALSE),
-      xaxis = list(showticklabels = FALSE, title = "", showgrid = FALSE, range = c(0, 100)),
-      margin = list(t = 50, b = 30, l = 10, r = 10) # Reduced margins
+      xaxis = list(title = "", zeroline = FALSE, showticklabels = FALSE, showgrid = FALSE, range = c(0, 100)), # Ensure x-axis goes 0-100
+      yaxis = list(title = "", zeroline = FALSE, showticklabels = FALSE, showgrid = FALSE),
+      margin = list(l = 10, r = 10, t = 50, b = 40) # Increase bottom margin for legend
     )
 })
 
@@ -155,7 +208,7 @@ output$summary_plot <- renderPlot({
 
   # Determine plot title based on zoom level
   plot_title <- if (zoom_level >= zoom_threshold && area_name != "Outside Planning Area") {
-    paste0("Price Distribution in ", area_name)
+    paste0("Price Distribution in\n", area_name)
   } else {
     "Price Distribution of Area"
   }
@@ -197,52 +250,119 @@ output$summary_plot <- renderPlot({
 planning_areas_data <- reactive({
   tryCatch({
     pa_data <- st_read("data/clean/district_and_planning_area.geojson", quiet = TRUE)
+    
+    # Ensure geometry is valid upon loading
+    if (!inherits(pa_data, "sf")) {
+        stop("Loaded planning area data is not an sf object.")
+    }
+    if (any(!st_is_valid(pa_data))) {
+      print("Fixing invalid geometries in planning areas upon load...")
+      pa_data <- st_make_valid(pa_data)
+    }
+    
     print("Planning areas columns:")
     print(names(pa_data))
     return(pa_data)
   }, error = function(e) {
-    warning("Error loading planning areas: ", e$message)
+    warning("Error loading or validating planning areas: ", e$message)
     NULL
   })
 })
 
 # Function to get planning area for facilities using reverse geocoding
 get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) {
-  # Debug prints
+  # Debug prints (keep for now)
   print(paste("Processing facilities for area:", area_name))
-  print(paste("Number of facilities:", nrow(facility_data)))
-  print(paste("Planning areas columns:", paste(names(planning_areas_sf), collapse=", ")))
   
-  req(facility_data, planning_areas_sf, area_name)
+  # Ensure required inputs are valid sf objects and area_name is not NULL/empty
+  req(facility_data, inherits(planning_areas_sf, "sf"), !is.null(area_name), nzchar(area_name), area_name != "Outside Planning Area")
   
-  # Create spatial points for facilities
-  facilities_sf <- st_as_sf(facility_data, coords = c("longitude", "latitude"), crs = 4326)
-  
-  # Ensure CRS matches
-  if (st_crs(facilities_sf) != st_crs(planning_areas_sf)) {
-    facilities_sf <- st_transform(facilities_sf, crs = st_crs(planning_areas_sf))
+  # Ensure facility data has coordinates and remove rows with missing ones
+  if (!all(c("longitude", "latitude") %in% names(facility_data))) {
+      stop("Facility data must contain 'longitude' and 'latitude' columns.")
   }
+  facility_data <- facility_data %>% filter(!is.na(longitude) & !is.na(latitude))
+  print(paste("Number of facilities with valid coordinates:", nrow(facility_data)))
+  if (nrow(facility_data) == 0) {
+      print("No facilities with valid coordinates.")
+      return(0)
+  }
+
+  # Create spatial points for facilities (use WGS84 - EPSG:4326)
+  # Use remove=FALSE to keep original coordinate columns if needed later
+  facilities_sf <- st_as_sf(facility_data, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE) 
   
-  # Find planning area column dynamically
-  pa_col <- names(planning_areas_sf)[grep("planning.*area|pln.*area", names(planning_areas_sf), ignore.case = TRUE)]
-  if (length(pa_col) == 0) pa_col <- "planning_area"
+  # Find planning area column dynamically (case-insensitive search)
+  pa_col_candidates <- grep("planning.*area|pln.*area", names(planning_areas_sf), ignore.case = TRUE, value = TRUE)
+  if (length(pa_col_candidates) > 0) {
+      pa_col <- pa_col_candidates[1] # Take the first match
+  } else if ("planning_area" %in% names(planning_areas_sf)) {
+      pa_col <- "planning_area" # Default fallback
+  } else {
+      warning("Could not automatically determine the planning area column name in the planning areas dataset.")
+      # Attempt to find a likely candidate or stop
+      potential_cols <- names(planning_areas_sf)[!sapply(planning_areas_sf, inherits, "sf")] # Exclude geometry
+      if (length(potential_cols) > 0) {
+          pa_col <- potential_cols[1] # Guess the first non-geometry column
+          warning(paste("Assuming planning area column is:", pa_col))
+      } else {
+          stop("No suitable planning area column found.")
+      }
+  }
   print(paste("Using planning area column:", pa_col))
   
-  # Find facilities in the current planning area (case insensitive)
-  current_area <- planning_areas_sf[toupper(planning_areas_sf[[pa_col]]) == toupper(area_name), ]
+  # Ensure the planning area column exists in the sf object
+  if (!pa_col %in% names(planning_areas_sf)) {
+      stop(paste("Planning area column '", pa_col, "' not found in planning_areas_sf."))
+  }
+
+  # Filter the target planning area polygon using case insensitive comparison
+  # Use .data pronoun for non-standard evaluation safety
+  current_area <- planning_areas_sf %>% 
+      filter(toupper(.data[[pa_col]]) == toupper(area_name))
+      
   if (nrow(current_area) == 0) {
-    print(paste("No matching area found for:", area_name))
-    print(paste("Available areas:", paste(unique(planning_areas_sf[[pa_col]]), collapse=", ")))
+    print(paste("No matching planning area polygon found for:", area_name))
+    # Optional: Print available areas for debugging
+    # print(paste("Available areas:", paste(unique(planning_areas_sf[[pa_col]]), collapse=", ")))
     return(0)
   }
+  # Ensure we only have one polygon for the target area
+  if (nrow(current_area) > 1) {
+      warning(paste("Multiple polygons found for planning area:", area_name, ". Using the first one."))
+      current_area <- head(current_area, 1)
+  }
   
-  # Temporary disable S2 for consistent results
+  # Ensure CRS matches between facilities and the target area polygon
+  target_crs <- st_crs(current_area)
+  if (st_crs(facilities_sf) != target_crs) {
+    print(paste("Transforming facilities CRS from", st_crs(facilities_sf)$input, "to", target_crs$input))
+    facilities_sf <- st_transform(facilities_sf, crs = target_crs)
+  }
+  
+  # Perform spatial intersection (points in polygon)
+  # Disable S2 temporarily for consistency with map_logic.R's reverse geocoding
   sf_use_s2(FALSE)
-  facilities_in_area <- st_intersects(facilities_sf, current_area, sparse = FALSE)
-  sf_use_s2(TRUE)
-  
-  count <- sum(facilities_in_area)
-  print(paste("Found facilities in area:", count))
+  count <- 0 # Initialize count
+  tryCatch({
+      # Use the filtered 'current_area' polygon for intersection
+      # st_intersects returns a list. Each element corresponds to a facility.
+      # The content of each element is the index(es) of the planning area polygon(s) it intersects.
+      # Since current_area has only one polygon, we expect intersecting facilities to have list elements like c(1L).
+      # Non-intersecting facilities will have list elements like integer(0).
+      intersection_list <- st_intersects(facilities_sf, current_area)
+
+      # Correctly count how many elements in the list have length > 0 (meaning they intersected the polygon)
+      count <- sum(sapply(intersection_list, length) > 0)
+
+  }, error = function(e) {
+      warning(paste("Error during spatial intersection for", area_name, ":", e$message))
+      count <- 0 # Return 0 on error
+  }, finally = {
+      sf_use_s2(TRUE) # Ensure S2 is re-enabled
+  })
+
+  print(paste("Found", count, "facilities intersecting with area:", area_name))
   return(count)
 }
 
@@ -251,86 +371,85 @@ output$facility_summary <- renderUI({
   # Get current planning area
   area_name <- current_planning_area()
   
-  # Get planning areas data
+  # Get planning areas data (already validated in the reactive)
   planning_areas_sf <- planning_areas_data()
   
   # Enhanced debugging - print more detailed information
-  print(paste("Current area:", area_name))
-  print(paste("Planning areas loaded:", !is.null(planning_areas_sf)))
-  if (!is.null(planning_areas_sf)) {
-    print(paste("Number of planning areas:", nrow(planning_areas_sf)))
-    print(paste("Planning area column names:", paste(names(planning_areas_sf), collapse=", ")))
-  }
+  print(paste("Facility Summary UI - Current area:", area_name))
+  print(paste("Facility Summary UI - Planning areas loaded:", !is.null(planning_areas_sf)))
   
   # Exit if no area selected or no planning areas data
-  if (is.null(area_name) || area_name == "Outside Planning Area" || is.null(planning_areas_sf)) {
+  if (is.null(area_name) || !nzchar(area_name) || area_name == "Outside Planning Area" || is.null(planning_areas_sf)) {
     return(div(
-      style = "margin: 15px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;",
-      "No facility data available for this area"
+      class = "data-placeholder",
+      p("Select a planning area on the map to see facility counts.", class = "data-placeholder-message")
     ))
   }
   
-  # Validate planning areas data
+  # Validate planning areas data type (redundant check, but safe)
   if (!inherits(planning_areas_sf, "sf")) {
-    print("Warning: planning_areas_sf is not an sf object")
+    warning("Facility Summary UI: Planning areas data is not an sf object.")
     return(div(
-      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px;",
-      "Error loading planning areas data"
+      class = "data-placeholder error",
+      h5("Data Error", class = "data-placeholder-title"),
+      p("Invalid planning areas data format.", class = "data-placeholder-message")
     ))
   }
   
-  # Ensure geometry is valid
-  if (any(!st_is_valid(planning_areas_sf))) {
-    print("Fixing invalid geometries in planning areas...")
-    planning_areas_sf <- st_make_valid(planning_areas_sf)
-  }
+  # Load all required facility data reactives
+  # Use req() to ensure they are loaded before proceeding
+  childcare_data <- childcare()
+  gym_data <- gym()
+  mrt_data <- mrt()
+  park_data <- park()
+  school_data <- sch()
+  mart_data <- mart()
+  req(childcare_data, gym_data, mrt_data, park_data, school_data, mart_data)
   
-  # Get facility counts with error handling
+  # Get facility counts with error handling for the overall process
   tryCatch({
-    # Load facility data first to ensure it's available
-    childcare_data <- childcare()
-    gym_data <- gym()
-    mrt_data <- mrt()
-    park_data <- park()
-    school_data <- sch()
-    mart_data <- mart()
-    
-    # Verify facility data is loaded
-    req(childcare_data, gym_data, mrt_data, park_data, school_data, mart_data)
-    
-    # Get counts
+    # Get counts using the refined function
     childcare_count <- get_facilities_in_area(childcare_data, planning_areas_sf, area_name)
     gym_count <- get_facilities_in_area(gym_data, planning_areas_sf, area_name)
     mrt_count <- get_facilities_in_area(mrt_data, planning_areas_sf, area_name)
     park_count <- get_facilities_in_area(park_data, planning_areas_sf, area_name)
     school_count <- get_facilities_in_area(school_data, planning_areas_sf, area_name)
     supermarket_count <- get_facilities_in_area(mart_data, planning_areas_sf, area_name)
-    
-    div(
-      style = "margin: 8px 0; padding: 8px; background-color: #f8f9fa; border-radius: 5px;",
-      h4("Facilities in Area", style = "margin-top: 0; margin-bottom: 5px; font-size: 14px; color: #2c3e50;"),
+
+    # Helper function to create styled facility item (unchanged)
+    create_facility_item <- function(icon, label, count) {
       div(
-        style = "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;",
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🏫 <strong>Schools:</strong> %d", school_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("👶 <strong>Childcare:</strong> %d", childcare_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🚉 <strong>MRT/LRT:</strong> %d", mrt_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🏋️ <strong>Gyms:</strong> %d", gym_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🌳 <strong>Parks:</strong> %d", park_count))),
-        div(style = "padding: 4px; background: #fff; border-radius: 4px;",
-            HTML(sprintf("🛒 <strong>Markets:</strong> %d", supermarket_count)))
+        style = "display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 6px; padding: 5px 8px; text-align: center;", # Adjusted padding
+        span(style = "font-size: 1.3em; margin-right: 5px;", icon), # Slightly smaller icon, added right margin
+        # Removed the label span
+        span(style = "font-weight: bold; font-size: 0.9em; color: #007bff;", count) # Slightly smaller count size
+      )
+    }
+
+    # Render the UI block (unchanged)
+    div(
+      style = "margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-radius: 8px;",
+      h5("Facilities in Area", style = "margin-top: 0; margin-bottom: 10px; font-size: 1.0em; font-weight: 600; color: #343a40; text-align: center;"),
+      # Use CSS Grid for layout
+      div(
+        style = "display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;", # Use CSS Grid with 3 columns
+        # Create items using the helper function (label is now ignored)
+        create_facility_item("🏫", "Schools", school_count),
+        create_facility_item("👶", "Childcare", childcare_count),
+        create_facility_item("🚉", "MRT/LRT", mrt_count),
+        create_facility_item("🏋️", "Gyms", gym_count),
+        create_facility_item("🌳", "Parks", park_count),
+        create_facility_item("🛒", "Markets", supermarket_count)
       )
     )
   }, error = function(e) {
-    print(paste("Error counting facilities:", e$message))
-    # Return error message if something goes wrong
+    # Catch errors specifically from the counting process within the UI render
+    print(paste("Error counting facilities within UI render:", e$message))
+    # Return error message if something goes wrong using standardized style
     div(
-      style = "margin: 15px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; color: #856404;",
-      "Unable to load facility data"
+      class = "data-placeholder warning",
+      h5("Facility Data Issue", class = "data-placeholder-title"),
+      p("Unable to load facility counts for the selected area.", class = "data-placeholder-message")
     )
   })
 })
@@ -357,7 +476,7 @@ output$left_overlay <- renderUI({
       # Income Distribution Plot - full size
       div(
         style = "margin-bottom: 25px;",
-        plotlyOutput("income_donut", height = "350px")
+        plotlyOutput("income_plot_output", height = "350px")
       ),
       
       # Facility Summary - now more compact

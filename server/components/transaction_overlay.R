@@ -141,7 +141,8 @@ output$analytics_dashboard <- renderUI({
           radioButtons("viz_type", "Visualization Type:", 
                       choices = c("Price Trend" = "price_trend", 
                                 "Price per SQM" = "price_per_sqm",
-                                "Transaction Volume" = "transaction_volume"),
+                                "Transaction Volume" = "transaction_volume",
+                                "Price Distribution" = "price_distribution"),
                       selected = "price_trend"),
           
           # Room type filter (if applicable)
@@ -156,7 +157,7 @@ output$analytics_dashboard <- renderUI({
           
           # Time period filter
           conditionalPanel(
-            condition = "input.viz_type == 'price_trend' || input.viz_type == 'price_per_sqm'",
+            condition = "input.viz_type == 'price_trend' || input.viz_type == 'price_per_sqm' || input.viz_type == 'price_distribution'",
             sliderInput("time_period", "Time Period:",
                       min = min(year(building_data[[date_col]])),
                       max = max(year(building_data[[date_col]])),
@@ -181,17 +182,38 @@ output$analytics_dashboard <- renderUI({
       div(
         style = "height: 400px; overflow: hidden;", # Prevent all scrolling with fixed height
         # Show different plots based on viz_type
-        conditionalPanel(
-          condition = "input.viz_type == 'price_trend'",
-          plotOutput("price_trend_plot", height = "250px")
+        # Wrap each conditionalPanel containing a plotOutput with the overlay structure
+        div(
+          style = "position: relative;",
+          conditionalPanel(
+            condition = "input.viz_type == 'price_trend'",
+            plotOutput("price_trend_plot", height = "250px")
+          ),
+          div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);")
         ),
-        conditionalPanel(
-          condition = "input.viz_type == 'price_per_sqm'",
-          plotOutput("price_per_sqm_plot", height = "250px")
+        div(
+          style = "position: relative;",
+          conditionalPanel(
+            condition = "input.viz_type == 'price_per_sqm'",
+            plotOutput("price_per_sqm_plot", height = "250px")
+          ),
+          div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);")
         ),
-        conditionalPanel(
-          condition = "input.viz_type == 'transaction_volume'",
-          plotOutput("transaction_volume_plot", height = "250px")
+        div(
+          style = "position: relative;",
+          conditionalPanel(
+            condition = "input.viz_type == 'transaction_volume'",
+            plotOutput("transaction_volume_plot", height = "250px")
+          ),
+          div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);")
+        ),
+        div(
+          style = "position: relative;",
+          conditionalPanel(
+            condition = "input.viz_type == 'price_distribution'",
+            plotOutput("price_distribution_plot", height = "250px")
+          ),
+          div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);")
         )
       )
     )
@@ -508,6 +530,110 @@ output$transaction_volume_plot <- renderPlot({
 
   # Return the plot
   return(p)
+})
+
+# Price Distribution Plot
+output$price_distribution_plot <- renderPlot({
+  # Get inputs
+  req(input$viz_type == "price_distribution")
+  req(transactions_overlay_visible())
+  
+  building_data <- get_transaction_data()
+  req(building_data)
+  
+  property_type <- selected_property_type()
+  
+  # Determine column names based on property type
+  if(property_type == "HDB") {
+    date_col <- "month"
+    price_col <- "resale_price"
+    type_col <- "flat_type"
+  } else {
+    date_col <- "contractDate"
+    price_col <- "price"
+    type_col <- "propertyType"
+  }
+  
+  # Filter by room type if not "all"
+  if(input$room_type_filter != "all") {
+    building_data <- building_data %>%
+      filter(!!sym(type_col) == input$room_type_filter)
+  }
+  
+  # Filter by time period if applicable
+  if(!is.null(input$time_period)) {
+    building_data <- building_data %>%
+      filter(year(!!sym(date_col)) >= input$time_period[1],
+             year(!!sym(date_col)) <= input$time_period[2])
+  }
+  
+  # Check if we have data after filtering
+  if(nrow(building_data) == 0) {
+    return(ggplot() + 
+             annotate("text", x = 0.5, y = 0.5, label = "No data for selected filters", size = 5) +
+             theme_void())
+  }
+  
+  # Get building name for plot title
+  building <- selected_building()
+  plot_title <- if (property_type == "HDB") {
+    paste0(building$block, " ", building$street_name)
+  } else {
+    paste0(building$project)
+  }
+  
+  # Get price column
+  price_col_data <- building_data[[price_col]]
+  
+  # Create the distribution plot
+  if(nrow(building_data) >= 3) {
+    # For buildings with enough transactions, show histogram with density curve
+    bin_count <- min(max(3, nrow(building_data) %/% 2), 15)
+    
+    # Calculate bin width to ensure histogram and density curve use same scale
+    bin_width <- (max(price_col_data) - min(price_col_data)) / bin_count
+    count_data <- nrow(building_data)
+    
+    ggplot(building_data, aes(x = .data[[price_col]])) +
+      geom_histogram(fill = "#4676a9", alpha = 0.5, bins = bin_count) +
+      # Scale density to histogram counts properly
+      geom_density(aes(y = ..density.. * count_data * bin_width), 
+                   color = "#003366", size = 1.2, alpha = 0.2) +
+      geom_vline(aes(xintercept = median(.data[[price_col]])),
+                color = "#ff5555", linetype = "dashed", size = 1) +
+      labs(
+        title = "Price Distribution",
+        subtitle = paste0("Median: $", format(median(price_col_data), big.mark = ",")),
+        x = "Price (SGD)",
+        y = "Number of Transactions"
+      ) +
+      scale_x_continuous(labels = scales::dollar_format(prefix = "$", suffix = "", big.mark = ",")) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(angle = 0, hjust = 0.5),
+        panel.grid.minor = element_blank()
+      )
+  } else {
+    # For buildings with very few transactions, show a box plot
+    ggplot(building_data, aes(y = .data[[price_col]])) +
+      geom_boxplot(fill = "#4676a9", alpha = 0.7) +
+      labs(
+        title = "Price Distribution",
+        subtitle = paste0("Median: $", format(median(price_col_data), big.mark = ",")),
+        x = "",
+        y = "Price (SGD)"
+      ) +
+      scale_y_continuous(labels = scales::dollar_format(prefix = "$", suffix = "", big.mark = ",")) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(angle = 0, hjust = 0.5),
+        panel.grid.minor = element_blank()
+      )
+  }
 })
 
 # --- Dashboard Overlay Close Button ---

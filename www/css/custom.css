@@ -98,6 +98,7 @@ body {
 /* Ensure the transaction overlay is unscrollable as a whole */
 .transactions-overlay {
   overflow: hidden; /* Prevent scrolling for the entire overlay */
+  height: 60% !important; /* Reduced height to 50% as requested */
 }
 
 /* Allow inner regions to remain scrollable */
@@ -105,6 +106,175 @@ body {
   overflow-y: auto; /* Enable vertical scrolling for inner content */
   max-height: 100%; /* Ensure it doesn't exceed the overlay's height */
 }
+
+/* Right Overlay Enhancements */
+.right-overlay {
+  /* Existing styles */
+  display: flex; /* Use flexbox for vertical layout */
+  flex-direction: column;
+}
+
+.right-overlay > div[style*="flex-direction: column"] {
+  flex-grow: 1; /* Allow inner container to grow */
+  overflow-y: auto; /* Enable scrolling ONLY for the content area */
+  padding-right: 5px; /* Add padding for scrollbar */
+}
+
+.left-overlay h4,
+.right-overlay h4 {
+  font-family: 'Roboto', sans-serif; /* Keep clean font */
+  font-size: 1.2em; /* Slightly larger */
+  font-weight: 700; /* Bold */
+  color: #1a75c2; /* Darker shade of primary blue */
+  margin-bottom: 12px; /* Increase bottom margin */
+  padding-bottom: 10px; /* Increase padding below text */
+  border-bottom: 2px solid #1a75c2; /* Thicker border matching text color */
+  flex-shrink: 0; 
+}
+
+.detail-placeholder {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.detail-placeholder .fa {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.building-header h5 {
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #0056b3; /* Darker blue */
+}
+
+.building-header .text-muted {
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.key-stats {
+  margin-bottom: 15px;
+}
+
+.key-stats .stat-item {
+  margin-bottom: 8px;
+  font-size: 0.95em;
+}
+
+.key-stats .stat-item strong {
+  display: inline-block;
+  width: 110px; /* Align labels */
+  color: #555;
+}
+
+.key-stats .stat-item span {
+  font-weight: 500;
+  color: #333;
+}
+
+.building-attributes {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: #444;
+}
+
+.building-attributes p {
+  margin-bottom: 5px;
+}
+
+.facility-section {
+  /* Ensure standard block layout, remove any specific positioning */
+  position: static; 
+  margin-top: 15px; /* Add some space above the section */
+}
+
+.facility-section h6 {
+  /* Align with key-stats labels */
+  text-align: left; /* Align left */
+  font-size: 0.95em; /* Match font size */
+  font-weight: bold; /* Match strong tag weight */
+  color: #555; /* Match color */
+  margin-bottom: 10px; /* Keep existing margin */
+  /* Remove width property if it was considered, not needed here */
+}
+
+/* Container for the facility plot */
+.facility-plot-container {
+  position: relative;
+}
+
+/* Transparent overlay for the plot */
+.facility-plot-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background-color: rgba(0,0,0,0);
+}
+
+/* Container for the analytics button */
+.analytics-button-container {
+  margin-top: 20px;
+}
+
+/* Keep score-specific styles */
+.proximity-score {
+  margin-top: 5px; 
+  margin-bottom: 15px; /* Increased bottom margin for space before plot */
+  padding: 8px 12px;
+  border-radius: 5px;
+  background-color: #e9ecef; 
+  text-align: center;
+  font-size: 0.95em;
+  position: static; /* Ensure no relative/absolute positioning */
+}
+
+.proximity-score strong {
+  color: #343a40; /* Darker text for label */
+  margin-right: 5px;
+}
+
+.proximity-score span {
+  font-weight: bold;
+  color: #007bff; /* Blue for the score value */
+}
+
+.proximity-score.default-score span {
+  color: #28a745; /* Green for default score */
+}
+
+.proximity-score em { /* Style for 'not available' text */
+  color: #6c757d; 
+  font-style: normal;
+}
+
+
+/* Ensure the plot output behaves like a block element */
+.facility-section .shiny-plot-output {
+  display: block; /* Explicitly set display */
+  position: static; /* Override any potential relative/absolute positioning */
+  margin-top: 0; /* Reset margin, spacing handled by score's margin-bottom */
+  width: 100%; /* Ensure it takes available width */
+}
+
+.right-overlay .btn-block {
+  margin-top: auto; /* Push button towards the bottom if space allows */
+  flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+/* Ensure hr has margin */
+.right-overlay hr {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  border-top: 1px solid #ddd;
+}
+
 
 /* Action buttons */
 .btn-primary {
@@ -149,4 +319,51 @@ body {
     right: 10%;
     left: 10%;
   }
+}
+
+/* Data Not Available Message Standard Styling */
+.data-placeholder {
+  padding: 15px;
+  margin: 10px 0;
+  text-align: center;
+  background-color: #f8f9fa; 
+  border-left: 3px solid #6c757d;
+  border-radius: 4px;
+  color: #6c757d;
+  font-size: 0.9em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px; /* Match height of plots */
+}
+
+.data-placeholder-title {
+  font-weight: 600;
+  font-size: 1.0em; 
+  margin-bottom: 5px;
+  color: #495057;
+}
+
+.data-placeholder-message {
+  margin-bottom: 0;
+}
+
+/* Variations */
+.data-placeholder.warning {
+  background-color: #fff3cd;
+  border-left-color: #ffc107;
+  color: #856404;
+}
+
+.data-placeholder.error {
+  background-color: #f8d7da;
+  border-left-color: #dc3545;
+  color: #721c24;
+}
+
+.data-placeholder.info {
+  background-color: #e3f2fd;
+  border-left-color: #007bff;
+  color: #0c5460;
 }

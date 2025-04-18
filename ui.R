@@ -109,9 +109,15 @@ ui <- fluidPage(
       style = "height: calc(100% - 70px); display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 10px;",
       h4("Area Summary"),
       h5(textOutput("current_region_name", inline = TRUE)),
-      plotOutput("summary_plot", height = "150px"),
-      uiOutput("income_stats"),
-      plotlyOutput("income_donut"),
+      # Wrap summary_plot output with overlay structure
+      div(
+        style = "position: relative;",
+        plotOutput("summary_plot", height = "150px"),
+        div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);") # Transparent overlay
+      ),
+      # uiOutput("income_stats"), # Keep commented or remove
+      # Replace plotlyOutput("income_donut") with the new uiOutput
+      uiOutput("income_display_ui"), # Conditionally renders plot or text message
       uiOutput("facility_summary") # Added facility summary here
     ),
     # Price legend at the absolute bottom (fixed position)
@@ -143,9 +149,7 @@ ui <- fluidPage(
       # Property content - hidden initially, shown when ready
       conditionalPanel(
         condition = "typeof input.right_overlay_ready !== 'undefined' && input.right_overlay_ready",
-        uiOutput("property_details"),
-        plotOutput("building_plot", height = "180px"),
-        plotOutput("facility_plot", height = "180px")
+        uiOutput("property_details") # This now contains the facility plot
       )
     )
   ),

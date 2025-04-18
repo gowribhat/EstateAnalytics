@@ -345,6 +345,7 @@ output$facility_plot <- renderPlot({
       plot.background = element_rect(fill = "transparent", colour = NA),
       panel.background = element_rect(fill = "transparent", colour = NA)
     )
+<<<<<<< HEAD
     names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
     
     # Create a data frame for ggplot
@@ -387,7 +388,9 @@ output$facility_plot <- renderPlot({
       )
   })
 })
+=======
 }, bg = "transparent") # Set plot background to transparent
+>>>>>>> master
 
 # Building-specific transaction list for right overlay (transactions overlay)
 output$building_transactions <- renderUI({

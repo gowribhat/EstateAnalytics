@@ -1,9 +1,9 @@
 # --- Configuration ---
 
 # Input CSV file path
-csv_file_path <- "Resources/URA_PrivateTransactions2025-04-02_region.csv" 
+csv_file_path <- "./data/raw/URA_PrivateTransactions2025-04-02.csv" 
 # Output RDS file path
-rds_file_path <- sub("\\.csv$", ".rds", csv_file_path)
+rds_file_path <- "./data/clean/ura_private.rds"
 
 # Strings to be treated as NA (add more if needed)
 na_strings <- c("NA", "", "NULL", "N/A", "na", "n/a", "<NA>", "NaN", " ")
