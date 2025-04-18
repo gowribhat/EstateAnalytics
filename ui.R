@@ -7,7 +7,7 @@
 # library(shinydashboard)
 # library(shinythemes)
 # library(leaflet)
-library(shinyjs) # Add this line
+library(shinyjs)
 
 ui <- fluidPage(
   useShinyjs(),
