@@ -177,15 +177,49 @@ output$property_details <- renderUI({
   proximity_score_display <- NULL
 
   if (nrow(facility_df) > 0) {
-      # Generate score display (Keep this part)
+      # Generate score display
       score_value <- round(score_info$score, 1)
       if (!is.na(score_value)) {
-          score_class <- if(score_info$type == "ranked") "proximity-score ranked-score" else "proximity-score default-score"
-          score_label <- if(score_info$type == "ranked") "Weighted Proximity Score:" else "Overall Proximity Score:"
-          proximity_score_display <- div(class = score_class,
-                                         tags$strong(score_label),
-                                         span(paste0(score_value, "%"))
-                                        )
+          # Determine background color based on score
+          score_bg_color <- if (score_value >= 75) {
+            "#d4edda" # Light Green
+          } else if (score_value >= 50) {
+            "#fff3cd" # Light Yellow/Orange
+          } else {
+            "#f8d7da" # Light Red
+          }
+          # Determine text color for score for better contrast
+          score_text_color <- if (score_value >= 75) {
+            "#155724" # Dark Green
+          } else if (score_value >= 50) {
+            "#856404" # Dark Yellow/Orange
+          } else {
+            "#721c24" # Dark Red
+          }
+          
+          # Split label text into three lines using <br>
+          score_label_text <- if(score_info$type == "ranked") "Weighted<br>Proximity<br>Score" else "Overall<br>Proximity<br>Score"
+          # Updated layout with dynamic score color
+          proximity_score_display <- div(
+            style = "display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 8px 5px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #f9f9f9; min-height: 60px;",
+            div( # Left side (label)
+              style = "flex-basis: 50%; text-align: center; line-height: 1.2; padding-left: 5px;",
+              tags$strong(HTML(score_label_text))
+            ),
+            div( # Middle (colon)
+              style = "flex-basis: 5%; text-align: center; font-weight: bold; color: #555;",
+              ":"
+            ),
+            div( # Right side (score)
+              # Apply dynamic background color here
+              style = paste0("flex-basis: 40%; text-align: center; background-color: ", score_bg_color, "; border-radius: 4px; padding: 5px 0;"),
+              span(
+                # Apply dynamic text color here
+                style = paste0("font-size: 2.0em; font-weight: bold; color: ", score_text_color, "; line-height: 1; vertical-align: middle;"),
+                paste0(score_value, "%")
+              )
+            )
+          )
       } else {
            proximity_score_display <- div(class = "proximity-score default-score", tags$em("Score not available"))
       }
@@ -226,18 +260,18 @@ output$property_details <- renderUI({
     hr(), # Separator
     # Updated Facility Section
     div(class = "facility-section",
-        tags$h6("Nearby Facilities"),
-        proximity_score_display, # Keep the score display
-        # Embed the facility plot directly here - plot uses the same underlying data now
-        # Increased height slightly for better visibility
-        # Wrap plotOutput in divs for overlay
+        # Use class for styling instead of inline style
+        tags$h6("Distance to Nearby Facilities"), 
+        proximity_score_display, # Use the updated score display here
+        # Use classes for plot container and overlay
         div(
-          style = "position: relative;", # Container for overlay
+          class = "facility-plot-container", # Use class for container
           plotOutput("facility_plot", height = "200px"),
-          div(style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background-color: rgba(0,0,0,0);") # Transparent overlay
+          div(class = "facility-plot-overlay") # Use class for overlay
         )
     ),
-    div(style = "margin-top: 20px;", # Add space before button
+    # Use class for button container
+    div(class = "analytics-button-container", 
         actionButton("toggle_transactions_overlay", "Building Analytics",
                      class = "btn btn-primary btn-block action-button")
     )
@@ -278,29 +312,36 @@ output$facility_plot <- renderPlot({
     facility_df$DisplayFacility <- factor(facility_df$DisplayFacility, levels = rev(levels(facility_df$Facility)))
   }
 
-  # Generate the bar plot using ggplot2 - enhanced for direct display
+  # Generate the lollipop plot using ggplot2
   ggplot(facility_df, aes(x = Distance, y = DisplayFacility)) +
-    geom_bar(stat = "identity", fill = "#6baed6", width = 0.7) + # Adjusted color and width
-    # Add text labels for distance on the bars
+    # --- Lollipop Chart Implementation ---
+    # Segment (line) from 0 to the distance value
+    geom_segment(aes(x = 0, xend = Distance, y = DisplayFacility, yend = DisplayFacility), 
+                 color = "grey70", linewidth = 0.8) + 
+    # Point (dot) at the end of the segment
+    geom_point(aes(x = Distance, y = DisplayFacility), color = "#4682B4", size = 3.5) + # Steel Blue color, slightly larger point
+    # --- End Lollipop ---
+    # Add text labels for distance next to the points
     geom_text(aes(label = paste(round(Distance), "m")), 
-              hjust = -0.15, # Position text slightly outside the bar end
-              size = 3.2,   # Adjust text size
-              color = "#444444") + # Slightly darker text
+              hjust = -0.3, # Position text slightly to the right of the point
+              size = 3.2,   
+              color = "#444444") + 
     # Explicitly set the y-axis order based on the factor levels
-    scale_y_discrete(limits = levels(facility_df$DisplayFacility)) + 
+    scale_y_discrete(limits = levels(facility_df$DisplayFacility)) +
     # Expand x-axis limits slightly to accommodate text labels
     scale_x_continuous(expand = expansion(mult = c(0.01, 0.18))) + # Adjust expansion
-    labs(title = NULL, x = "Distance (m)", y = NULL) + # Add x-axis label
-    theme_minimal(base_size = 11) + 
+    # Remove title from labs()
+    labs(title = NULL, x = "Distance (m)", y = NULL) +
+    theme_minimal(base_size = 11) +
     theme(
       axis.title.x = element_text(size = 9, margin = margin(t = 5), color = "grey30"), # Style x-axis title
       axis.text.x = element_text(size = 8, color = "grey30"), # Adjust x-axis text size
       axis.text.y = element_text(size = 9.5, hjust = 1, color = "grey20"), # Show y-axis text (facility names), adjust size/color
       axis.ticks.y = element_blank(),      # Hide y-axis ticks
-      panel.grid.major.y = element_blank(), # Hide horizontal grid lines
+      # panel.grid.major.y = element_blank(), # Keep major horizontal grid lines for lollipop
       panel.grid.minor = element_blank(),   # Hide minor grid lines
       panel.grid.major.x = element_line(color = "grey90", size = 0.4), # Subtle vertical grid lines
-      plot.margin = margin(t = 5, r = 15, b = 5, l = 5), # Adjust plot margins (more right margin for labels)
+      plot.margin = margin(t = 5, r = 20, b = 5, l = 5), # Adjust plot margins (more right margin for labels)
       plot.background = element_rect(fill = "transparent", colour = NA),
       panel.background = element_rect(fill = "transparent", colour = NA)
     )
