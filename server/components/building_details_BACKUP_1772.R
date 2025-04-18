@@ -345,52 +345,8 @@ output$facility_plot <- renderPlot({
       plot.background = element_rect(fill = "transparent", colour = NA),
       panel.background = element_rect(fill = "transparent", colour = NA)
     )
-<<<<<<< HEAD
-    names(f) <- c("Childcare Centre", "Gym", "LRT/MRT", "Park", "School", "Supermarket")
-    
-    # Create a data frame for ggplot
-    facility_df <- data.frame(
-      Facility = names(f),
-      Distance = f
-    )
-    if(!is.null(ranked_selection())){
-      selected_facilities <- reactive({
-        facility_ranking()
-      })
-      facility_df <- facility_df %>% filter(Facility %in% ranked_selection())
-      # Rearranges the vector of distances by user-selected priority
-      facility_df$Facility <- factor(facility_df$Facility, levels = ranked_selection())
-    }
-    
-    # Generate the bar plot using ggplot2
-    ggplot(facility_df, aes(x = Distance, y = Facility)) +
-      geom_bar(stat = "identity", fill = "pink") +
-      labs(
-        title = "Distance from Facilities",
-        x = "Distance (m)",
-        y = "Facilities"
-      ) +
-      scale_y_discrete(limits=rev)+
-      theme_minimal() +
-      theme(
-        plot.title = element_text(face = "bold", size = 14),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12)
-      )
-    
-  }, error = function(e) {
-    # Return a placeholder plot on error
-    ggplot() +
-      annotate("text", x = 0.5, y = 0.5, label = "Error rendering facility plot", size = 5) +
-      theme_void() +
-      theme(
-        plot.background = element_rect(fill = "#f8f9fa", color = NA)
-      )
-  })
-})
-=======
 }, bg = "transparent") # Set plot background to transparent
->>>>>>> master
+
 
 # Building-specific transaction list for right overlay (transactions overlay)
 output$building_transactions <- renderUI({
