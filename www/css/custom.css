@@ -120,10 +120,16 @@ body {
   padding-right: 5px; /* Add padding for scrollbar */
 }
 
+.left-overlay h4,
 .right-overlay h4 {
-  margin-bottom: 15px; /* Space below title */
-  flex-shrink: 0; /* Prevent title from shrinking */
-  color: #333;
+  font-family: 'Roboto', sans-serif; /* Keep clean font */
+  font-size: 1.2em; /* Slightly larger */
+  font-weight: 700; /* Bold */
+  color: #1a75c2; /* Darker shade of primary blue */
+  margin-bottom: 12px; /* Increase bottom margin */
+  padding-bottom: 10px; /* Increase padding below text */
+  border-bottom: 2px solid #1a75c2; /* Thicker border matching text color */
+  flex-shrink: 0; 
 }
 
 .detail-placeholder {
@@ -187,9 +193,34 @@ body {
 }
 
 .facility-section h6 {
-  margin-bottom: 8px; 
-  color: #555;
-  font-weight: 600;
+  /* Align with key-stats labels */
+  text-align: left; /* Align left */
+  font-size: 0.95em; /* Match font size */
+  font-weight: bold; /* Match strong tag weight */
+  color: #555; /* Match color */
+  margin-bottom: 10px; /* Keep existing margin */
+  /* Remove width property if it was considered, not needed here */
+}
+
+/* Container for the facility plot */
+.facility-plot-container {
+  position: relative;
+}
+
+/* Transparent overlay for the plot */
+.facility-plot-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background-color: rgba(0,0,0,0);
+}
+
+/* Container for the analytics button */
+.analytics-button-container {
+  margin-top: 20px;
 }
 
 /* Keep score-specific styles */
