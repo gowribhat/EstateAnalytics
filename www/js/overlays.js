@@ -169,14 +169,130 @@ $(document).ready(function() {
     }
   });
   
-  // Add window resize handler for DataTable adjustments
+  // Store the overlay visibility state before responsive hiding
+  let savedOverlayState = {
+    leftOverlayVisible: false,
+    rightOverlayVisible: false,
+    transactionsOverlayVisible: false
+  };
+  // Track if the window was previously below the responsive threshold
+  // Initialize based on current width
+  let wasBelowThreshold = $(window).width() < 768; 
+
+  // Add window resize handler for DataTable adjustments and responsive overlay behavior
   $(window).resize(function() {
-    // Check if transaction overlay is visible
+    console.log("Resize event triggered."); // Log resize event
+
+    // DataTable adjustments (existing code)
     if ($('#transactions_overlay').css('display') === 'flex') {
-      // If DataTable exists, adjust columns after resize
       if ($.fn.DataTable.isDataTable('#transactions_table')) {
         $('#transactions_table').DataTable().columns.adjust();
       }
     }
+
+    // Responsive behavior for overlays
+    const windowWidth = $(window).width();
+    const RESPONSIVE_THRESHOLD = 768;
+    const isBelowThreshold = windowWidth < RESPONSIVE_THRESHOLD;
+    // More detailed logging
+    console.log(`Current width: ${windowWidth}, Threshold: ${RESPONSIVE_THRESHOLD}, Below: ${isBelowThreshold}, Was Below: ${wasBelowThreshold}`); 
+
+    if (isBelowThreshold) {
+      // Only save state and hide if we are transitioning from above to below the threshold
+      if (!wasBelowThreshold) {
+          console.log("Transitioning to BELOW threshold. Saving state and hiding overlays.");
+          savedOverlayState = {
+            leftOverlayVisible: $('.left-overlay').is(':visible'),
+            rightOverlayVisible: $('.right-overlay').is(':visible'),
+            transactionsOverlayVisible: $('#transactions_overlay').is(':visible')
+          };
+          console.log('Saved overlay state:', savedOverlayState);
+
+          // Hide all overlays
+          $('.left-overlay, .right-overlay, #transactions_overlay').each(function() {
+            if ($(this).is(':visible')) {
+              $(this).hide();
+              // Improved logging for identifying the overlay
+              console.log(`Hiding overlay: #${$(this).attr('id') || $(this).attr('class').split(' ')[0]}`); 
+            }
+          });
+
+          // Update Shiny input and state tracker
+          Shiny.setInputValue('overlays_visible', false);
+          wasBelowThreshold = true; // Update state AFTER processing
+      } else {
+          console.log("Already below threshold. No state change needed.");
+      }
+
+    } else { // isAboveThreshold (windowWidth >= RESPONSIVE_THRESHOLD)
+      // Only restore if we are transitioning from below to above the threshold
+      if (wasBelowThreshold) {
+        console.log("Transitioning to ABOVE threshold. Restoring overlays based on saved state.");
+        console.log('Using saved state:', savedOverlayState);
+
+        let anyRestored = false; // Track if any overlay was actually restored
+
+        // Restore Left Overlay if it was visible before hiding
+        if (savedOverlayState.leftOverlayVisible) {
+          $('.left-overlay').show();
+          console.log('Restoring left overlay. Display:', $('.left-overlay').css('display'));
+          anyRestored = true;
+        }
+
+        // Restore Right Overlay if it was visible before hiding
+        if (savedOverlayState.rightOverlayVisible) {
+          $('.right-overlay').show();
+          console.log('Restoring right overlay. Display:', $('.right-overlay').css('display'));
+          anyRestored = true;
+        }
+
+        // Restore Transactions Overlay if it was visible before hiding
+        if (savedOverlayState.transactionsOverlayVisible) {
+          $('#transactions_overlay').css('display', 'flex');
+          console.log('Restoring transactions overlay. Display:', $('#transactions_overlay').css('display'));
+          anyRestored = true;
+        }
+
+        // Update Shiny input only if an overlay was restored or if any overlay is now visible
+        if (anyRestored || $('.left-overlay:visible, .right-overlay:visible, #transactions_overlay:visible').length > 0) {
+            // Check current Shiny value to avoid redundant updates
+            if (!Shiny.shinyapp.$inputValues.overlays_visible) { 
+                Shiny.setInputValue('overlays_visible', true);
+                console.log("Set overlays_visible to true.");
+            }
+        } else {
+            // If nothing was restored and nothing is visible, ensure overlays_visible is false
+             if (Shiny.shinyapp.$inputValues.overlays_visible) { // Avoid redundant updates
+                 Shiny.setInputValue('overlays_visible', false);
+                 console.log("No overlays restored/visible, set overlays_visible to false.");
+             }
+        }
+
+        // Update state tracker AFTER processing
+        wasBelowThreshold = false;
+
+      } else {
+        console.log("Already above threshold. No state change needed.");
+        // Ensure overlays_visible reflects current state even if no transition occurred
+        // This handles cases where overlays might be shown/hidden by other means while above threshold
+        const anyVisible = $('.left-overlay:visible, .right-overlay:visible, #transactions_overlay:visible').length > 0;
+        if (anyVisible && !Shiny.shinyapp.$inputValues.overlays_visible) { // Avoid redundant updates
+            Shiny.setInputValue('overlays_visible', true);
+            console.log("Ensured overlays_visible is true (already above threshold).");
+        } else if (!anyVisible && Shiny.shinyapp.$inputValues.overlays_visible) { // Avoid redundant updates
+            Shiny.setInputValue('overlays_visible', false);
+            console.log("Ensured overlays_visible is false (already above threshold).");
+        }
+      }
+    }
+    console.log("Resize handler finished."); // Log end of handler
   });
-});
+
+  // Trigger resize handler once on load to set initial state correctly
+  // Use a small delay to ensure Shiny inputs are available
+  setTimeout(function() {
+      console.log("Triggering initial resize check on load.");
+      $(window).trigger('resize');
+  }, 100); 
+
+}); // End document.ready
