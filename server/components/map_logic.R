@@ -303,17 +303,17 @@ observe({
     return()
   }
   
-  # Create price palette based on property type
+  # Create price palette based on property type - using green to red gradient (green for cheaper, red for more expensive)
   if(property_type == "HDB") {
     price_palette <- colorNumeric(
-      palette = "viridis",
+      palette = c("#00a600", "#e9e900", "#FF0000"), # Green to yellow to red
       domain = data$resale_price,
       reverse = FALSE
     )
     price_col <- data$resale_price
   } else {
     price_palette <- colorNumeric(
-      palette = "viridis",
+      palette = c("#00a600", "#e9e900", "#FF0000"), # Green to yellow to red
       domain = data$price,
       reverse = FALSE
     )
@@ -405,9 +405,9 @@ observe({
         tags$h5("Property Price Legend", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px;"),
         tags$div(
           style = "display: flex; flex-direction: row; align-items: center;",
-          # Create a gradient bar for the legend
+          # Create a gradient bar for the legend - green to red (cheaper to expensive)
           tags$div(
-            style = "flex-grow: 1; height: 15px; background: linear-gradient(to right, #440154, #414487, #2a788e, #22a884, #7ad151, #fde725); border-radius: 3px;"
+            style = "flex-grow: 1; height: 15px; background: linear-gradient(to right, #00CC00, #FFFF00, #FF0000); border-radius: 3px;"
           )
         ),
         tags$div(
