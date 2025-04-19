@@ -239,7 +239,7 @@ body, html {
     ),
     actionButton(
       inputId = "filter_area",
-      label   = "Area",
+      label   = "Floor Size",
       class   = "btn btn-primary"
     ),
     actionButton(
