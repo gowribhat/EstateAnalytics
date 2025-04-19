@@ -7,6 +7,9 @@
 # - Marker display: Dynamically updates markers based on zoom level and filters.
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
+# Enable JavaScript functionality for UI effects
+shinyjs::useShinyjs()
+
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
   # Calculate responsive zoom level based on screen width
@@ -260,6 +263,15 @@ observe({
     clearMarkerClusters() %>%
     clearHeatmap() %>%
     clearControls() # Clear all legends and other controls
+  
+  # Control heatmap legend visibility based on mode
+  if (vis_mode == "heatmap") {
+    # Show heatmap legend
+    runjs("$('#heatmap_legend').fadeIn(300);")
+  } else {
+    # Hide heatmap legend
+    runjs("$('#heatmap_legend').fadeOut(300);")
+  }
   
   # Exit early if we should show nothing (very zoomed out)
   if (vis_mode == "none") {
@@ -645,4 +657,24 @@ filtered_facilities <- reactive({
   if ("LRT/MRT" %in% selected) facilities$mrt <- mrt()
   
   facilities
+})
+
+# Heatmap density legend
+output$heatmap_legend_content <- renderUI({
+  tags$div(
+    style = "width: 100%; text-align: center;",
+    tags$h5("Transaction Density", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px; color: #333;"),
+    tags$div(
+      style = "display: flex; flex-direction: row; align-items: center; justify-content: center;",
+      # Create a gradient bar for the legend - red (dense) to green (sparse)
+      tags$div(
+        style = "flex-grow: 1; height: 12px; max-width: 200px; background: linear-gradient(to right, #00CC00, #FFFF00, #FF0000); border-radius: 6px;"
+      )
+    ),
+    tags$div(
+      style = "display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px; max-width: 200px; margin-left: auto; margin-right: auto;",
+      tags$span("Sparse", style = "font-weight: bold; color: #00AA00;"),
+      tags$span("Dense", style = "font-weight: bold; color: #AA0000;")
+    )
+  )
 })
