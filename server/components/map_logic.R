@@ -9,13 +9,58 @@
 
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
-  leaflet(options = leafletOptions(zoomControl = FALSE, minZoom = 12)) %>% # Disable default zoom controls and limit min zoom
-    addTiles() %>% # Add default OpenStreetMap map tiles
-    setView(lng = sg_lng, lat = sg_lat, zoom = sg_zoom) %>% # Use coordinates/zoom from global.R
+  # Calculate responsive zoom level based on screen width
+  # This function is called once when the app initializes
+  # We'll set both the initial zoom and minimum zoom to the same value
+  
+  # Default zoom level based on typical screen sizes, will be updated by JS later
+  initialZoom <- 11  # Default value
+  
+  # Create the map with minZoom set to the same as initialZoom
+  leaflet(options = leafletOptions(
+    zoomControl = FALSE,
+    minZoom = initialZoom,  # Setting minimum zoom equal to initial zoom
+    attributionControl = FALSE
+  )) %>%
+    addTiles() %>%
+    setView(lng = sg_lng, lat = sg_lat, zoom = initialZoom) %>%
     setMaxBounds(
       lng1 = 103.5, lat1 = 1.1,  # Southwest corner of the bounding box
       lng2 = 104.2, lat2 = 1.6   # Northeast corner of the bounding box
     )
+})
+
+# Send screenDimensions request immediately after session starts
+observe({
+  # This ensures the client sends screen dimensions as early as possible
+  session$sendCustomMessage(type = "getScreenDimensions", message = list())
+}, priority = 1000) # High priority to run early
+
+# Observer to update map zoom based on screen dimensions
+observeEvent(input$screenDimensions, {
+  dims <- input$screenDimensions
+  
+  # Calculate responsive zoom level based on screen width
+  responsive_zoom <- if (dims$width < 768) {
+    10
+  } else if (dims$width < 1200) {
+    10.5
+  } else if (dims$width < 1600) {
+    11
+  } else {
+    11.5
+  }
+  
+  # Update map with the responsive zoom levels
+  # We'll recreate the map completely with the new minZoom setting
+  leafletProxy("property_map") %>%
+    setView(lng = sg_lng, lat = sg_lat, zoom = responsive_zoom)
+  
+  # Send the new minZoom value to JavaScript to enforce it client-side
+  session$sendCustomMessage(type = "setMinZoom", message = list(zoom = responsive_zoom))
+  
+  # Update global zoom variable for reference
+  sg_zoom <<- responsive_zoom
 })
 
 # --- Reverse Geocoding for Map Center ---
