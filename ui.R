@@ -239,7 +239,7 @@ body, html {
     ),
     actionButton(
       inputId = "filter_area",
-      label   = "Area",
+      label   = "Floor Size",
       class   = "btn btn-primary"
     ),
     actionButton(
@@ -271,7 +271,8 @@ body, html {
       # uiOutput("income_stats"), # Keep commented or remove
       # Replace plotlyOutput("income_donut") with the new uiOutput
       uiOutput("income_display_ui"), # Conditionally renders plot or text message
-      uiOutput("facility_summary") # Added facility summary here
+      uiOutput("facility_summary"), # Added facility summary here
+      uiOutput("area_analysis") # Always show AI area analysis below facility summary
     ),
     # Price legend at the absolute bottom (fixed position)
     div(
@@ -347,5 +348,12 @@ body, html {
   ),
 
   # Hidden input to track overlay visibility
-  tags$input(id = "overlays_visible", type = "hidden", value = "false")
+  tags$input(id = "overlays_visible", type = "hidden", value = "false"),
+  
+  # Heatmap density legend (initially hidden, shown only in heatmap mode)
+  div(
+    id = "heatmap_legend",
+    style = "display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255, 255, 255, 0.9); border-radius: 10px; padding: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); max-width: 300px;",
+    uiOutput("heatmap_legend_content")
+  )
 )

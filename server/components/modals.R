@@ -33,11 +33,11 @@ observeEvent(input$filter_budget, {
   ))
 })
 
-# Observe Area button click
+# Observe Floor Size button click
 observeEvent(input$filter_area, {
   showModal(modalDialog(
-    title = "Select Area Range",
-    sliderInput("modal_area", "Area (sqm):", min = 0, max = 1000, value = area_range(), step = 10, width = "100%"),
+    title = "Select Floor Size Range",
+    sliderInput("modal_area", "Floor Size (sqm):", min = 0, max = 1000, value = area_range(), step = 10, width = "100%"),
     footer = tagList(
       modalButton("Cancel"),
       actionButton("ok_area", "OK")
@@ -130,7 +130,7 @@ observeEvent(input$ok_budget, {
 })
 
 observeEvent(input$ok_area, {
-  label_text <- paste("Area:", input$modal_area[1], "-", input$modal_area[2], "sqm")
+  label_text <- paste("Floor Size:", input$modal_area[1], "-", input$modal_area[2], "sqm")
   updateActionButton(session, "filter_area", label = label_text)
   removeModal()
   # Note: The reactive value area_range is updated in filters.R

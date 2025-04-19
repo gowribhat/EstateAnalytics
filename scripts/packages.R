@@ -23,5 +23,6 @@ required_packages <- c(
   "lubridate", 
   "jsonlite", 
   "dotenv",
-  "gtools"
+  "gtools",
+  "markdown"
 )

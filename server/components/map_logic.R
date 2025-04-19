@@ -7,6 +7,9 @@
 # - Marker display: Dynamically updates markers based on zoom level and filters.
 # - Spatial filtering: Filters data based on map bounds and user-selected criteria.
 
+# Enable JavaScript functionality for UI effects
+shinyjs::useShinyjs()
+
 # --- Base Map Rendering ---
 output$property_map <- renderLeaflet({
   # Calculate responsive zoom level based on screen width
@@ -261,6 +264,15 @@ observe({
     clearHeatmap() %>%
     clearControls() # Clear all legends and other controls
   
+  # Control heatmap legend visibility based on mode
+  if (vis_mode == "heatmap") {
+    # Show heatmap legend
+    runjs("$('#heatmap_legend').fadeIn(300);")
+  } else {
+    # Hide heatmap legend
+    runjs("$('#heatmap_legend').fadeOut(300);")
+  }
+  
   # Exit early if we should show nothing (very zoomed out)
   if (vis_mode == "none") {
     output$price_legend <- renderUI({ NULL })
@@ -303,17 +315,17 @@ observe({
     return()
   }
   
-  # Create price palette based on property type
+  # Create price palette based on property type - using green to red gradient (green for cheaper, red for more expensive)
   if(property_type == "HDB") {
     price_palette <- colorNumeric(
-      palette = "viridis",
+      palette = c("#00a600", "#e9e900", "#FF0000"), # Green to yellow to red
       domain = data$resale_price,
       reverse = FALSE
     )
     price_col <- data$resale_price
   } else {
     price_palette <- colorNumeric(
-      palette = "viridis",
+      palette = c("#00a600", "#e9e900", "#FF0000"), # Green to yellow to red
       domain = data$price,
       reverse = FALSE
     )
@@ -405,9 +417,9 @@ observe({
         tags$h5("Property Price Legend", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px;"),
         tags$div(
           style = "display: flex; flex-direction: row; align-items: center;",
-          # Create a gradient bar for the legend
+          # Create a gradient bar for the legend - green to red (cheaper to expensive)
           tags$div(
-            style = "flex-grow: 1; height: 15px; background: linear-gradient(to right, #440154, #414487, #2a788e, #22a884, #7ad151, #fde725); border-radius: 3px;"
+            style = "flex-grow: 1; height: 15px; background: linear-gradient(to right, #00CC00, #FFFF00, #FF0000); border-radius: 3px;"
           )
         ),
         tags$div(
@@ -645,4 +657,24 @@ filtered_facilities <- reactive({
   if ("LRT/MRT" %in% selected) facilities$mrt <- mrt()
   
   facilities
+})
+
+# Heatmap density legend
+output$heatmap_legend_content <- renderUI({
+  tags$div(
+    style = "width: 100%; text-align: center;",
+    tags$h5("Transaction Density", style = "margin-top: 0; margin-bottom: 8px; font-size: 14px; color: #333;"),
+    tags$div(
+      style = "display: flex; flex-direction: row; align-items: center; justify-content: center;",
+      # Create a gradient bar for the legend - red (dense) to green (sparse)
+      tags$div(
+        style = "flex-grow: 1; height: 12px; max-width: 200px; background: linear-gradient(to right, #00CC00, #FFFF00, #FF0000); border-radius: 6px;"
+      )
+    ),
+    tags$div(
+      style = "display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px; max-width: 200px; margin-left: auto; margin-right: auto;",
+      tags$span("Sparse", style = "font-weight: bold; color: #00AA00;"),
+      tags$span("Dense", style = "font-weight: bold; color: #AA0000;")
+    )
+  )
 })

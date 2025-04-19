@@ -277,6 +277,9 @@ get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) 
   # Ensure required inputs are valid sf objects and area_name is not NULL/empty
   req(facility_data, inherits(planning_areas_sf, "sf"), !is.null(area_name), nzchar(area_name), area_name != "Outside Planning Area")
   
+  # Check if this is MRT/LRT data with 'name' column for station names
+  is_mrt_data <- "name" %in% names(facility_data)
+  
   # Ensure facility data has coordinates and remove rows with missing ones
   if (!all(c("longitude", "latitude") %in% names(facility_data))) {
       stop("Facility data must contain 'longitude' and 'latitude' columns.")
@@ -346,14 +349,26 @@ get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) 
   count <- 0 # Initialize count
   tryCatch({
       # Use the filtered 'current_area' polygon for intersection
-      # st_intersects returns a list. Each element corresponds to a facility.
-      # The content of each element is the index(es) of the planning area polygon(s) it intersects.
-      # Since current_area has only one polygon, we expect intersecting facilities to have list elements like c(1L).
-      # Non-intersecting facilities will have list elements like integer(0).
       intersection_list <- st_intersects(facilities_sf, current_area)
-
-      # Correctly count how many elements in the list have length > 0 (meaning they intersected the polygon)
-      count <- sum(sapply(intersection_list, length) > 0)
+      
+      if (is_mrt_data) {
+        # For MRT/LRT data, count unique station names instead of individual exits
+        # First identify which facilities intersect with the area
+        intersecting_indices <- which(sapply(intersection_list, length) > 0)
+        
+        if (length(intersecting_indices) > 0) {
+          # Extract the original facility data for intersecting points
+          intersecting_facilities <- facility_data[intersecting_indices, ]
+          
+          # Count unique station names
+          unique_stations <- unique(intersecting_facilities$name)
+          count <- length(unique_stations)
+          print(paste("Found", count, "unique MRT/LRT stations in area:", area_name))
+        }
+      } else {
+        # For other facility types, count normally
+        count <- sum(sapply(intersection_list, length) > 0)
+      }
 
   }, error = function(e) {
       warning(paste("Error during spatial intersection for", area_name, ":", e$message))
@@ -362,7 +377,9 @@ get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) 
       sf_use_s2(TRUE) # Ensure S2 is re-enabled
   })
 
-  print(paste("Found", count, "facilities intersecting with area:", area_name))
+  if (!is_mrt_data) {
+    print(paste("Found", count, "facilities intersecting with area:", area_name))
+  }
   return(count)
 }
 
@@ -416,13 +433,37 @@ output$facility_summary <- renderUI({
     school_count <- get_facilities_in_area(school_data, planning_areas_sf, area_name)
     supermarket_count <- get_facilities_in_area(mart_data, planning_areas_sf, area_name)
 
-    # Helper function to create styled facility item (unchanged)
+    # Helper function to create styled facility item with tooltip
     create_facility_item <- function(icon, label, count) {
+      # Create a unique ID for each tooltip using the label
+      tooltip_id <- paste0("tooltip-", gsub("[^a-zA-Z0-9]", "", tolower(label)))
+      
       div(
-        style = "display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 6px; padding: 5px 8px; text-align: center;", # Adjusted padding
+        style = "display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 6px; padding: 5px 8px; text-align: center; position: relative; cursor: help;", # Added cursor:help to indicate hoverable
+        id = paste0("facility-", tooltip_id), # Add unique ID to the container
         span(style = "font-size: 1.3em; margin-right: 5px;", icon), # Slightly smaller icon, added right margin
         # Removed the label span
-        span(style = "font-weight: bold; font-size: 0.9em; color: #007bff;", count) # Slightly smaller count size
+        span(style = "font-weight: bold; font-size: 0.9em; color: #007bff;", count), # Slightly smaller count size
+        # Add tooltip that appears on hover
+        tags$div(
+          id = tooltip_id,
+          class = "facility-tooltip",
+          style = "position: absolute; visibility: hidden; background-color: #333; color: white; text-align: center; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; bottom: 110%; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 100; opacity: 0; transition: opacity 0.3s;",
+          label,
+          # Add small arrow below the tooltip
+          tags$div(
+            style = "position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #333 transparent transparent transparent;"
+          )
+        ),
+        # Add direct event handlers without relying on 'last()'
+        tags$script(HTML(paste0("
+          $(document).ready(function() {
+            $('#facility-", tooltip_id, "').hover(
+              function() { $('#", tooltip_id, "').css({'visibility': 'visible', 'opacity': '1'}); },
+              function() { $('#", tooltip_id, "').css({'visibility': 'hidden', 'opacity': '0'}); }
+            );
+          });
+        ")))
       )
     }
 
@@ -454,6 +495,122 @@ output$facility_summary <- renderUI({
   })
 })
 
+# Source AI utilities and read API key
+source("server/components/ai_utils.R")
+groq_api_key <- Sys.getenv("GROQ_API_KEY")
+if (groq_api_key == "") {
+  if (file.exists(".env")) {
+    env <- readLines(".env")
+    key_line <- grep("^GROQ_API_KEY=", env, value = TRUE)
+    if (length(key_line) > 0) groq_api_key <- sub("^GROQ_API_KEY=", "", key_line)
+  }
+  if (groq_api_key == "") stop("GROQ_API_KEY not set in environment or .env file")
+}
+
+# Track AI analysis trigger per map state
+area_analysis_triggered <- reactiveVal(FALSE)
+observeEvent(input$generate_area_analysis, { area_analysis_triggered(TRUE) })
+# Reset AI trigger when map moves or zooms
+observeEvent(input$property_map_zoom, { area_analysis_triggered(FALSE) })
+observeEvent(input$property_map_center, { area_analysis_triggered(FALSE) })
+
+output$area_analysis <- renderUI({
+  # Button to trigger AI analysis
+  btn <- actionButton("generate_area_analysis", "Generate AI analysis of area", class = "btn btn-primary btn-block")
+  # Show button until triggered
+  if (!area_analysis_triggered()) {
+    return(btn)
+  }
+  # Disable map panning/zoom while analysis runs
+  shinyjs::addClass("property_map", "no-interact")
+  # Get current area
+  area_name <- current_planning_area()
+  on.exit(shinyjs::removeClass("property_map", "no-interact"), add = TRUE)
+
+  if (is.null(area_name) || !nzchar(area_name) || area_name == "Outside Planning Area") {
+    return(div(
+      p("Select a planning area or zoom in to see AI-powered analysis.", class = "data-placeholder-message")
+    ))
+  }
+  # Collect data and build prompt
+  price_data <- visible_transactions()
+  status <- income_data_status()
+  income_data <- NULL
+  if (!is.null(status) && status$available) {
+    region_data <- status$region_data
+    total_households <- status$total_households
+
+    no_income <- region_data$NoEmployedPerson
+    no_income_percent <- round(no_income / total_households * 100, 1)
+
+    low_income <- sum(region_data$Below_1_000, region_data$X1_000_1_999, region_data$X2_000_2_999)
+    low_income_percent <- round(low_income / total_households * 100, 1)
+
+    mid_income <- sum(region_data$X3_000_3_999, region_data$X4_000_4_999, region_data$X5_000_5_999,
+                      region_data$X6_000_6_999, region_data$X7_000_7_999, region_data$X8_000_8_999)
+    mid_income_percent <- round(mid_income / total_households * 100, 1)
+
+    high_income <- sum(region_data$X9_000_9_999, region_data$X10_000_10_999, region_data$X11_000_11_999,
+                       region_data$X12_000_12_999, region_data$X13_000_13_999, region_data$X14_000_14_999,
+                       region_data$X15_000_17_499, region_data$X17_500_19_999)
+    high_income_percent <- round(high_income / total_households * 100, 1)
+
+    affluent <- region_data$X20_000andOver
+    affluent_percent <- round(affluent / total_households * 100, 1)
+
+    income_data <- list(
+      available = TRUE,
+      percentages = c(no_income_percent, low_income_percent, mid_income_percent, high_income_percent, affluent_percent)
+    )
+  }
+
+  planning_areas_sf <- planning_areas_data()
+  facilities <- NULL
+  if (!is.null(planning_areas_sf)) {
+    childcare_data <- childcare()
+    gym_data <- gym()
+    mrt_data <- mrt()
+    park_data <- park()
+    school_data <- sch()
+    mart_data <- mart()
+
+    if (!is.null(childcare_data) && !is.null(gym_data) && !is.null(mrt_data) &&
+        !is.null(park_data) && !is.null(school_data) && !is.null(mart_data)) {
+
+      facilities <- list(
+        schools = get_facilities_in_area(school_data, planning_areas_sf, area_name),
+        childcare = get_facilities_in_area(childcare_data, planning_areas_sf, area_name),
+        mrt = get_facilities_in_area(mrt_data, planning_areas_sf, area_name),
+        gyms = get_facilities_in_area(gym_data, planning_areas_sf, area_name),
+        parks = get_facilities_in_area(park_data, planning_areas_sf, area_name),
+        supermarkets = get_facilities_in_area(mart_data, planning_areas_sf, area_name)
+      )
+    }
+  }
+
+  user_facilities <- user_selection()
+  prompt <- create_area_analysis_prompt(area_name, price_data, income_data, facilities, user_facilities)
+
+  # Call API within renderUI to keep progress messages in proper sequence
+  withProgress(message = "Generating AI-powered analysis...", value = 0.2, {
+    analysis_content <- call_groq_api(prompt, groq_api_key)
+  })
+
+  # Process and render result
+  content <- gsub("### PROS", "<h3 class='pros-header'>PROS</h3>", analysis_content)
+  content <- gsub("### CONS", "<h3 class='cons-header'>CONS</h3>", content)
+  div(
+    class = "area-analysis",
+    h5("AI Area Analysis", class = "area-analysis-title"),
+    p(paste("Analysis for", area_name), class = "area-analysis-subtitle"),
+    HTML(markdown::markdownToHTML(text = content, fragment.only = TRUE)),
+    tags$p(
+      "Disclaimer: This AI-generated analysis may contain inaccuracies. Please verify with official sources.",
+      style = "font-size:0.75em; color:#666; margin-top:8px;"
+    )
+  )
+})
+
 # Update the left overlay UI with optimized graph sizes
 output$left_overlay <- renderUI({
   div(
@@ -479,8 +636,12 @@ output$left_overlay <- renderUI({
         plotlyOutput("income_plot_output", height = "350px")
       ),
       
-      # Facility Summary - now more compact
-      uiOutput("facility_summary")
+      # Facility Summary - more compact
+      uiOutput("facility_summary"),
+      div(
+        style = "margin-top: 20px; margin-bottom: 20px;",
+        uiOutput("area_analysis")
+      )
     ),
     
     # Price legend at bottom
