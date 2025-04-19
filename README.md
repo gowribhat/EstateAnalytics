@@ -20,9 +20,9 @@ Project/
 │   ├── server.R                                # Main server-side logic for the app
 │   ├── components/                             # Modular server-side scripts
 │   │   ├── ai_utils.R                          # AI-related utility functions
-│   │   ├── area_details.R                      # Handles left panel: income stats & price trends
+│   │   ├── area_details.R                      # Handles left overlay panel
 │   │   ├── building_analytics.R                # Building-specific analytics functionality
-│   │   ├── building_details.R                  # Handles right panel: building-specific info
+│   │   ├── building_details.R                  # Handles right overlay panel
 │   │   ├── data_loading.R                      # Loads datasets
 │   │   ├── facility.R                          # Manages facility-related data and functions
 │   │   ├── filters.R                           # Filters data based on user choices
