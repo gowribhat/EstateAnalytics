@@ -82,6 +82,22 @@ body {
   width: 100% !important;
 }
 
+.transactions-overlay h4 {
+  font-family: 'Roboto', sans-serif; /* Keep clean font */
+  font-size: 1.2em; /* Slightly larger */
+  font-weight: 700; /* Bold */
+  color: #1a75c2; /* Darker shade of primary blue */
+  margin-bottom: 12px; /* Increase bottom margin */
+  padding-bottom: 10px; /* Increase padding below text */
+  flex-shrink: 0;
+}
+
+.transactions-overlay h5{
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #0056b3; /* Darker blue */
+}
+
 .transactions-overlay .dataTables_wrapper {
   padding: 0;
   height: 100%;
