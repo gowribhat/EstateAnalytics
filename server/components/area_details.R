@@ -562,7 +562,11 @@ output$area_analysis <- renderUI({
     class = "area-analysis",
     h5("AI Area Analysis", class = "area-analysis-title"),
     p(paste("Analysis for", area_name), class = "area-analysis-subtitle"),
-    HTML(markdown::markdownToHTML(text = content, fragment.only = TRUE))
+    HTML(markdown::markdownToHTML(text = content, fragment.only = TRUE)),
+    tags$p(
+      "Disclaimer: This AI-generated analysis may contain inaccuracies. Please verify with official sources.",
+      style = "font-size:0.75em; color:#666; margin-top:8px;"
+    )
   )
 })
 
