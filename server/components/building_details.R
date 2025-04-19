@@ -150,6 +150,8 @@ output$property_details <- renderUI({
     median_price <- median(building_data$resale_price)
     recent_price <- building_data$resale_price[1]
     latest_date <- format(building_data$month[1], "%b %Y")
+    # Find the oldest date
+    oldest_date <- format(min(building_data$month), "%b %Y") 
     total_transactions <- nrow(building_data)
     year_built <- paste("Built:", building_data$lease_commence_date[1])
     flat_type <- paste("Flat Type:", building_data$flat_type[1])
@@ -159,6 +161,8 @@ output$property_details <- renderUI({
     median_price <- median(building_data$price)
     recent_price <- building_data$price[1]
     latest_date <- format(building_data$contractDate[1], "%b %Y")
+    # Find the oldest date
+    oldest_date <- format(min(building_data$contractDate), "%b %Y")
     total_transactions <- nrow(building_data)
     year_built <- paste("Property Type:", building_data$propertyType[1]) # Use Property Type instead of Built
     flat_type <- "" # URA doesn't have flat_type
@@ -247,7 +251,12 @@ output$property_details <- renderUI({
         ),
         div(class = "stat-item",
             tags$strong("Transactions:"),
-            span(paste(total_transactions, "sales"))
+            # Wrap lines in spans and add padding to the second line for alignment
+            span( 
+              paste(total_transactions, "sales"),
+              tags$br(),
+              span(paste0("(since ", oldest_date, ")"), style = "padding-left: 8.5em;") # Adjust padding as needed
+            )
         )
     ),
     hr(), # Separator
