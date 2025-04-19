@@ -24,10 +24,6 @@ call_groq_api <- function(prompt, api_key) {
     model = "llama3-70b-8192",  # Using Llama 3 model
     messages = list(
       list(
-        role = "system",
-        content = "You are an expert Singapore property advisor providing balanced analyses of neighborhoods. Focus on creating concise, well-structured bullet points for pros and cons based on the provided data. Be factual, specific, and relevant to home buyers."
-      ),
-      list(
         role = "user",
         content = prompt
       )
@@ -114,9 +110,12 @@ create_area_analysis_prompt <- function(area_name, price_data = NULL, income_dat
   # Final instructions
   prompt <- paste0(prompt, 
                   "Analyze this area as a place to buy property. Format your response in two sections with bullet points: '### PROS' and '### CONS'. ",
-                  "Focus on location benefits/drawbacks, value for money, amenities, demographics, and lifestyle considerations. ",
-                  "Keep each bullet point concise (max 20 words) and highly specific to this area based on the data provided. ",
-                  "Include 4-6 bullet points in each section.")
+                  "Focus on location benefits/drawbacks, value for money, amenities, demographics, lifestyle considerations, and upcoming developments. ",
+                  "Integrate general insights about Singapore's property market and compare this area to other popular neighborhoods. ",
+                  "Highlight unique selling points that agents can use to distinguish their services. ",
+                  "Keep each bullet point concise (max 10 words) and highly specific. Include 4-6 bullet points per section.",
+                  "Use hyphens to keep each bullet point short and clear.",
+                  "Separate each bullet point with a new line. ")
   
   return(prompt)
 }
