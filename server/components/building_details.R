@@ -266,7 +266,7 @@ output$property_details <- renderUI({
         # Use classes for plot container and overlay
         div(
           class = "facility-plot-container", # Use class for container
-          plotOutput("facility_plot", height = "200px"),
+          plotOutput("facility_plot", height = "200px", width = "100%"),
           div(class = "facility-plot-overlay") # Use class for overlay
         )
     ),
@@ -329,7 +329,8 @@ output$facility_plot <- renderPlot({
     # Explicitly set the y-axis order based on the factor levels
     scale_y_discrete(limits = levels(facility_df$DisplayFacility)) +
     # Expand x-axis limits slightly to accommodate text labels
-    scale_x_continuous(expand = expansion(mult = c(0.01, 0.18))) + # Adjust expansion
+    scale_x_continuous(expand = expansion(mult = c(0.01, 0.4))) + # Further expand right to accommodate labels
+    coord_cartesian(clip = 'off') + # Allow labels to render outside plot area
     # Remove title from labs()
     labs(title = NULL, x = "Distance (m)", y = NULL) +
     theme_minimal(base_size = 11) +
