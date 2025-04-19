@@ -314,7 +314,7 @@ body, html {
     class = "transactions-overlay", # Class is kept for potential JS selection, ID used for styling
     # Header with title and close button
     div(
-      style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;",
+      style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; flex-shrink: 0; border-bottom: 2px solid #1a75c2;",
       h4("Building Analytics Dashboard", style = "margin: 0;"),
       actionButton("close_transactions", "×", class = "btn btn-sm close-overlay", style = "border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-weight: bold; padding: 0;")
     ),
@@ -330,7 +330,7 @@ body, html {
         div(
           style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column;",
           tags$i(class = "fa fa-spinner fa-spin", style = "font-size: 48px; color: #4676a9; margin-bottom: 15px;"),
-          h4("Loading building analytics...", style = "color: #4676a9;")
+          p("Loading building analytics...", style = "color: #4676a9;")
         )
       ),
 
@@ -355,5 +355,10 @@ body, html {
     id = "heatmap_legend",
     style = "display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255, 255, 255, 0.9); border-radius: 10px; padding: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); max-width: 300px;",
     uiOutput("heatmap_legend_content")
+  ),
+
+  div(
+    class = "corner-logo",
+    span("EstateAnalytics", class = "logo-text")
   )
 )

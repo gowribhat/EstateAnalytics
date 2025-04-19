@@ -372,11 +372,36 @@ observe({
         lng = ~longitude,
         lat = ~latitude,
         radius = 7,
-        stroke = FALSE,
+        stroke = TRUE,
+        weight = 1,
+        color = "#000000",
+        opacity = 0.8,
         fillOpacity = 0.8,
         fillColor = ~price_palette(price_col),
         layerId = ~building_id, # Keep layerId for click events
-        # Skip popup content for large datasets - will show on click instead
+        # Add tooltip instead of popup for large datasets
+        label = lapply(popup_content, HTML),
+        labelOptions = labelOptions(
+          style = list(
+            "background-color" = "rgba(255, 255, 255, 0.9)",
+            "border-color" = "#00000050",
+            "border-width" = "1px",
+            "border-radius" = "4px",
+            "padding" = "4px 8px",
+            "font-size" = "12px",
+            "box-shadow" = "0 2px 5px rgba(0,0,0,0.2)"
+          ),
+          textsize = "12px",
+          opacity = 0.9,
+          direction = "auto",
+          offset = c(0, -10),
+          sticky = TRUE
+        ),
+        # Add hover effect with options
+        options = pathOptions(
+          className = "circle-marker-hover"
+        ),
+        # Cluster options
         clusterOptions = markerClusterOptions(
           spiderfyOnMaxZoom = FALSE,
           zoomToBoundsOnClick = TRUE,
@@ -385,17 +410,41 @@ observe({
         )
       )
     } else {
-      # For smaller datasets, use normal markers with popups
+      # For smaller datasets, use normal markers with tooltips
       map_proxy %>% addCircleMarkers(
         data = data,
         lng = ~longitude,
         lat = ~latitude,
         radius = 5,
-        stroke = FALSE,
+        stroke = TRUE,
+        weight = 1,
+        color = "#000000",
+        opacity = 0.8,
         fillOpacity = 0.7,
         fillColor = ~price_palette(price_col),
-        popup = popup_content,
+        # Replace popup with tooltip
+        label = lapply(popup_content, HTML),
+        labelOptions = labelOptions(
+          style = list(
+            "background-color" = "rgba(255, 255, 255, 0.9)",
+            "border-color" = "#00000050",
+            "border-width" = "1px",
+            "border-radius" = "4px",
+            "padding" = "4px 8px",
+            "font-size" = "12px",
+            "box-shadow" = "0 2px 5px rgba(0,0,0,0.2)"
+          ),
+          textsize = "12px",
+          opacity = 0.9,
+          direction = "auto",
+          offset = c(0, -10),
+          sticky = TRUE
+        ),
         layerId = ~building_id,
+        # Add hover effect with options
+        options = pathOptions(
+          className = "circle-marker-hover"
+        ),
         clusterOptions = markerClusterOptions(
           spiderfyOnMaxZoom = TRUE,
           zoomToBoundsOnClick = TRUE,

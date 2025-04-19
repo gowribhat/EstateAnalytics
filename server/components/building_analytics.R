@@ -136,7 +136,7 @@ output$analytics_dashboard <- renderUI({
         style = "height: calc(100% - 30px); overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;",
         wellPanel(
           style = "background-color: #f8f9fa; max-height: none; height: auto; margin-bottom: 20px;",
-          h4("Analytics Controls"),
+          h5("Analytics Controls"),
           # Visualization type selector
           radioButtons("viz_type", "Visualization Type:", 
                       choices = c("Price Trend" = "price_trend", 
