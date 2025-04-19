@@ -271,7 +271,8 @@ body, html {
       # uiOutput("income_stats"), # Keep commented or remove
       # Replace plotlyOutput("income_donut") with the new uiOutput
       uiOutput("income_display_ui"), # Conditionally renders plot or text message
-      uiOutput("facility_summary") # Added facility summary here
+      uiOutput("facility_summary"), # Added facility summary here
+      uiOutput("area_analysis") # Always show AI area analysis below facility summary
     ),
     # Price legend at the absolute bottom (fixed position)
     div(
