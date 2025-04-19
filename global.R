@@ -9,6 +9,13 @@ source("scripts/load_packages.R")
 # Explicitly load DT for DataTable functionality
 library(DT)
 
+# Load dotenv package and read .env file if it exists
+if (require("dotenv", quietly = TRUE)) {
+  load_dot_env(file = ".env")
+} else {
+  message("dotenv package not available; environment variables must be set manually")
+}
+
 # Global options to disable scientific notation
 options(scipen = 999)           # Disable scientific notation
 options(digits = 10)            # Set high precision for numeric display
