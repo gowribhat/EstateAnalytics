@@ -433,13 +433,37 @@ output$facility_summary <- renderUI({
     school_count <- get_facilities_in_area(school_data, planning_areas_sf, area_name)
     supermarket_count <- get_facilities_in_area(mart_data, planning_areas_sf, area_name)
 
-    # Helper function to create styled facility item (unchanged)
+    # Helper function to create styled facility item with tooltip
     create_facility_item <- function(icon, label, count) {
+      # Create a unique ID for each tooltip using the label
+      tooltip_id <- paste0("tooltip-", gsub("[^a-zA-Z0-9]", "", tolower(label)))
+      
       div(
-        style = "display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 6px; padding: 5px 8px; text-align: center;", # Adjusted padding
+        style = "display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 6px; padding: 5px 8px; text-align: center; position: relative; cursor: help;", # Added cursor:help to indicate hoverable
+        id = paste0("facility-", tooltip_id), # Add unique ID to the container
         span(style = "font-size: 1.3em; margin-right: 5px;", icon), # Slightly smaller icon, added right margin
         # Removed the label span
-        span(style = "font-weight: bold; font-size: 0.9em; color: #007bff;", count) # Slightly smaller count size
+        span(style = "font-weight: bold; font-size: 0.9em; color: #007bff;", count), # Slightly smaller count size
+        # Add tooltip that appears on hover
+        tags$div(
+          id = tooltip_id,
+          class = "facility-tooltip",
+          style = "position: absolute; visibility: hidden; background-color: #333; color: white; text-align: center; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; bottom: 110%; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 100; opacity: 0; transition: opacity 0.3s;",
+          label,
+          # Add small arrow below the tooltip
+          tags$div(
+            style = "position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #333 transparent transparent transparent;"
+          )
+        ),
+        # Add direct event handlers without relying on 'last()'
+        tags$script(HTML(paste0("
+          $(document).ready(function() {
+            $('#facility-", tooltip_id, "').hover(
+              function() { $('#", tooltip_id, "').css({'visibility': 'visible', 'opacity': '1'}); },
+              function() { $('#", tooltip_id, "').css({'visibility': 'hidden', 'opacity': '0'}); }
+            );
+          });
+        ")))
       )
     }
 
