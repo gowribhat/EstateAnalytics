@@ -466,9 +466,26 @@ if (groq_api_key == "") {
   if (groq_api_key == "") stop("GROQ_API_KEY not set in environment or .env file")
 }
 
+# Track AI analysis trigger per map state
+area_analysis_triggered <- reactiveVal(FALSE)
+observeEvent(input$generate_area_analysis, { area_analysis_triggered(TRUE) })
+# Reset AI trigger when map moves or zooms
+observeEvent(input$property_map_zoom, { area_analysis_triggered(FALSE) })
+observeEvent(input$property_map_center, { area_analysis_triggered(FALSE) })
+
 output$area_analysis <- renderUI({
-  # Get current area and prepare
+  # Button to trigger AI analysis
+  btn <- actionButton("generate_area_analysis", "Generate AI analysis of area", class = "btn btn-primary btn-block")
+  # Show button until triggered
+  if (!area_analysis_triggered()) {
+    return(btn)
+  }
+  # Disable map panning/zoom while analysis runs
+  shinyjs::addClass("property_map", "no-interact")
+  # Get current area
   area_name <- current_planning_area()
+  on.exit(shinyjs::removeClass("property_map", "no-interact"), add = TRUE)
+
   if (is.null(area_name) || !nzchar(area_name) || area_name == "Outside Planning Area") {
     return(div(
       p("Select a planning area or zoom in to see AI-powered analysis.", class = "data-placeholder-message")
