@@ -277,6 +277,9 @@ get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) 
   # Ensure required inputs are valid sf objects and area_name is not NULL/empty
   req(facility_data, inherits(planning_areas_sf, "sf"), !is.null(area_name), nzchar(area_name), area_name != "Outside Planning Area")
   
+  # Check if this is MRT/LRT data with 'name' column for station names
+  is_mrt_data <- "name" %in% names(facility_data)
+  
   # Ensure facility data has coordinates and remove rows with missing ones
   if (!all(c("longitude", "latitude") %in% names(facility_data))) {
       stop("Facility data must contain 'longitude' and 'latitude' columns.")
@@ -346,14 +349,26 @@ get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) 
   count <- 0 # Initialize count
   tryCatch({
       # Use the filtered 'current_area' polygon for intersection
-      # st_intersects returns a list. Each element corresponds to a facility.
-      # The content of each element is the index(es) of the planning area polygon(s) it intersects.
-      # Since current_area has only one polygon, we expect intersecting facilities to have list elements like c(1L).
-      # Non-intersecting facilities will have list elements like integer(0).
       intersection_list <- st_intersects(facilities_sf, current_area)
-
-      # Correctly count how many elements in the list have length > 0 (meaning they intersected the polygon)
-      count <- sum(sapply(intersection_list, length) > 0)
+      
+      if (is_mrt_data) {
+        # For MRT/LRT data, count unique station names instead of individual exits
+        # First identify which facilities intersect with the area
+        intersecting_indices <- which(sapply(intersection_list, length) > 0)
+        
+        if (length(intersecting_indices) > 0) {
+          # Extract the original facility data for intersecting points
+          intersecting_facilities <- facility_data[intersecting_indices, ]
+          
+          # Count unique station names
+          unique_stations <- unique(intersecting_facilities$name)
+          count <- length(unique_stations)
+          print(paste("Found", count, "unique MRT/LRT stations in area:", area_name))
+        }
+      } else {
+        # For other facility types, count normally
+        count <- sum(sapply(intersection_list, length) > 0)
+      }
 
   }, error = function(e) {
       warning(paste("Error during spatial intersection for", area_name, ":", e$message))
@@ -362,7 +377,9 @@ get_facilities_in_area <- function(facility_data, planning_areas_sf, area_name) 
       sf_use_s2(TRUE) # Ensure S2 is re-enabled
   })
 
-  print(paste("Found", count, "facilities intersecting with area:", area_name))
+  if (!is_mrt_data) {
+    print(paste("Found", count, "facilities intersecting with area:", area_name))
+  }
   return(count)
 }
 
