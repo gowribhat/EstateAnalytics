@@ -10,109 +10,99 @@ EstateAnalytics is a subscription-based platform designed to help real estate ag
 
 ```
 Project/
-├── global.R                                  # Shared libraries & settings used across the app
+├── global.R                                    # Shared settings used across the app
 |
-├── ui.R                                      # Defines the user interface layout
+├── ui.R                                        # Defines the user interface layout
 |
-├── app.R                                     # Main Shiny app file
+├── app.R                                       # Main Shiny app file
 |
 ├── server/
-│   ├── server.R                              # Main server-side logic for the app
-│   ├── components/                           # Modular server-side scripts
-│   │   ├── ai_utils.R                        # AI-related utility functions
-│   │   ├── area_details.R                    # Handles left panel: income stats & price trends
-│   │   ├── building_analytics.R              # Building-specific analytics functionality
-│   │   ├── building_details.R                # Handles right panel: building-specific info
-│   │   ├── data_loading.R                    # Loads datasets like HDB, private properties, etc.
-│   │   ├── facility.R                        # Manages facility-related data and functionality
-│   │   ├── filters.R                         # Filters data based on user choices
-│   │   ├── map_logic.R                       # Manages map display, markers, and interactions
-│   │   ├── modals.R                          # Pop-up windows for user filters
-│   │   └── utils.R                           # Helper functions for charts, maps, and UI
-│   └── guide.md                              # Instructions for adding server components
+│   ├── server.R                                # Main server-side logic for the app
+│   ├── components/                             # Modular server-side scripts
+│   │   ├── ai_utils.R                          # AI-related utility functions
+│   │   ├── area_details.R                      # Handles left panel: income stats & price trends
+│   │   ├── building_analytics.R                # Building-specific analytics functionality
+│   │   ├── building_details.R                  # Handles right panel: building-specific info
+│   │   ├── data_loading.R                      # Loads datasets
+│   │   ├── facility.R                          # Manages facility-related data and functions
+│   │   ├── filters.R                           # Filters data based on user choices
+│   │   ├── map_logic.R                         # Manages map interactions
+│   │   ├── modals.R                            # Pop-up windows for user filters
+│   │   └── utils.R                             # Helper functions for charts, maps, and UI
+│   └── guide.md                                # Instructions for adding server components
 |
-├── www/                                      # Files for the web interface
-│   ├── css/                                  # Custom stylesheets
-│   │   └── custom.css                        # Styling for the app
-│   ├── images/                               # Image assets
-│   │   ├── EstateAnalytics.png               # Application logo
-│   │   └── EstateAnalyticsWithTagline.png    # Application logo with tagline
-│   └── js/                                   # Custom JavaScript files
-│       └── overlays.js                       # Handles overlay visibility and actions
+├── www/                                        # Files for the web interface
+│   ├── css/                                    # Custom stylesheets
+│   │   └── custom.css                          # Styling for the app
+│   ├── images/                                 # Image assets
+│   │   ├── EstateAnalytics.png                 # Application logo
+│   │   └── EstateAnalyticsWithTagline.png      # Application logo with tagline
+│   └── js/                                     # Custom JavaScript files
+│       └── overlays.js                         # Handles overlay visibility and actions
 |
-├── data/                                     # Pre-processed datasets
-│   ├── clean/                                # Cleaned data ready for application use
-│   │   ├── childcares.RDS                    # Childcare center data
-│   │   ├── district_and_planning_area.geojson # Planning areas geometry
-│   │   ├── gyms_data.rds                     # Gyms location data
-│   │   ├── hdb.rds                           # HDB transactions and details
-│   │   ├── household_income_data.rds         # Income data by planning area
-│   │   ├── LRT_MRT.rds                       # Train stations location data
-│   │   ├── parks_data.rds                    # Parks location data
-│   │   ├── schools.rds                       # Schools location and details
-│   │   ├── Supermarkets.rds                  # Supermarkets location data
-│   │   └── ura_private.rds                   # Private property transactions
-│   └── raw/                                  # Original unprocessed data sources
-│       ├── Generalinformationofschools.csv   # Raw schools data
-│       └── ...                               # Other raw data files
+├── data/                                       
+│   ├── clean/                                  # Cleaned data ready for application use
+│   │   ├── childcares.RDS                      
+│   │   └── ...                                 
+│   └── raw/                                    # Original unprocessed data sources
+│       ├── Generalinformationofschools.csv     
+│       └── ...                                 # Other raw data files
 |
-├── scripts/                                  # Setup and data processing scripts
-│   ├── load_packages.R                       # Loads required R packages
-│   ├── install_packages.R                    # Installs missing packages
-│   ├── packages.R                            # List of required packages
-│   ├── viewRDS.R                             # Utility to view RDS file contents
-│   └── data_cleaning/                        # Scripts for data preparation
+├── scripts/                                    # Setup and data processing scripts
+│   ├── load_packages.R                         # Loads required R packages
+│   ├── install_packages.R                      # Installs missing packages
+│   ├── packages.R                              # List of required packages
+│   ├── viewRDS.R                               # Utility to view RDS file contents
+│   └── data_cleaning/                          # Scripts for data preparation
 │       ├── append_planning_area.R            
 │       ├── clean_schools_childcares_data.R   
 │       └── ...                               
 |
-├── .env                                      # Environment variables (GROQ API Key)
+├── .env                                        # Environment variables (GROQ API Key)
 |
-├── .gitignore                                # Files to exclude from version control
+├── .gitignore                                  # Files to exclude from version control
 |
-├── .gitattributes                            # Git settings for the repository
+├── .gitattributes                              # Git settings for the repository
 |
-├── .lintr                                    # Linting configuration for R code
+├── .lintr                                      # Linting configuration for R code
 |
-└── .Rprofile                                 # Project-specific R settings
+└── .Rprofile                                   # Project-specific R settings
 ```
 
 ## Getting Started
 
 1.  **Set up GROQ API Key**
 
-   The application uses GROQ's API for AI-powered features. Follow these steps to obtain an API key:
+      The application uses GROQ's API for AI-powered features. Follow these steps to obtain an API key:
    
-   a. Visit [GROQ's website](https://console.groq.com/keys) and create an account if you don't have one.
+      a. Visit [GROQ's website](https://console.groq.com/keys) and create an account if you don't have one.
    
-   b. After logging in, navigate to the API Keys section or developer dashboard.
+      b. After logging in, navigate to the API Keys      section or developer dashboard.
    
-   c. Create a new API key (you may need to provide a name for your project).
+      c. Create a new API key (you may need to provide a name for your project).
    
-   d. Copy the generated API key - you'll need it for the next step.
+      d. Copy the generated API key - you'll need it for the next step.
 
 2.  **Create a .env file**
 
-   Create a file named `.env` in the project root directory with your GROQ API key:
-   
-   ```
-   GROQ_API_KEY=your_api_key_here
-   ```
-   
-   Replace `your_api_key_here` with the actual API key you obtained from GROQ. This file is included in `.gitignore` to ensure your API key remains private.
+      Create a file named `.env` in the project root directory with your GROQ API key:
+      
+      ```
+      GROQ_API_KEY=your_api_key_here
+      ```
+      
+      Replace `your_api_key_here` with the actual API key you obtained from GROQ. This file is included in `.gitignore` to ensure your API key remains private.
 
 
 4.  **Run the Shiny app**
 
-   Click on the "Run App" button in Rstudio to start the Shiny app. If using VS Code, open `ui.R` and "Run App".
-   
-   > **Note:** For best performance, use Chrome, Firefox, or Edge browsers. Safari may experience significant lag with this application.
+      Click on the "Run App" button in Rstudio to start the Shiny app. If using VS Code, open `ui.R` and "Run App".
+      
+      > **Note:** For best performance, use Chrome, Firefox, or Edge browsers. Safari may experience significant lag with this application.
 
 5.  **Deploy the app**
 
-   To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
-
-## Deployment Files
+      To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
 
 <details>
 <summary><h2>🚀 GitHub Workflow Guide (click to expand)</h2></summary>
@@ -174,8 +164,6 @@ To stay up-to-date:
 - **Update your local project regularly**
 
 </details>
-
----
 
 <details>
 <summary><h2>🤖 Optional: AI-Powered Setup (click to expand)</h2></summary>
