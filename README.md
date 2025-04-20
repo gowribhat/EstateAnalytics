@@ -83,24 +83,64 @@ Project/
    
       d. Copy the generated API key - you'll need it for the next step.
 
-2.  **Create a .env file**
+2.  **Set up URA API Access Key**
 
-      Create a file named `.env` in the project root directory with your GROQ API key:
+      The application uses the [URA API](https://eservice.ura.gov.sg/maps/api/) for accessing private property transaction data.
+
+      a. Visit the [URA Data Service portal](https://eservice.ura.gov.sg/maps/api/).
+
+      b. Register for an account if you don't have one.
       
-      ```
-      GROQ_API_KEY=your_api_key_here
-      ```
+      c. Request an Access Key for the relevant APIs (e.g., Private Residential Property Transactions). Approval might be required.
+
+      d. Once approved, copy your Access Key.
+
+3.  **Set up OneMap API Credentials**
+
+      The application uses the [OneMap API](https://www.onemap.gov.sg/apidocs/) for geocoding addresses (e.g., finding coordinates for HDB blocks). You need to register for an account to use their APIs.
+
+      a. Visit the [OneMap portal](https://www.onemap.gov.sg/) and register for an account.
+
+      b. Once registered, you will use your account email and password for API access.
+
+4.  **Set up Google API Key**
+
+      The data cleaning scripts use the `ggmap` package, which requires a Google Cloud Platform API key for geocoding postal codes.
+
+      a. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+
+      b. Create a new project or select an existing one.
       
-      Replace `your_api_key_here` with the actual API key you obtained from GROQ. This file is included in `.gitignore` to ensure your API key remains private.
+      c. Enable the "Geocoding API" and "Maps JavaScript API" for your project.
 
+      d. Go to "Credentials" and create a new API key.
 
-4.  **Run the Shiny app**
+      e. Copy the generated API key.
+
+5.  **Create a .env file**
+
+      Create a file named `.env` in the project root directory with your API keys and credentials:
+
+      ```
+      GROQ_API_KEY=your_groq_api_key_here
+      # Optional keys below (only needed for running data cleaning scripts)
+      URA_ACCESSKEY=your_ura_access_key_here
+      ONEMAP_EMAIL=your_onemap_email@example.com
+      ONEMAP_EMAIL_PASSWORD=your_onemap_password
+      GOOGLE_API_KEY=your_google_api_key_here
+      ```
+
+      Replace the placeholder values with your actual keys and credentials. This file is included in `.gitignore` to ensure your keys and credentials remain private.
+
+      > **Note:** The `URA_ACCESSKEY`, `ONEMAP_EMAIL`, `ONEMAP_EMAIL_PASSWORD`, and `GOOGLE_API_KEY` are only required if you intend to run the data cleaning scripts located in the `scripts/data_cleaning/` directory. They are **not** needed to run the main Shiny application with the pre-cleaned data.
+
+6.  **Run the Shiny app**
 
       Click on the "Run App" button in Rstudio to start the Shiny app. If using VS Code, open `ui.R` and "Run App".
       
       > **Note:** For best performance, use Chrome, Firefox, or Edge browsers. Safari may experience significant lag with this application.
 
-5.  **Deploy the app**
+7.  **Deploy the app**
 
       To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
 
