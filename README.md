@@ -83,24 +83,47 @@ Project/
    
       d. Copy the generated API key - you'll need it for the next step.
 
-2.  **Create a .env file**
+2.  **Set up URA API Access Key**
 
-      Create a file named `.env` in the project root directory with your GROQ API key:
+      The application uses the [URA API](https://eservice.ura.gov.sg/maps/api/) for accessing private property transaction data.
+
+      a. Visit the [URA Data Service portal](https://eservice.ura.gov.sg/maps/api/).
+
+      b. Register for an account if you don't have one.
       
+      c. Request an Access Key for the relevant APIs (e.g., Private Residential Property Transactions). Approval might be required.
+
+      d. Once approved, copy your Access Key.
+
+3.  **Set up OneMap API Credentials**
+
+      The application uses the [OneMap API](https://www.onemap.gov.sg/apidocs/) for geocoding addresses (e.g., finding coordinates for HDB blocks). You need to register for an account to use their APIs.
+
+      a. Visit the [OneMap portal](https://www.onemap.gov.sg/) and register for an account.
+
+      b. Once registered, you will use your account email and password for API access.
+
+5.  **Create a .env file**
+
+      Create a file named `.env` in the project root directory with your API keys and credentials:
+
       ```
-      GROQ_API_KEY=your_api_key_here
+      GROQ_API_KEY=your_groq_api_key_here
+      URA_ACCESSKEY=your_ura_access_key_here
+      ONEMAP_EMAIL=your_onemap_email@example.com
+      ONEMAP_EMAIL_PASSWORD=your_onemap_password
       ```
-      
-      Replace `your_api_key_here` with the actual API key you obtained from GROQ. This file is included in `.gitignore` to ensure your API key remains private.
+
+      Replace the placeholder values with your actual keys and credentials. This file is included in `.gitignore` to ensure your keys and credentials remain private.
 
 
-4.  **Run the Shiny app**
+6.  **Run the Shiny app**
 
       Click on the "Run App" button in Rstudio to start the Shiny app. If using VS Code, open `ui.R` and "Run App".
       
       > **Note:** For best performance, use Chrome, Firefox, or Edge browsers. Safari may experience significant lag with this application.
 
-5.  **Deploy the app**
+7.  **Deploy the app**
 
       To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
 
