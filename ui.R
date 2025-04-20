@@ -357,8 +357,11 @@ body, html {
     uiOutput("heatmap_legend_content")
   ),
 
-  div(
-    class = "corner-logo",
-    span("EstateAnalytics", class = "logo-text")
+  tags$a(
+    href = "https://gowribhat.github.io/EstateAnalytics/", target = "_blank",
+    div(
+      class = "corner-logo",
+      span("EstateAnalytics", class = "logo-text")
+    )
   )
 )
