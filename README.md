@@ -1,89 +1,111 @@
-# HomeExplorer
+# EstateAnalytics
 
-> A Comprehensive Property Search & Analysis Platform
+> Confidence Sells. Data Closes.
 
-## Overview
+## Introduction
 
-This project aims to develop a data analytics platform that revolutionizes how people search for and evaluate properties in Singapore. By leveraging multiple government data sources and advanced visualizations, the platform will provide insights into property values, neighborhood characteristics, and lifestyle factors to help users make informed housing decisions.
+EstateAnalytics is a subscription-based platform designed to help real estate agents communicate property data effectively to their clients. By leveraging multiple government data sources and advanced visualizations, the platform provides real-time market insights, interactive data visualizations, and actionable property analytics. Our mission is to empower agents with data-driven insights that increase successful deal closures, focusing on agent-client communication rather than traditional lead generation. Initially targeting Singapore's real estate market with plans to expand across Southeast Asia, EstateAnalytics aims to become an essential tool for real estate professionals.
 
 ## Project Structure
 
 ```
 Project/
-├── global.R                                  # Shared libraries & settings used across the app
+├── global.R                                    # Shared settings used across the app
 |
-├── ui.R                                      # Defines the user interface layout
+├── ui.R                                        # Defines the user interface layout
+|
+├── app.R                                       # Main Shiny app file
 |
 ├── server/
-│   ├── server.R                              # Main server-side logic for the app
-│   ├── components/                           # Modular server-side scripts
-│   │   ├── area_details.R                    # Handles left panel: income stats & price trends
-│   │   ├── building_details.R                # Handles right panel: building-specific info
-│   │   ├── data_loading.R                    # Loads datasets like HDB, private properties, etc.
-│   │   ├── filters.R                         # Filters data based on user choices
-│   │   ├── map_logic.R                       # Manages map display, markers, and interactions
-│   │   ├── modals.R                          # Pop-up windows for user filters
-│   │   ├── transaction_overlay.R             # Manages transaction details overlay
-│   │   └── utils.R                           # Helper functions for charts, maps, and UI
-│   └── guide.md                              # Instructions for adding server components
+│   ├── server.R                                # Main server-side logic for the app
+│   ├── components/                             # Modular server-side scripts
+│   │   ├── ai_utils.R                          # AI-related utility functions
+│   │   ├── area_details.R                      # Handles left overlay panel
+│   │   ├── building_analytics.R                # Building-specific analytics functionality
+│   │   ├── building_details.R                  # Handles right overlay panel
+│   │   ├── data_loading.R                      # Loads datasets
+│   │   ├── facility.R                          # Manages facility-related data and functions
+│   │   ├── filters.R                           # Filters data based on user choices
+│   │   ├── map_logic.R                         # Manages map interactions
+│   │   ├── modals.R                            # Pop-up windows for user filters
+│   │   └── utils.R                             # Helper functions for charts, maps, and UI
+│   └── guide.md                                # Instructions for adding server components
 |
-├── www/                                      # Files for the web interface
-│   ├── css/                                  # Custom stylesheets
-│   │   └── custom.css                        # Styling for the app
-│   └── js/                                   # Custom JavaScript files
-│       └── overlays.js                       # Handles overlay visibility and actions
+├── www/                                        # Files for the web interface
+│   ├── css/                                    # Custom stylesheets
+│   │   └── custom.css                          # Styling for the app
+│   ├── images/                                 # Image assets
+│   │   ├── EstateAnalytics.png                 # Application logo
+│   │   └── EstateAnalyticsWithTagline.png      # Application logo with tagline
+│   └── js/                                     # Custom JavaScript files
+│       └── overlays.js                         # Handles overlay visibility and actions
 |
-├── data/                                     # Pre-processed datasets
-│   ├── schools.RDS                           # School locations and details
-│   ├── childcares.RDS                        # Childcare center data
-│   └── ...                                   # Other datasets (e.g., parks, supermarkets)
+├── data/                                       
+│   ├── clean/                                  # Cleaned data ready for application use
+│   │   ├── childcares.RDS                      
+│   │   └── ...                                 
+│   └── raw/                                    # Original unprocessed data sources
+│       ├── Generalinformationofschools.csv     
+│       └── ...                                 # Other raw data files
 |
-├── scripts/                                  # Setup scripts
-│   ├── load_packages.R                       # Loads required R packages
-│   ├── install_packages.R                    # Installs missing packages
-│   └── packages.R                            # List of required packages
+├── scripts/                                    # Setup and data processing scripts
+│   ├── load_packages.R                         # Loads required R packages
+│   ├── install_packages.R                      # Installs missing packages
+│   ├── packages.R                              # List of required packages
+│   ├── viewRDS.R                               # Utility to view RDS file contents
+│   └── data_cleaning/                          # Scripts for data preparation
+│       ├── append_planning_area.R            
+│       ├── clean_schools_childcares_data.R   
+│       └── ...                               
 |
-├── temp.R                                    # Temporary server logic for testing
+├── .env                                        # Environment variables (GROQ API Key)
 |
-├── .gitignore                                # Files to exclude from version control
+├── .gitignore                                  # Files to exclude from version control
 |
-├── .gitattributes                            # Git settings for the repository
+├── .gitattributes                              # Git settings for the repository
 |
-├── .lintr                                    # Linting configuration for R code
+├── .lintr                                      # Linting configuration for R code
 |
-└── .Rprofile                                 # Project-specific R settings
+└── .Rprofile                                   # Project-specific R settings
 ```
 
 ## Getting Started
 
-1.  **Install dependencies**
+1.  **Set up GROQ API Key**
 
-    Run script to install any missing packages for local developement.
+      The application uses GROQ's API for AI-powered features. Follow these steps to obtain an API key:
+   
+      a. Visit [GROQ's website](https://console.groq.com/keys) and create an account if you don't have one.
+   
+      b. After logging in, navigate to the API Keys      section or developer dashboard.
+   
+      c. Create a new API key (you may need to provide a name for your project).
+   
+      d. Copy the generated API key - you'll need it for the next step.
 
-    ```r
-    source("scripts/install_packages.R")
-    ```
+2.  **Create a .env file**
 
-1.  **Run the Shiny app**
+      Create a file named `.env` in the project root directory with your GROQ API key:
+      
+      ```
+      GROQ_API_KEY=your_api_key_here
+      ```
+      
+      Replace `your_api_key_here` with the actual API key you obtained from GROQ. This file is included in `.gitignore` to ensure your API key remains private.
 
-    Click on the “Run App” button in Rstudio to start the Shiny app.
 
-1.  **Deploy the app**
+4.  **Run the Shiny app**
 
-    To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
+      Click on the "Run App" button in Rstudio to start the Shiny app. If using VS Code, open `ui.R` and "Run App".
+      
+      > **Note:** For best performance, use Chrome, Firefox, or Edge browsers. Safari may experience significant lag with this application.
 
-## Deployment Files
+5.  **Deploy the app**
 
-Ensure that the following files are included when deploying the app:
+      To deploy the app to Shinyapps.io, create an account and follow the instructions in the [Shinyapps.io documentation](https://docs.rstudio.com/shinyapps.io/).
 
-- `app.R` – Main Shiny app file
-- `global.R` – Shared libraries and configurations
-- `server/` – Folder with server-side logic
-- `ui.R` – UI layout file
-- `www/` - CSS and JS files to be rendered on web browser
-- `data/` - Cleaned datasets
-
-## 🚀 GitHub Workflow Guide
+<details>
+<summary><h2>🚀 GitHub Workflow Guide (click to expand)</h2></summary>
 
 ### 🔁 BEFORE You Start Working
 
@@ -141,9 +163,10 @@ To stay up-to-date:
 - **Merge your PR only after review**
 - **Update your local project regularly**
 
----
+</details>
 
-## 🤖 Optional: AI-Powered Setup (VS Code + GitHub Copilot + Ollama)
+<details>
+<summary><h2>🤖 Optional: AI-Powered Setup (click to expand)</h2></summary>
 
 Want to boost your workflow with **AI assistance**? Set up **free AI tools** to help write, understand, and debug code for the project.
 
@@ -159,7 +182,7 @@ Want to boost your workflow with **AI assistance**? Set up **free AI tools** to 
 ### 🎓 2. Get GitHub Student Pack (Free Copilot Access) <a name="student-pack"></a>
 
 1. Visit: [https://education.github.com/pack](https://education.github.com/pack)
-2. Click **“Get Student Benefits”** / **Sign in for Student Developer Pack**
+2. Click **"Get Student Benefits"** / **Sign in for Student Developer Pack**
 3. Sign in with your GitHub account using your NUS email
 4. Follow the verification steps
 
@@ -191,3 +214,5 @@ After your [student pack from step 2](#student-pack) is approved:
    - `"Suggest improvements for this filter logic"`
    - `"What does leafletOutput() do in Shiny?"`
 4. You can also go to [https://github.com/copilot/](https://github.com/copilot/) on you browser to start a chat and add the project repository or specific files as attachments.
+
+</details>
