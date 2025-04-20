@@ -103,19 +103,36 @@ Project/
 
       b. Once registered, you will use your account email and password for API access.
 
+4.  **Set up Google API Key**
+
+      The data cleaning scripts use the `ggmap` package, which requires a Google Cloud Platform API key for geocoding postal codes.
+
+      a. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+
+      b. Create a new project or select an existing one.
+      
+      c. Enable the "Geocoding API" and "Maps JavaScript API" for your project.
+
+      d. Go to "Credentials" and create a new API key.
+
+      e. Copy the generated API key.
+
 5.  **Create a .env file**
 
       Create a file named `.env` in the project root directory with your API keys and credentials:
 
       ```
       GROQ_API_KEY=your_groq_api_key_here
+      # Optional keys below (only needed for running data cleaning scripts)
       URA_ACCESSKEY=your_ura_access_key_here
       ONEMAP_EMAIL=your_onemap_email@example.com
       ONEMAP_EMAIL_PASSWORD=your_onemap_password
+      GOOGLE_API_KEY=your_google_api_key_here
       ```
 
       Replace the placeholder values with your actual keys and credentials. This file is included in `.gitignore` to ensure your keys and credentials remain private.
 
+      > **Note:** The `URA_ACCESSKEY`, `ONEMAP_EMAIL`, `ONEMAP_EMAIL_PASSWORD`, and `GOOGLE_API_KEY` are only required if you intend to run the data cleaning scripts located in the `scripts/data_cleaning/` directory. They are **not** needed to run the main Shiny application with the pre-cleaned data.
 
 6.  **Run the Shiny app**
 
